@@ -1,5 +1,6 @@
 #!/usr/bin/pyton3
 
+import json
 import os
 import mysql.connector
 import mysql.connector.pooling
@@ -15,23 +16,16 @@ from mysql.connector.cursor import MySQLCursorPrepared
 from random import randrange
 
 def main():
-    reddit = praw.Reddit('DozenIncBOT')
-    ke = reddit.subreddit("SomethingsNotRight")
+    with open("settings.json") as jsonfile:
+        cfg = json.load(jsonfile)
 
-    dbConfig = {
-    'user': 'dummy',
-    'password': '1234',
-    'host': '127.0.0.1',
-    'port': '3306',
-    'database': 'Reddit',
-    'raise_on_warnings': True,
-    'connection_timeout': 3600
-    }
-    db = mysql.connector.pooling.MySQLConnectionPool(pool_name = None, **dbConfig)
+    reddit = praw.Reddit(cfg['praw'])
+    ke = reddit.subreddit(cfg['sub'])
+    db = mysql.connector.pooling.MySQLConnectionPool(pool_name=None, raise_on_warnings=True, connection_timeout=3600, **cfg['sql'])
     pool = db.get_connection()
     con = pool.cursor(prepared=True)
-    con.execute("SET SQL_SAFE_UPDATES = 0;")
-    con.execute("INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', 'root', 'Game Initalized');".format(time.time()))
+    con.execute(cfg['preStm']['main'][0])
+    con.execute(cfg['preStm']['main'][1].format(time.time()))
     con.execute("COMMIT;")
     con.execute("SHOW PROCESSLIST")
     conStat = con.fetchall()
@@ -40,7 +34,7 @@ def main():
     curCycle = 0
     stateReply = ["has not yet started.", "has already started."]
 
-    print("Connected as " + str(reddit.user.me()))
+    print("Connected as {}".format(str(reddit.user.me())))
     print("Database Connections: ")
     for row in conStat:
         print(row[0])
@@ -49,45 +43,44 @@ def main():
     while True:
         for item in reddit.inbox.stream():
             if ((re.search('!join', item.body)) and (gameState == 0)):
-                addUser(item, ke, con)
+                addUser(item, ke, con, cfg)
             elif ((re.search('!leave', item.body)) and (gameState == 0)):
-                removeUser(item, ke, con)
+                removeUser(item, ke, con, cfg)
             elif ((re.search('!vote', item.body)) and (gameState == 1)):
-                voteUser(item, ke, con, curCycle)
+                voteUser(item, ke, con, cfg, curCycle)
             elif ((re.search('!digup', item.body)) and (gameState == 1)):
-                digupUser(item, ke, con)
+                digupUser(item, ke, con, cfg)
             elif (re.search('!gamestate', item.body)):
-                gameState = gamestate(item, gameState)
+                gameState = gamestate(item, con, cfg)
             elif (re.search('!cycle', item.body)):
-                curCycle = cycle(item, curCycle)
+                curCycle = cycle(item, con, cfg, curCycle)
             elif (re.search('!RESET', item.body)):
-                reset(item, ke, db, con)
+                reset(item, ke, db, con, cfg)
             elif (re.search('!HAULT', item.body)):
-                hault(item, db, con)
+                hault(item, db, con, cfg)
             else:
-                item.reply("Invalid Command.\n\nNote: The game " + stateReply[gameState])
+                item.reply(cfg['reply']['err']['unkCmd'].format(stateReply[gameState]))
 
             item.mark_read()
 
     con.close()
     db.close()
 
-def gamestate(item, gameState):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s)"
+def gamestate(item, con, cfg):
     pattern = re.search("!gamestate\s([0-9]{1,1})", item.body)
     target = pattern.group(1)
 
     try:
         if (item.author.name != "goldenninjadragon"):
-            con.execute(log, (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: gameState"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: gameState"))
             con.execute("COMMIT;")
             return
         else:
-            con.execute(log, (item.created_utc, item.author.name, "Changed gameState to " + target))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Changed gameState to " + target))
             con.execute("COMMIT;")
 
-            item.reply("**gamestate changed to " + target + "**")
-            print("Moving to gamestate " + target)
+            item.reply("**gamestate changed to {}**".format(target))
+            print("Moving to gamestate {}".format(target))
 
             return int(target)
     except mysql.connector.Error as err:
@@ -95,91 +88,75 @@ def gamestate(item, gameState):
         con.close()
         os._exit(-1)
 
-def addUser(item, ke, con):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, 'Joined Game')"
-    inst = "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`"
-    roles = ['ASSASIN', 'HANDLER', 'OPERATIVE', 'ANALYST']
+def addUser(item, ke, con, cfg):
     random.seed(item.author.name)
     curPos = random.randint(0,3)
 
     try:
-        con.execute(log, (item.created_utc, item.author.name))
-        con.execute(inst, (item.created_utc, item.author.name, roles[curPos]))
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
+        con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos]))
         con.execute("COMMIT;")
 
-        item.author.message("The Twelve vs MI6", "Hello u/"
-        + item.author.name + " you have joined the game!"
-        + "\n\nYour role is: *" + roles[curPos]
-        + "*.\n\nSHHHH!!! Don't tell anyone!"
-        + "\n\nYou can leave the game by replying `!leave` to the game thread. **You cannot rejoin once the game has started!**")
+        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos]))
 
-        ke.flair.set(item.author, text="Mafia: Alive")
+        ke.flair.set(item.author, text=cfg['flairs']['alive'])
 
         curPos += 1
-        if (curPos >= len(roles)):
+        if (curPos >= len(cfg['roles'])):
             curPos = 0
-        print("  > " + item.author.name + " has joined")
+        print("  > {} has joined".format(item.author.name))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
 
-def removeUser(item, ke, con):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, 'Left Game');"
-    leave = "DELETE FROM Mafia WHERE `username`=%s"
-
+def removeUser(item, ke, con, cfg):
     try:
-        con.execute(log, (item.created_utc, item.author.name))
-        con.execute(leave, (item.author.name,))
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Left Game"))
+        con.execute(cfg['preStm']['leave'], (item.author.name,))
         con.execute("COMMIT;")
 
-        item.reply("You have left the game. You can rejoin before the game starts.")
+        item.reply(cfg['reply']['removeUser'])
         ke.flair.delete(item.author)
-        print("  > " + item.author.name + " has left")
+        print("  > {} has left".format(item.author.name))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
 
-def voteUser(item, ke, con, curCycle):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s);"
-    check = "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;"
-    vote = "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s"
+def voteUser(item, ke, con, cfg, curCycle):
     pattern = re.search("!vote\s([A-Za-z0-9_]{1,20})", item.body)
     target = ""
 
     if pattern:
         target = pattern.group(1)
         try:
-            con.execute(check, (item.author.name,))
+            con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
             r = con.fetchall()
 
             if (len(r) <= 0):
-                item.reply("You are a spectator. You cannot vote.")
+                item.reply(cfg['reply']['err']['spec'])
                 return
             elif ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
-                item.reply("You cannot vote in this role.")
+                item.reply(cfg['reply']['err']['role'])
                 return
             elif (((str(r[0][1]) == "ASSASIN") and (curCycle % 2 != 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 == 0))):
-                item.reply("You cannot vote at this time.")
+                item.reply(cfg['reply']['err']['cycle'])
                 return
 
-            con.execute(log, (item.created_utc, item.author.name, "Vote: " + target))
-            con.execute(vote, (item.author.name, target, target))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Vote: {}".format(target)))
+            con.execute(cfg['preStm']['voteUser'], (item.author.name, target, target))
             con.execute("COMMIT;")
-            item.reply("Your vote has been tallied. You can change your vote until the cycle ends.")
-            print("  > " + item.author.name + " has voted to kill " + target)
+            item.reply(cfg['reply']['voteUser'])
+            print("  > {} has voted to kill {}".format(item.author.name, target))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
             con.close()
             os._exit(-1)
     else:
-        item.reply("Invalid username. Do not include the `u/` prefix")
+        item.reply(cfg['reply']['err']['nmFmt'])
 
-def digupUser(item, ke, con):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s);"
-    check = "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;"
-    inv = "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s"
+def digupUser(item, ke, con, cfg):
     pattern = re.search("!digup\s([A-Za-z0-9_]{1,20})", item.body)
     target = ""
     cred = random.randint(1,75)
@@ -190,36 +167,26 @@ def digupUser(item, ke, con):
     "OPERATIVE": 2,
     "ANALYST": 3
     }
-    grammar = {
-    0: " an Assasin ",
-    1: " a Handler ",
-    2: " an Operative ",
-    3: " an Analyst "
-    }
-    alive = {
-    1: " alive.",
-    0: " deceased."
-    }
 
     if pattern:
         target = pattern.group(1)
         try:
-            con.execute(check, (item.author.name,))
+            con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
             r = con.fetchall()
 
             if (len(r) <= 0):
-                item.reply("You are a spectator. You cannot investigate.")
+                item.reply(cfg['reply']['err']['spec'])
                 return
             elif ((str(r[0][1]) == "ASSASIN") or (str(r[0][1]) == "OPERATIVE")):
-                item.reply("You cannot investigate in this role.")
+                item.reply(cfg['reply']['err']['role'])
                 return
 
-            con.execute(log, (item.created_utc, item.author.name, "Investigate: " + target))
-            con.execute(inv, (target,))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Investigate: {}".format(target)))
+            con.execute(cfg['preStm']['digupUser'], (target,))
             r = con.fetchall()
 
             if (len(r) <= 0):
-                item.reply("Cannot find user or user is not playing in the game.")
+                item.reply(cfg['reply']['err']['notFound'])
                 return
 
             con.execute("COMMIT;")
@@ -243,34 +210,30 @@ def digupUser(item, ke, con):
             else:
                 role = roles[r[0][0]]
 
-            item.reply("**Intelligence Report**\n\nu/"
-            + target + " is believed to be" + grammar[role]
-            + "and is currently" + alive[r[0][1]]
-            + "\n\n^(This information is believed to be " + str(cred) + "% credible.)")
-            print("  > " + item.author.name + " has investgated " + target)
+            item.reply(cfg['reply']['digupUser'].format(target, cfg['reply']['digupUserBody'][0][role], cfg['reply']['digupUserBody'][1][r[0][1]], str(cred)))
+            print("  > {} has investgated {}".format(item.author.name, target))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
             con.close()
             os._exit(-1)
     else:
-        item.reply("Invalid username. Do not include the `u/` prefix")
+        item.reply(cfg['reply']['err']['nmFmt'])
 
-def cycle(item, curCycle):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s)"
+def cycle(item, con, cfg, curCycle):
     pattern = re.search("!cycle", item.body)
     target = curCycle + 1
 
     try:
         if (item.author.name != "goldenninjadragon"):
-            con.execute(log, (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: cycle"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: cycle"))
             con.execute("COMMIT;")
             return
         else:
-            con.execute(log, (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
             con.execute("COMMIT;")
 
-            item.reply("**Moving to cycle " + str(target) + "**")
-            print("Moving to cycle " + str(target))
+            item.reply("**Moving to cycle {}**".format(str(target)))
+            print("Moving to cycle {}".format(str(target)))
 
             return target
     except mysql.connector.Error as err:
@@ -278,18 +241,16 @@ def cycle(item, curCycle):
         con.close()
         os._exit(-1)
 
-def reset(item, ke, db, con):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s)"
-
+def reset(item, ke, db, con, cfg):
     item.mark_read()
 
     try:
         if (item.author.name != "goldenninjadragon"):
-            con.execute(log, (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: reset"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: reset"))
             con.execute("COMMIT;")
             return
         else:
-            con.execute(log, (item.created_utc, item.author.name, "REMOTE RESET"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE RESET"))
             con.execute("SELECT `username` FROM Mafia")
             result = con.fetchall()
 
@@ -310,18 +271,16 @@ def reset(item, ke, db, con):
         os._exit(-1)
 
 
-def hault(item, db, con):
-    log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s)"
-
+def hault(item, db, con, cfg):
     item.mark_read()
 
     try:
         if (item.author.name != "goldenninjadragon"):
-            con.execute(log, (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: hault"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: hault"))
             con.execute("COMMIT;")
             return
         else:
-            con.execute(log, (item.created_utc, item.author.name, "REMOTE HAULT"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE HAULT"))
             con.execute("COMMIT;")
 
             item.reply("**Stopping Game**")
@@ -337,7 +296,7 @@ def exit_gracefully(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
 
     try:
-        if input("\nReally quit? (y/n)> ").lower().startswith('y'):
+        if input("\nDo you really want to quit? (y/n)> ").lower().startswith('y'):
             sys.exit(1)
     except KeyboardInterrupt:
         print("Ok ok, quitting")

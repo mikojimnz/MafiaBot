@@ -1,0 +1,68 @@
+{
+  "praw": "DozenIncBOT",
+  "sub": "SomethingsNotRight",
+  "sql": {
+    "user": "dummy",
+    "password": "1234",
+    "host": "127.0.0.1",
+    "port": "3306",
+    "database": "Reddit"
+  },
+  "flairs": {
+    "alive": "Mafia: Alive",
+    "dead": "Mafia: Killed"
+  },
+  "roles": [
+    [
+      "ASSASIN",
+      "HANDLER",
+      "OPERATIVE",
+      "ANALYST"
+    ],
+    {
+      "ASSASIN": "0",
+      "HANDLER": "1",
+      "OPERATIVE": "2",
+      "ANALYST": "3"
+    }
+  ],
+  "preStm": {
+    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;" ,
+    "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
+    "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
+    "leave": "DELETE FROM Mafia WHERE `username`=%s;",
+    "log":"INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
+    "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;",
+    "main": [
+      "SET SQL_SAFE_UPDATES = 0;",
+      "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', 'root', 'Game Initalized');"
+    ]
+  },
+  "reply": {
+    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone!\n\nYou can leave the game by replying *!leave* to the game thread. **You cannot rejoin once the game has started!**",
+    "digupUser": "**Intelligence Report**\n\nu/{} is believed to be {} and is currently {}\n\n^(This information is believed to be {}% credible.)",
+    "digupUserBody": [
+      [
+        "an Assasin",
+        "a Handler",
+        "an Operative",
+        "an Analyst"
+      ],
+      [
+        "deceased.",
+        "alive."
+      ]
+    ],
+    "msgTitle": "Mafia: The Twelve vs MI6",
+    "removeUser": "You have left the game. You can rejoin before the game starts.",
+    "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends.",
+    "err": {
+      "cycle": "You cannot vote at this time.",
+      "notFound": "Cannot find user or user is not playing in the game.",
+      "nmFmt": "Invalid username. Do not include the `u/` prefix",
+      "role": "You cannot use this command in this role.",
+      "spec": "You are a spectator. You cannot use this command.",
+      "unkCmd": "Invalid Command.\n\nNote: The game {}"
+    }
+  }
+}
