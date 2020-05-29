@@ -85,14 +85,15 @@ def gamestate(item, gameState):
         else:
             con.execute(log, (item.created_utc, item.author.name, "Changed gameState to " + target))
             con.execute("COMMIT;")
+
+            item.reply("**gamestate changed to " + target + "**")
+            print("Moving to gamestate " + target)
+
+            return int(target)
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
-    finally:
-        item.reply("**gamestate changed to " + target + "**")
-        print("Moving to gamestate " + target)
-        return int(target)
 
 def addUser(item, ke, con):
     log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, 'Joined Game')"
@@ -105,11 +106,7 @@ def addUser(item, ke, con):
         con.execute(log, (item.created_utc, item.author.name))
         con.execute(inst, (item.created_utc, item.author.name, roles[curPos]))
         con.execute("COMMIT;")
-    except mysql.connector.Error as err:
-        print("EXCEPTION {}".format(err))
-        con.close()
-        os._exit(-1)
-    finally:
+
         item.author.message("The Twelve vs MI6", "Hello u/"
         + item.author.name + " you have joined the game!"
         + "\n\nYour role is: *" + roles[curPos]
@@ -122,6 +119,10 @@ def addUser(item, ke, con):
         if (curPos >= len(roles)):
             curPos = 0
         print("  > " + item.author.name + " has joined")
+    except mysql.connector.Error as err:
+        print("EXCEPTION {}".format(err))
+        con.close()
+        os._exit(-1)
 
 def removeUser(item, ke, con):
     log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, 'Left Game');"
@@ -131,14 +132,14 @@ def removeUser(item, ke, con):
         con.execute(log, (item.created_utc, item.author.name))
         con.execute(leave, (item.author.name,))
         con.execute("COMMIT;")
+
+        item.reply("You have left the game. You can rejoin before the game starts.")
+        ke.flair.delete(item.author)
+        print("  > " + item.author.name + " has left")
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
-    finally:
-        item.reply("You have left the game. You can rejoin before the game starts.")
-        ke.flair.delete(item.author)
-        print("  > " + item.author.name + " has left")
 
 def voteUser(item, ke, con, curCycle):
     log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s);"
@@ -267,14 +268,15 @@ def cycle(item, curCycle):
         else:
             con.execute(log, (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
             con.execute("COMMIT;")
+
+            item.reply("**Moving to cycle " + str(target) + "**")
+            print("Moving to cycle " + str(target))
+
+            return target
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
-    finally:
-        item.reply("**Moving to cycle " + str(target) + "**")
-        print("Moving to cycle " + str(target))
-        return target
 
 def reset(item, ke, db, con):
     log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s)"
@@ -297,15 +299,16 @@ def reset(item, ke, db, con):
             con.execute("TRUNCATE TABLE Mafia;");
             con.execute("TRUNCATE TABLE VoteCall;");
             con.execute("COMMIT;")
+
+            item.reply("**Resetting Game**")
+            print("REMOTE RESET RECIEVED")
+            con.close()
+            os._exit(1)
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
-    finally:
-        item.reply("**Resetting Game**")
-        print("REMOTE RESET RECIEVED")
-        con.close()
-        os._exit(1)
+
 
 def hault(item, db, con):
     log = "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s)"
@@ -320,15 +323,15 @@ def hault(item, db, con):
         else:
             con.execute(log, (item.created_utc, item.author.name, "REMOTE HAULT"))
             con.execute("COMMIT;")
+
+            item.reply("**Stopping Game**")
+            print("REMOTE HAULT RECIEVED")
+            con.close()
+            os._exit(1)
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
-    finally:
-        item.reply("**Stopping Game**")
-        print("REMOTE HAULT RECIEVED")
-        con.close()
-        os._exit(1)
 
 def exit_gracefully(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
