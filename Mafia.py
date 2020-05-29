@@ -106,7 +106,7 @@ def addUser(item, ke, con, cfg, curPos):
         con.execute("COMMIT;")
 
         curPos += 1
-        if (curPos >= len(cfg['roles'])):
+        if (curPos >= len(cfg['roles'][0])):
             curPos = 0
         print("  > {} has joined".format(item.author.name))
         return curPos
