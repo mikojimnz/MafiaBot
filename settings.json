@@ -9,8 +9,8 @@
     "database": "Reddit"
   },
   "flairs": {
-    "alive": "Mafia: Alive",
-    "dead": "Mafia: Killed"
+    "alive": "Mafia: Alive - Round {}",
+    "dead": "Mafia: {} on Rouud {}"
   },
   "roles": [
     [
@@ -26,6 +26,37 @@
       "ANALYST": "3"
     }
   ],
+  "deathMsg": [
+    "Stabbed in the heart",
+    "Stabbed in the eye",
+    "Killed by blunt force trauma",
+    "Poisoned",
+    "Electrocuted",
+    "Strangled by a hose",
+    "Neck snapped while wearing PJs",
+    "Strung upside down and slit open",
+    "Suffocated by perfume",
+    "Stabbed by a pitchfork through the neck",
+    "Runover while reversing",
+    "Choked by an elevator",
+    "Fell off a building",
+    "Burnt while sleeping",
+    "Clubbed on the head",
+    "Killed by bad tuning",
+    "Suffocated by powder",
+    "Drowned",
+    "Castrated",
+    "Chocked to death with a toilet brush",
+    "Had a mysterious heart attack",
+    "Axed in the back",
+    "Throat slit",
+    "Killed by tiny chair",
+    "Runover by bus",
+    "Paralysed by neurotoxin",
+    "Chopped and boiled down",
+    "Fed to the pigs",
+    "Chopped and blended"
+  ],
   "preStm": {
     "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;" ,
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
@@ -33,6 +64,13 @@
     "leave": "DELETE FROM Mafia WHERE `username`=%s;",
     "log":"INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;",
+    "cycle": [
+      "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= 5)",
+      "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive;",
+      "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
+      "SELECT vote,count(*) AS cnt FROM VoteCall GROUP BY vote HAVING cnt >= 5 ORDER BY cnt DESC;",
+      "SELECT username FROM Mafia WHERE `alive`='1';"
+    ],
     "main": [
       "SET SQL_SAFE_UPDATES = 0;",
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', 'root', 'Game Initalized');"
@@ -40,6 +78,10 @@
   },
   "reply": {
     "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone!\n\nYou can leave the game by replying *!leave* to the game thread. **You cannot rejoin once the game has started!**",
+    "cycle": [
+      "**You Were Killed!**\n\nYou were {} on round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
+      "**You survived another round!**\n\nNow playing round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!"
+    ],
     "digupUser": "**Intelligence Report**\n\nu/{} is believed to be {} and is currently {}\n\n^(This information is believed to be {}% credible.)",
     "digupUserBody": [
       [
@@ -53,12 +95,15 @@
         "alive."
       ]
     ],
+    "getSts": "Current Stats:\n\nGame is {} on round {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
+    "showHelp": "List of available commands:\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game. You cannot rejoin once the game has started\n* !leave: Leave the game.\n* !rules: Shows the rules.\n* !stats\n* !vote USERNAME: Vote on which user to be eliminated. For Assasins and Handlers only.",
+    "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful.\n2. You must investigate each other to determine who is on what side.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve.\n4. During the Night, The Twelve can investigate and kill users who they suspect are in MI6.\n5. A user must receive at least 3 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion.\n6. At the end of each cycle, an announcement will be made how many people are alive how many were killed.\n7. You must choose your allies carefully to seek out the enemy.",
     "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends.",
     "err": {
       "cycle": "You cannot vote at this time.",
-      "notFound": "Cannot find user or user is not playing in the game.",
+      "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
       "role": "You cannot use this command in this role.",
       "spec": "You are a spectator. You cannot use this command.",

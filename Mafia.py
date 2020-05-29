@@ -14,6 +14,7 @@ import sys
 from mysql.connector import errorcode
 from mysql.connector.cursor import MySQLCursorPrepared
 from random import randrange
+from time import sleep
 
 def main():
     with open("settings.json") as jsonfile:
@@ -30,8 +31,9 @@ def main():
     con.execute("SHOW PROCESSLIST")
     conStat = con.fetchall()
 
-    gameState = 0
+    state = 0
     curCycle = 0
+    curPos = 0
     stateReply = ["has not yet started.", "has already started."]
 
     print("Connected as {}".format(str(reddit.user.me())))
@@ -42,31 +44,37 @@ def main():
 
     while True:
         for item in reddit.inbox.stream():
-            if ((re.search('!join', item.body)) and (gameState == 0)):
-                addUser(item, ke, con, cfg)
-            elif ((re.search('!leave', item.body)) and (gameState == 0)):
+            if ((re.search('!join', item.body)) and (state == 0)):
+                curPos = addUser(item, ke, con, cfg, curPos)
+            elif (re.search('!leave', item.body)):
                 removeUser(item, ke, con, cfg)
-            elif ((re.search('!vote', item.body)) and (gameState == 1)):
+            elif ((re.search('!vote', item.body)) and (state == 1)):
                 voteUser(item, ke, con, cfg, curCycle)
-            elif ((re.search('!digup', item.body)) and (gameState == 1)):
+            elif ((re.search('!digup', item.body)) and (state == 1)):
                 digupUser(item, ke, con, cfg)
+            elif ((re.search('!stats', item.body)) and (state == 1)):
+                getStats(item, con, cfg, state, curCycle)
+            elif (re.search('!help', item.body)):
+                showHelp(item, cfg)
+            elif (re.search('!rules', item.body)):
+                showRules(item, cfg)
             elif (re.search('!gamestate', item.body)):
-                gameState = gamestate(item, con, cfg)
-            elif (re.search('!cycle', item.body)):
-                curCycle = cycle(item, con, cfg, curCycle)
+                state = gameState(item, con, cfg)
+            elif ((re.search('!cycle', item.body)) and (state == 1)):
+                curCycle = cycle(item, reddit, ke, con, cfg, curCycle)
             elif (re.search('!RESET', item.body)):
                 reset(item, ke, db, con, cfg)
             elif (re.search('!HAULT', item.body)):
                 hault(item, db, con, cfg)
             else:
-                item.reply(cfg['reply']['err']['unkCmd'].format(stateReply[gameState]))
+                item.reply(cfg['reply']['err']['unkCmd'].format(stateReply[state]))
 
             item.mark_read()
 
     con.close()
     db.close()
 
-def gamestate(item, con, cfg):
+def gameState(item, con, cfg):
     pattern = re.search("!gamestate\s([0-9]{1,1})", item.body)
     target = pattern.group(1)
 
@@ -88,23 +96,20 @@ def gamestate(item, con, cfg):
         con.close()
         os._exit(-1)
 
-def addUser(item, ke, con, cfg):
-    random.seed(item.author.name)
-    curPos = random.randint(0,3)
-
+def addUser(item, ke, con, cfg, curPos):
     try:
+        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos]))
+        ke.flair.set(item.author, text=cfg['flairs']['alive'].format(0))
+
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
         con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos]))
         con.execute("COMMIT;")
-
-        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos]))
-
-        ke.flair.set(item.author, text=cfg['flairs']['alive'])
 
         curPos += 1
         if (curPos >= len(cfg['roles'])):
             curPos = 0
         print("  > {} has joined".format(item.author.name))
+        return curPos
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -226,9 +231,52 @@ def digupUser(item, ke, con, cfg):
     else:
         item.reply(cfg['reply']['err']['nmFmt'])
 
-def cycle(item, con, cfg, curCycle):
+def getStats(item, con, cfg, state, curCycle):
+    target = curCycle + 1
+    alive = -1
+    killed = -1
+    good = -1
+    bad = -1
+    stateReply = ["is not active", "is active", "is over"]
+
+    try:
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Get Stats"))
+        con.execute(cfg['preStm']['cycle'][1])
+        result = con.fetchall()
+
+        if (len(result) == 2):
+            alive = result[1][1]
+            killed = result[0][1]
+
+        con.execute(cfg['preStm']['cycle'][2])
+        result = con.fetchall()
+
+        if (len(result) == 4):
+            good += result[0][1] + result[3][1]
+            bad += result[1][1] + result[2][1]
+
+        con.execute("COMMIT;")
+        item.reply(cfg['reply']['getSts'].format(stateReply[state], target, alive, good, bad, killed, alive + killed))
+    except mysql.connector.Error as err:
+        print("EXCEPTION {}".format(err))
+        con.close()
+        os._exit(-1)
+
+def showHelp(item, cfg):
+    item.reply(cfg['reply']['showHelp'])
+
+def showRules(item, cfg):
+    item.reply(cfg['reply']['showRules'])
+
+def cycle(item, reddit, ke, con, cfg, curCycle):
     pattern = re.search("!cycle", item.body)
     target = curCycle + 1
+    alive = -1
+    killed = -1
+    good = -1
+    bad = -1
+
+    random.seed(time.time())
 
     try:
         if (item.author.name != "goldenninjadragon"):
@@ -237,10 +285,51 @@ def cycle(item, con, cfg, curCycle):
             return
         else:
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
-            con.execute("COMMIT;")
+            con.execute(cfg['preStm']['cycle'][0])
+            con.execute(cfg['preStm']['cycle'][1])
+            result = con.fetchall()
 
+            if (len(result) == 2):
+                alive = result[1][1]
+                killed = result[0][1]
+
+            print("\nAlive: {} | Killed {}".format(alive,killed))
+
+            con.execute(cfg['preStm']['cycle'][2])
+            result = con.fetchall()
+
+            if (len(result) == 4):
+                good += result[0][1] + result[3][1]
+                bad += result[1][1] + result[2][1]
+
+            for row in result:
+                print("{} {} still alive".format(row[1], row[0]))
+
+            print("MI6 remaining: {}".format(good))
+            print("The Twelve remaining: {}".format(bad))
+
+            con.execute(cfg['preStm']['cycle'][3])
+            result = con.fetchall()
+
+            for row in result:
+                n = random.randint(0,len(cfg['deathMsg']) - 1)
+                flair = cfg['flairs']['dead'].format(cfg['deathMsg'][n],target)
+                ke.flair.set(reddit.redditor(row[0]), text=flair)
+                reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(lower(cfg['deathMsg'][n]),target,alive,killed,good,bad))
+                sleep(0.1)
+
+            con.execute(cfg['preStm']['cycle'][4])
+            result = con.fetchall()
+
+            for row in result:
+                flair = cfg['flairs']['alive'].format(target)
+                ke.flair.set(reddit.redditor(row[0]), text=flair)
+                sleep(0.1)
+
+            con.execute("TRUNCATE TABLE VoteCall");
+            con.execute("COMMIT;")
             item.reply("**Moved to cycle {}**".format(str(target)))
-            print("Moved to cycle {}".format(str(target)))
+            print("Moved to cycle {}\n".format(str(target)))
 
             return target
     except mysql.connector.Error as err:
