@@ -144,6 +144,13 @@ def voteUser(item, ke, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['cycle'])
                 return
 
+            con.execute(cfg['preStm']['digupUser'], (target,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['notFound'])
+                return
+
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Vote: {}".format(target)))
             con.execute(cfg['preStm']['voteUser'], (item.author.name, target, target))
             con.execute("COMMIT;")
@@ -159,6 +166,7 @@ def voteUser(item, ke, con, cfg, curCycle):
 def digupUser(item, ke, con, cfg):
     pattern = re.search("!digup\s([A-Za-z0-9_]{1,20})", item.body)
     target = ""
+    random.seed(time.time())
     cred = random.randint(1,75)
     role = 0
     roles = {
@@ -190,7 +198,6 @@ def digupUser(item, ke, con, cfg):
                 return
 
             con.execute("COMMIT;")
-            random.seed(time.time())
 
             if ((cred >= 1) and (cred < 25)):
                 if (random.randint(0,7) == 0):
@@ -232,8 +239,8 @@ def cycle(item, con, cfg, curCycle):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
             con.execute("COMMIT;")
 
-            item.reply("**Moving to cycle {}**".format(str(target)))
-            print("Moving to cycle {}".format(str(target)))
+            item.reply("**Moved to cycle {}**".format(str(target)))
+            print("Moved to cycle {}".format(str(target)))
 
             return target
     except mysql.connector.Error as err:
