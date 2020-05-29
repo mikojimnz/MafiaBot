@@ -145,7 +145,7 @@ def voteUser(item, ke, con, cfg, curCycle):
             elif ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
                 item.reply(cfg['reply']['err']['role'])
                 return
-            elif (((str(r[0][1]) == "ASSASIN") and (curCycle % 2 != 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 == 0))):
+            elif (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 != 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 == 0))):
                 item.reply(cfg['reply']['err']['cycle'])
                 return
 
@@ -175,7 +175,7 @@ def digupUser(item, ke, con, cfg):
     cred = random.randint(1,75)
     role = 0
     roles = {
-    "ASSASIN": 0,
+    "ASSASSIN": 0,
     "HANDLER": 1,
     "OPERATIVE": 2,
     "ANALYST": 3
@@ -190,7 +190,7 @@ def digupUser(item, ke, con, cfg):
             if (len(r) <= 0):
                 item.reply(cfg['reply']['err']['spec'])
                 return
-            elif ((str(r[0][1]) == "ASSASIN") or (str(r[0][1]) == "OPERATIVE")):
+            elif ((str(r[0][1]) == "ASSASSIN") or (str(r[0][1]) == "OPERATIVE")):
                 item.reply(cfg['reply']['err']['role'])
                 return
 
