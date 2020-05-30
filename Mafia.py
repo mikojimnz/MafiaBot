@@ -98,9 +98,9 @@ def gameState(item, reddit, con, cfg):
             for row in result:
                 if ((target == "0") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has paused!", cfg['reply']['gamePause'])
-                elif ((target == "0") and (silent == None)):
+                elif ((target == "1") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format(cfg['sub'], cfg['targetPost']))
-                elif ((target == "0") and (silent == None)):
+                elif ((target == "2") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
                 sleep(0.1)
 
@@ -116,7 +116,6 @@ def gameState(item, reddit, con, cfg):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'])
                 comment.mod.approve()
                 comment.mod.distinguish(how='yes', sticky=True)
-
 
             con.execute("COMMIT;")
             item.reply("**gamestate changed to {}**".format(target))
@@ -333,13 +332,13 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             return
         else:
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
-            con.execute(cfg['preStm']['cycle'][0])
+            con.execute(cfg['preStm']['cycle'][0], (cfg['voteThreshold'],))
             con.execute(cfg['preStm']['cycle'][1])
             result = con.fetchall()
 
             if (len(result) == 2):
-                alive = result[1][1]
-                killed = result[0][1] - 1
+                alive = result[0][1]
+                killed = result[1][1] - 1
 
             print("\nAlive: {} | Killed {}".format(alive,killed))
 
@@ -356,7 +355,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             print("MI6 remaining: {}".format(good))
             print("The Twelve remaining: {}".format(bad))
 
-            con.execute(cfg['preStm']['cycle'][3].format(cfg['voteThreshold']))
+            con.execute(cfg['preStm']['cycle'][3], (cfg['voteThreshold'],))
             result = con.fetchall()
 
             for row in result:

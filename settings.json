@@ -72,8 +72,8 @@
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;",
     "getAll": "SELECT username FROM Mafia;",
     "cycle": [
-      "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= 5)",
-      "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive;",
+      "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
+      "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "SELECT username FROM Mafia WHERE `alive`='1';"
@@ -121,7 +121,7 @@
     }
   },
   "sticky": {
-    "cycle":"It is now **{}** on round {}.\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
+    "cycle":"It is now **{}** on day {}.\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
     "end": "The game has ended! Thanks for playing!\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
     "hault": "`Warning: HAULT command recieved. Stopping processes.`\n`Info: inbox.stream() listern closed (1)`\n`Info: Database connection closed (1)`",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
