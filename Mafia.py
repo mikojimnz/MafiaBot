@@ -2,6 +2,7 @@
 
 import json
 import os
+import math
 import mysql.connector
 import mysql.connector.pooling
 import praw
@@ -21,7 +22,7 @@ def main():
         cfg = json.load(jsonfile)
 
     reddit = praw.Reddit(cfg['praw'])
-    ke = reddit.subreddit(cfg['sub'])
+    sub = reddit.subreddit(cfg['sub'])
     db = mysql.connector.pooling.MySQLConnectionPool(pool_name=None, raise_on_warnings=True, connection_timeout=3600, **cfg['sql'])
     pool = db.get_connection()
     con = pool.cursor(prepared=True)
@@ -45,13 +46,13 @@ def main():
     while True:
         for item in reddit.inbox.stream():
             if ((re.search('!join', item.body)) and (state == 0)):
-                curPos = addUser(item, ke, con, cfg, curPos)
+                curPos = addUser(item, sub, con, cfg, curPos)
             elif (re.search('!leave', item.body)):
-                removeUser(item, ke, con, cfg)
+                removeUser(item, sub, con, cfg)
             elif ((re.search('!vote', item.body)) and (state == 1)):
-                voteUser(item, ke, con, cfg, curCycle)
+                voteUser(item, sub, con, cfg, curCycle)
             elif ((re.search('!digup', item.body)) and (state == 1)):
-                digupUser(item, ke, con, cfg)
+                digupUser(item, sub, con, cfg)
             elif ((re.search('!stats', item.body)) and (state == 1)):
                 getStats(item, con, cfg, state, curCycle)
             elif (re.search('!help', item.body)):
@@ -61,11 +62,11 @@ def main():
             elif (re.search('!gamestate', item.body)):
                 state = gameState(item, reddit, con, cfg)
             elif ((re.search('!cycle', item.body)) and (state == 1)):
-                curCycle = cycle(item, reddit, ke, con, cfg, curCycle)
+                curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
             elif (re.search('!ANNOUNCEMENT', item.body)):
                 announce(item, reddit, con, cfg)
             elif (re.search('!RESET', item.body)):
-                reset(item, ke, db, con, cfg)
+                reset(item, sub, db, con, cfg)
             elif (re.search('!HAULT', item.body)):
                 hault(item, db, con, cfg)
             else:
@@ -126,10 +127,10 @@ def gameState(item, reddit, con, cfg):
         con.close()
         os._exit(-1)
 
-def addUser(item, ke, con, cfg, curPos):
+def addUser(item, sub, con, cfg, curPos):
     try:
         item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], cfg['sub'], cfg['targetPost']))
-        ke.flair.set(item.author, text=cfg['flairs']['alive'].format(0), flair_template_id=cfg['flairID']['alive'])
+        sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
         con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos]))
@@ -145,21 +146,21 @@ def addUser(item, ke, con, cfg, curPos):
         con.close()
         os._exit(-1)
 
-def removeUser(item, ke, con, cfg):
+def removeUser(item, sub, con, cfg):
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Left Game"))
         con.execute(cfg['preStm']['leave'], (item.author.name,))
         con.execute("COMMIT;")
 
         item.reply(cfg['reply']['removeUser'])
-        ke.flair.delete(item.author)
+        sub.flair.delete(item.author)
         print("  > {} has left".format(item.author.name))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
 
-def voteUser(item, ke, con, cfg, curCycle):
+def voteUser(item, sub, con, cfg, curCycle):
     pattern = re.search("!vote\s([A-Za-z0-9_]{1,20})", item.body)
     target = ""
 
@@ -198,7 +199,7 @@ def voteUser(item, ke, con, cfg, curCycle):
     else:
         item.reply(cfg['reply']['err']['nmFmt'])
 
-def digupUser(item, ke, con, cfg):
+def digupUser(item, sub, con, cfg):
     pattern = re.search("!digup\s([A-Za-z0-9_]{1,20})", item.body)
     target = ""
     random.seed(time.time())
@@ -263,6 +264,7 @@ def digupUser(item, ke, con, cfg):
 
 def getStats(item, con, cfg, state, curCycle):
     target = curCycle + 1
+    day = int(math.ceil(target/2))
     role = ""
     user = 0
     alive = -1
@@ -297,7 +299,7 @@ def getStats(item, con, cfg, state, curCycle):
             bad += result[1][1] + result[2][1] + 1
 
         con.execute("COMMIT;")
-        item.reply(cfg['reply']['getSts'].format(stateReply[state], target, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
+        item.reply(cfg['reply']['getSts'].format(stateReply[state], day, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -309,13 +311,18 @@ def showHelp(item, cfg):
 def showRules(item, cfg):
     item.reply(cfg['reply']['showRules'])
 
-def cycle(item, reddit, ke, con, cfg, curCycle):
+def cycle(item, reddit, sub, con, cfg, curCycle):
     pattern = re.search("!cycle", item.body)
     target = curCycle + 1
+    day = int(math.ceil(target/2))
     alive = -1
     killed = -1
     good = -1
     bad = -1
+    mode = {
+    0: "Night",
+    1: "Day"
+    }
 
     random.seed(time.time())
 
@@ -332,7 +339,7 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
 
             if (len(result) == 2):
                 alive = result[1][1]
-                killed = result[0][1]
+                killed = result[0][1] - 1
 
             print("\nAlive: {} | Killed {}".format(alive,killed))
 
@@ -340,8 +347,8 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
             result = con.fetchall()
 
             if (len(result) == 4):
-                good += result[0][1] + result[3][1]
-                bad += result[1][1] + result[2][1]
+                good += result[0][1] + result[3][1] + 1
+                bad += result[1][1] + result[2][1] + 1
 
             for row in result:
                 print("{} {} still alive".format(row[1], row[0]))
@@ -349,21 +356,25 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
             print("MI6 remaining: {}".format(good))
             print("The Twelve remaining: {}".format(bad))
 
-            con.execute(cfg['preStm']['cycle'][3])
+            con.execute(cfg['preStm']['cycle'][3].format(cfg['voteThreshold']))
             result = con.fetchall()
 
             for row in result:
                 n = random.randint(0,len(cfg['deathMsg']) - 1)
-                ke.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],target), flair_template_id=cfg['flairID']['dead'])
-                reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n],target,alive,killed,good,bad))
+                sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
+                reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, alive, good, bad, killed, alive + killed))
                 sleep(0.1)
 
             con.execute(cfg['preStm']['cycle'][4])
             result = con.fetchall()
 
             for row in result:
-                ke.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(target), flair_template_id=cfg['flairID']['alive'])
+                sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
                 sleep(0.1)
+
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
+            comment.mod.approve()
+            comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute("TRUNCATE TABLE VoteCall");
             con.execute("COMMIT;")
@@ -400,7 +411,7 @@ def announce(item, reddit, con, cfg):
         con.close()
         os._exit(-1)
 
-def reset(item, ke, db, con, cfg):
+def reset(item, reddit, sub, db, con, cfg):
     item.mark_read()
 
     try:
@@ -414,11 +425,15 @@ def reset(item, ke, db, con, cfg):
             result = con.fetchall()
 
             for row in result:
-                ke.flair.delete(row[0])
+                sub.flair.delete(row[0])
 
             con.execute("TRUNCATE TABLE Mafia;");
             con.execute("TRUNCATE TABLE VoteCall;");
             con.execute("COMMIT;")
+
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['reset'])
+            comment.mod.approve()
+            comment.mod.distinguish(how='yes', sticky=True)
 
             item.reply("**Resetting Game**")
             print("REMOTE RESET RECIEVED")
@@ -430,7 +445,7 @@ def reset(item, ke, db, con, cfg):
         os._exit(-1)
 
 
-def hault(item, db, con, cfg):
+def hault(item, reddit, db, con, cfg):
     item.mark_read()
 
     try:
@@ -441,6 +456,10 @@ def hault(item, db, con, cfg):
         else:
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE HAULT"))
             con.execute("COMMIT;")
+
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['hault'])
+            comment.mod.approve()
+            comment.mod.distinguish(how='yes', sticky=True)
 
             item.reply("**Stopping Game**")
             print("REMOTE HAULT RECIEVED")
