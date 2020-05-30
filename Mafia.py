@@ -129,7 +129,7 @@ def gameState(item, reddit, con, cfg):
 def addUser(item, ke, con, cfg, curPos):
     try:
         item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], cfg['sub'], cfg['targetPost']))
-        ke.flair.set(item.author, text=cfg['flairs']['alive'].format(0))
+        ke.flair.set(item.author, text=cfg['flairs']['alive'].format(0), flair_template_id=cfg['flairID']['alive'])
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
         con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos]))
@@ -354,8 +354,7 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
 
             for row in result:
                 n = random.randint(0,len(cfg['deathMsg']) - 1)
-                flair = cfg['flairs']['dead'].format(cfg['deathMsg'][n],target)
-                ke.flair.set(reddit.redditor(row[0]), text=flair)
+                ke.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],target), flair_template_id=cfg['flairID']['dead'])
                 reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n],target,alive,killed,good,bad))
                 sleep(0.1)
 
@@ -363,8 +362,7 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
             result = con.fetchall()
 
             for row in result:
-                flair = cfg['flairs']['alive'].format(target)
-                ke.flair.set(reddit.redditor(row[0]), text=flair)
+                ke.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(target), flair_template_id=cfg['flairID']['alive'])
                 sleep(0.1)
 
             con.execute("TRUNCATE TABLE VoteCall");

@@ -11,7 +11,11 @@
   },
   "flairs": {
     "alive": "Mafia: Alive - Round {}",
-    "dead": "Mafia: {} on Rouud {}"
+    "dead": "{}: {} on Rouud {}"
+  },
+  "flairID": {
+    "alive": "5958a89e-a22d-11ea-b2dd-0e21fdae0ecf",
+    "dead": "6b25177e-a22d-11ea-8cab-0e345a8c674b"
   },
   "roles": [
     [
@@ -70,7 +74,7 @@
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= 5)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive;",
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
-      "SELECT vote,count(*) AS cnt FROM VoteCall GROUP BY vote HAVING cnt >= 5 ORDER BY cnt DESC;",
+      "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= 5 ORDER BY cnt DESC;",
       "SELECT username FROM Mafia WHERE `alive`='1';"
     ],
     "main": [
