@@ -129,17 +129,17 @@ def gameState(item, reddit, con, cfg):
 
 def addUser(item, sub, con, cfg, curPos):
     try:
+        if (curPos >= len(cfg['roles'][0])):
+            curPos = 0
+
         item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], cfg['sub'], cfg['targetPost']))
         sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
         con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos]))
         con.execute("COMMIT;")
-
-        curPos += 1
-        if (curPos > len(cfg['roles'][0])):
-            curPos = 0
         print("  > {} has joined".format(item.author.name))
+        curPos += 1
         return curPos
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
