@@ -77,8 +77,9 @@ def main():
     db.close()
 
 def gameState(item, reddit, con, cfg):
-    pattern = re.search("!gamestate\s([0-9]{1,1})", item.body)
+    pattern = re.search("!gamestate\s([0-9]{1,1})(\s-s)?", item.body)
     target = pattern.group(1)
+    silent = pattern.group(2)
     players = 0
     commen = None
 
@@ -94,23 +95,27 @@ def gameState(item, reddit, con, cfg):
             players = len(result)
 
             for row in result:
-                if (target == "0"):
+                if ((target == "0") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has paused!", cfg['reply']['gamePause'])
-                elif (target == "1"):
+                elif ((target == "0") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format(cfg['sub'], cfg['targetPost']))
-                elif (target == "2"):
+                elif ((target == "0") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
                 sleep(0.1)
 
-            if (target == "0"):
+            if ((target == "0") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['pause'])
-            elif (target == "1"):
+                comment.mod.approve()
+                comment.mod.distinguish(how='yes', sticky=True)
+            elif ((target == "1") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['start'].format(players))
-            elif (target == "2"):
+                comment.mod.approve()
+                comment.mod.distinguish(how='yes', sticky=True)
+            elif ((target == "2") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'])
+                comment.mod.approve()
+                comment.mod.distinguish(how='yes', sticky=True)
 
-            comment.mod.approve()
-            comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute("COMMIT;")
             item.reply("**gamestate changed to {}**".format(target))
@@ -374,7 +379,7 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
         os._exit(-1)
 
 def announce(item, reddit, con, cfg):
-    pattern = re.search("!ANNOUNCEMENT\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\\;',./]+)", item.body)
+    pattern = re.search("!ANNOUNCEMENT\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\;\',./’]+)", item.body)
     target = pattern.group(1)
 
     try:
