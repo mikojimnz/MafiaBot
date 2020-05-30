@@ -97,7 +97,7 @@ def gameState(item, reddit, con, cfg):
                 if (target == "0"):
                     reddit.redditor(row[0]).message("The game has paused!", cfg['reply']['gamePause'])
                 elif (target == "1"):
-                    reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format{cfg['sub'], cfg['targetPost']})
+                    reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format(cfg['sub'], cfg['targetPost']))
                 elif (target == "2"):
                     reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
                 sleep(0.1)

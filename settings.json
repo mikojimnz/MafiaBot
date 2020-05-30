@@ -78,7 +78,7 @@
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', 'root', 'Game Initalized');"
     ]
   },
-  "reply": s{
+  "reply": {
     "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know your playing.](https://reddit.com/r/{}/comments{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
