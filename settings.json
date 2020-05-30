@@ -1,4 +1,5 @@
 {
+  "targetPost":"gt1rvh",
   "praw": "DozenIncBOT",
   "sub": "SomethingsNotRight",
   "sql": {
@@ -64,6 +65,7 @@
     "leave": "DELETE FROM Mafia WHERE `username`=%s;",
     "log":"INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;",
+    "getAll": "SELECT username FROM Mafia;",
     "cycle": [
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= 5)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive;",
@@ -76,8 +78,8 @@
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', 'root', 'Game Initalized');"
     ]
   },
-  "reply": {
-    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone!\n\nYou can leave the game by replying *!leave* to the game thread. **You cannot rejoin once the game has started!**",
+  "reply": s{
+    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know your playing.](https://reddit.com/r/{}/comments{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another round!**\n\nNow playing round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!"
@@ -95,7 +97,10 @@
         "alive."
       ]
     ],
-    "getSts": "Current Stats:\n\nGame is {} on round {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n",
+    "gameEnd": "The game has ended.\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
+    "gamePause": "The game has been paused.\n\nPlease check the game thread more info.",
+    "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments{}",
+    "getSts": "Current Stats:\n\nGame is {} on round {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "showHelp": "List of available commands:\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game. You cannot rejoin once the game has started\n* !leave: Leave the game.\n* !rules: Shows the rules.\n* !stats\n* !vote USERNAME: Vote on which user to be eliminated. For Assassins and Handlers only.",
@@ -109,5 +114,10 @@
       "spec": "You are a spectator. You cannot use this command.",
       "unkCmd": "Invalid Command.\n\nNote: The game {}"
     }
+  },
+  "sticky": {
+    "end": "The game has ended!",
+    "pause": "The game is not active.\n\nUsers can !join or !leave.",
+    "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   }
 }

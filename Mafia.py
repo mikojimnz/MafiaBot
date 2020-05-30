@@ -59,9 +59,11 @@ def main():
             elif (re.search('!rules', item.body)):
                 showRules(item, cfg)
             elif (re.search('!gamestate', item.body)):
-                state = gameState(item, con, cfg)
+                state = gameState(item, reddit, con, cfg)
             elif ((re.search('!cycle', item.body)) and (state == 1)):
                 curCycle = cycle(item, reddit, ke, con, cfg, curCycle)
+            elif (re.search('!ANNOUNCEMENT', item.body)):
+                announce(item, reddit, con, cfg)
             elif (re.search('!RESET', item.body)):
                 reset(item, ke, db, con, cfg)
             elif (re.search('!HAULT', item.body)):
@@ -74,9 +76,11 @@ def main():
     con.close()
     db.close()
 
-def gameState(item, con, cfg):
+def gameState(item, reddit, con, cfg):
     pattern = re.search("!gamestate\s([0-9]{1,1})", item.body)
     target = pattern.group(1)
+    players = 0
+    commen = None
 
     try:
         if (item.author.name != "goldenninjadragon"):
@@ -85,11 +89,32 @@ def gameState(item, con, cfg):
             return
         else:
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Changed gameState to " + target))
-            con.execute("COMMIT;")
+            con.execute(cfg['preStm']['getAll'])
+            result = con.fetchall()
+            players = len(result)
 
+            for row in result:
+                if (target == "0"):
+                    reddit.redditor(row[0]).message("The game has paused!", cfg['reply']['gamePause'])
+                elif (target == "1"):
+                    reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format{cfg['sub'], cfg['targetPost']})
+                elif (target == "2"):
+                    reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
+                sleep(0.1)
+
+            if (target == "0"):
+                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['pause'])
+            elif (target == "1"):
+                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['start'].format(players))
+            elif (target == "2"):
+                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'])
+
+            comment.mod.approve()
+            comment.mod.distinguish(how='yes', sticky=True)
+
+            con.execute("COMMIT;")
             item.reply("**gamestate changed to {}**".format(target))
             print("Moving to gamestate {}".format(target))
-
             return int(target)
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
@@ -98,7 +123,7 @@ def gameState(item, con, cfg):
 
 def addUser(item, ke, con, cfg, curPos):
     try:
-        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos]))
+        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], cfg['sub'], cfg['targetPost']))
         ke.flair.set(item.author, text=cfg['flairs']['alive'].format(0))
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
@@ -106,7 +131,7 @@ def addUser(item, ke, con, cfg, curPos):
         con.execute("COMMIT;")
 
         curPos += 1
-        if (curPos >= len(cfg['roles'][0])):
+        if (curPos > len(cfg['roles'][0])):
             curPos = 0
         print("  > {} has joined".format(item.author.name))
         return curPos
@@ -233,30 +258,41 @@ def digupUser(item, ke, con, cfg):
 
 def getStats(item, con, cfg, state, curCycle):
     target = curCycle + 1
+    role = ""
+    user = 0
     alive = -1
     killed = -1
     good = -1
     bad = -1
-    stateReply = ["is not active", "is active", "is over"]
+    stateReply = ["not active", "active", "over"]
 
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Get Stats"))
+        con.execute(cfg['preStm']['digupUser'], (item.author.name,))
+        result = con.fetchall()
+
+        if (len(result) == 1):
+            role = result[0][0]
+            user = result[0][1]
+        else:
+            role = "spectator"
+
         con.execute(cfg['preStm']['cycle'][1])
         result = con.fetchall()
 
-        if (len(result) == 2):
-            alive = result[1][1]
-            killed = result[0][1]
+        if (len(result[0]) == 2):
+            alive = result[0][1]
+            killed = result[0][0] - 1
 
         con.execute(cfg['preStm']['cycle'][2])
         result = con.fetchall()
 
         if (len(result) == 4):
-            good += result[0][1] + result[3][1]
-            bad += result[1][1] + result[2][1]
+            good += result[0][1] + result[3][1] + 1
+            bad += result[1][1] + result[2][1] + 1
 
         con.execute("COMMIT;")
-        item.reply(cfg['reply']['getSts'].format(stateReply[state], target, alive, good, bad, killed, alive + killed))
+        item.reply(cfg['reply']['getSts'].format(stateReply[state], target, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -315,7 +351,7 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
                 n = random.randint(0,len(cfg['deathMsg']) - 1)
                 flair = cfg['flairs']['dead'].format(cfg['deathMsg'][n],target)
                 ke.flair.set(reddit.redditor(row[0]), text=flair)
-                reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(lower(cfg['deathMsg'][n]),target,alive,killed,good,bad))
+                reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n],target,alive,killed,good,bad))
                 sleep(0.1)
 
             con.execute(cfg['preStm']['cycle'][4])
@@ -332,6 +368,30 @@ def cycle(item, reddit, ke, con, cfg, curCycle):
             print("Moved to cycle {}\n".format(str(target)))
 
             return target
+    except mysql.connector.Error as err:
+        print("EXCEPTION {}".format(err))
+        con.close()
+        os._exit(-1)
+
+def announce(item, reddit, con, cfg):
+    pattern = re.search("!ANNOUNCEMENT\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\\;',./]+)", item.body)
+    target = pattern.group(1)
+
+    try:
+        if (item.author.name != "goldenninjadragon"):
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: announce"))
+            con.execute("COMMIT;")
+            return
+        else:
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Annouced Message"))
+            con.execute(cfg['preStm']['getAll'])
+            result = con.fetchall()
+
+            for row in result:
+                reddit.redditor(row[0]).message("Annoucment", target)
+                sleep(0.1)
+
+            con.execute("COMMIT;")
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
