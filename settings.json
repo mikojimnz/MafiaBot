@@ -84,7 +84,7 @@
     ]
   },
   "reply": {
-    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know your playing.](https://reddit.com/r/{}/comments{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
+    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know your playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!"
@@ -104,7 +104,7 @@
     ],
     "gameEnd": "The game has ended.\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
     "gamePause": "The game has been paused.\n\nPlease check the game thread more info.",
-    "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments{}",
+    "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}",
     "getSts": "Current Stats:\n\nGame is {} on round {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
