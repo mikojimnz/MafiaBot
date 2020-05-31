@@ -6,12 +6,16 @@
     "goldenninjadragon"
   ],
   "cycle": {
-    "cycleDelay": 43200
+    "min30": 19800,
+    "min15": 20700,
+    "min5": 21300,
+    "cycleDelay": 21600
   },
   "targetPost":"gtdhg7",
   "praw": "DozenIncBOT",
   "sub": "KillingEve",
-  "voteThreshold": "2",
+  "cmtThreshold": 1,
+  "voteThreshold": 5,
   "sql": {
     "user": "dummy",
     "password": "1234",
@@ -76,12 +80,15 @@
     "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0') ON DUPLICATE KEY UPDATE `username`=`username`,`alive`='0';",
     "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
+    "chkCmt": "SELECT `username` FROM Mafia WHERE `username`=%s AND `comment`>%s;",
+    "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": [
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
-      "SELECT username FROM Mafia WHERE `alive`='1';"
+      "SELECT username FROM Mafia WHERE `alive`='1';",
+      "UPDATE Mafia SET `comment`=0 WHERE `comment`>0"
     ],
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
     "getAll": "SELECT username FROM Mafia;",
@@ -127,6 +134,7 @@
         "over"
       ]
     ],
+    "noParticipate": "You must participate in the investigation by commenting in the game thread to use this command.",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "showHelp": "List of available commands:\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game. You cannot rejoin once the game has started\n* !leave: Leave the game.\n* !rules: Shows the rules.\n* !stats\n* !vote USERNAME: Vote on which user to be eliminated. For Assassins and Handlers only.",
@@ -153,6 +161,9 @@
     "cycle":"It is now **{}** on day {}.\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
     "end": "The game has ended! Thanks for playing!\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
     "hault": "`Warning: HAULT command recieved. Stopping processes.`\n\n`Info: inbox.stream() listener closed (1)`\n\n`Info: Database connection closed (1)`",
+    "min30": "Round ending in 30 minutes!\nWho is working for who?!",
+    "min15": "Round ending in 15 minutes!\nCast your final kills soon!",
+    "min5": "Round ending in 5 minutes!\nCast your final kills now!",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
     "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",

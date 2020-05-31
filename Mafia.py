@@ -34,6 +34,7 @@ def main():
     db = mysql.connector.pooling.MySQLConnectionPool(pool_name=None, raise_on_warnings=True, connection_timeout=3600, **cfg['sql'])
     pool = db.get_connection()
     con = pool.cursor(prepared=True)
+    cache = []
 
     con.execute(cfg['preStm']['main'][0])
     con.execute(cfg['preStm']['main'][1].format(time.time()))
@@ -85,6 +86,20 @@ def main():
                     item.reply(cfg['reply']['err']['unkCmd'][0][0].format(cfg['reply']['err']['unkCmd'][1][state]))
 
                 item.mark_read()
+
+            for comment in sub.stream.comments(skip_existing=True,pause_after=-1):
+                if comment is None:
+                    break
+
+                if ((comment.submission.id == cfg['targetPost']) and (comment.id not in cache)):
+                    cache.append(comment.id)
+                    con.execute(cfg['preStm']['comment'].format(comment.author.name))
+                    con.execute("COMMIT;")
+
+        except mysql.connector.Error as err:
+            print("EXCEPTION {}".format(err))
+            con.close()
+            os._exit(-1)
         except Exception as e:
             traceback.print_exc()
             sleep(10)
@@ -92,7 +107,16 @@ def main():
         selfEpoch += 1
         sleep(1)
 
-        if (selfEpoch % cfg['clock']['cycleDelay'] == 0):
+        if (selfEpoch % cfg['cycle']['min30'] == 0):
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min30'])
+            comment.mod.distinguish(how='yes', sticky=False)
+        elif (selfEpoch % cfg['cycle']['min15'] == 0):
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min15'])
+            comment.mod.distinguish(how='yes', sticky=False)
+        elif (selfEpoch % cfg['cycle']['min5'] == 0):
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min5'])
+            comment.mod.distinguish(how='yes', sticky=False)
+        elif (selfEpoch % cfg['cycle']['cycleDelay'] == 0):
             item = type('', (), {})()
             item.author = type('', (), {})()
             item.author.name = "*SELF*"
@@ -214,6 +238,13 @@ def voteUser(item, sub, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['cycle'])
                 return
 
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name,cfg['cmtThreshold']))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['noParticipate'])
+                return
+
             con.execute(cfg['preStm']['digupUser'], (target,))
             r = con.fetchall()
 
@@ -251,6 +282,13 @@ def digupUser(item, sub, con, cfg):
                 return
             elif ((str(r[0][1]) == "ASSASSIN") or (str(r[0][1]) == "OPERATIVE")):
                 item.reply(cfg['reply']['err']['role'])
+                return
+
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name,cfg['cmtThreshold']))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Investigate: {}".format(target)))
@@ -402,6 +440,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
             comment.mod.distinguish(how='yes', sticky=True)
 
+            con.execute(cfg['preStm']['cycle'][5])
             con.execute("TRUNCATE TABLE VoteCall");
             con.execute("COMMIT;")
             if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(target)))
@@ -448,12 +487,12 @@ def restart(item, sub, db, con, cfg):
         else:
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE RESTART"))
             con.execute(cfg['preStm']['restart'])
+            con.execute(cfg['preStm']['cycle'][5])
             con.execute("SELECT `username` FROM Mafia")
             result = con.fetchall()
 
             for row in result:
                 sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
-
             con.execute("TRUNCATE TABLE VoteCall;");
             con.execute("COMMIT;")
 
