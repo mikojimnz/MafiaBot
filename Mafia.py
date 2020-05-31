@@ -9,6 +9,7 @@ import praw
 import random
 import re
 import time
+import traceback
 import signal
 import sys
 
@@ -18,8 +19,16 @@ from random import randrange
 from time import sleep
 
 def main():
-    with open("settings.json") as jsonfile:
-        cfg = json.load(jsonfile)
+    with open("settings.json") as jsonFile1:
+        cfg = json.load(jsonFile1)
+    with open("save.json") as jsonFile2:
+        sve = json.load(jsonFile2)
+
+    state = int(sve['state'])
+    curCycle = int(sve['curCycle'])
+    curPos = int(sve['curPos'])
+
+    stateReply = ["has not yet started.", "has already started."]
 
     reddit = praw.Reddit(cfg['praw'])
     sub = reddit.subreddit(cfg['sub'])
@@ -32,47 +41,66 @@ def main():
     con.execute("SHOW PROCESSLIST")
     conStat = con.fetchall()
 
-    state = 0
-    curCycle = 0
-    curPos = 0
-    stateReply = ["has not yet started.", "has already started."]
-
     print("Connected as {}".format(str(reddit.user.me())))
-    print("Database Connections: ")
-    for row in conStat:
-        print(row[0])
+    print("Database Connections: {}".format(len(conStat)))
     print("______")
 
     while True:
-        for item in reddit.inbox.stream():
-            if ((re.search('!join', item.body)) and (state == 0)):
-                curPos = addUser(item, sub, con, cfg, curPos)
-            elif (re.search('!leave', item.body)):
-                removeUser(item, sub, con, cfg)
-            elif ((re.search('!vote', item.body)) and (state == 1)):
-                voteUser(item, sub, con, cfg, curCycle)
-            elif ((re.search('!digup', item.body)) and (state == 1)):
-                digupUser(item, sub, con, cfg)
-            elif ((re.search('!stats', item.body)) and (state == 1)):
-                getStats(item, con, cfg, state, curCycle)
-            elif (re.search('!help', item.body)):
-                showHelp(item, cfg)
-            elif (re.search('!rules', item.body)):
-                showRules(item, cfg)
-            elif (re.search('!gamestate', item.body)):
-                state = gameState(item, reddit, con, cfg)
-            elif ((re.search('!cycle', item.body)) and (state == 1)):
-                curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-            elif (re.search('!ANNOUNCEMENT', item.body)):
-                announce(item, reddit, con, cfg)
-            elif (re.search('!RESET', item.body)):
-                reset(item, sub, db, con, cfg)
-            elif (re.search('!HAULT', item.body)):
-                hault(item, db, con, cfg)
-            else:
-                item.reply(cfg['reply']['err']['unkCmd'].format(stateReply[state]))
+        try:
+            for item in reddit.inbox.stream():
+                if ((re.search('!join', item.body)) and (state == 0)):
+                    curPos = addUser(item, sub, con, cfg, curPos)
 
-            item.mark_read()
+                    with open("save.json", "r+") as jsonFile2:
+                        tmp = json.load(jsonFile2)
+                        tmp['curPos'] = curPos
+                        jsonFile2.seek(0)
+                        json.dump(tmp, jsonFile2)
+                        jsonFile2.truncate()
+                elif (re.search('!leave', item.body)):
+                    removeUser(item, sub, con, cfg)
+                elif ((re.search('!vote', item.body)) and (state == 1)):
+                    voteUser(item, sub, con, cfg, curCycle)
+                elif ((re.search('!digup', item.body)) and (state == 1)):
+                    digupUser(item, sub, con, cfg)
+                elif ((re.search('!stats', item.body)) and (state == 1)):
+                    getStats(item, con, cfg, state, curCycle)
+                elif (re.search('!help', item.body)):
+                    showHelp(item, cfg)
+                elif (re.search('!rules', item.body)):
+                    showRules(item, cfg)
+                elif (re.search('!gamestate', item.body)):
+                    state = gameState(item, reddit, con, cfg)
+
+                    with open("save.json", "r+") as jsonFile2:
+                        tmp = json.load(jsonFile2)
+                        tmp['state'] = state
+                        jsonFile2.seek(0)
+                        json.dump(tmp, jsonFile2)
+                        jsonFile2.truncate()
+                elif ((re.search('!cycle', item.body)) and (state == 1)):
+                    curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
+
+                    with open("save.json", "r+") as jsonFile2:
+                        tmp = json.load(jsonFile2)
+                        tmp['curCycle'] = curCycle
+                        jsonFile2.seek(0)
+                        json.dump(tmp, jsonFile2)
+                        jsonFile2.truncate()
+                elif (re.search('!ANNOUNCEMENT', item.body)):
+                    announce(item, reddit, con, cfg)
+                elif (re.search('!RESET', item.body)):
+                    reset(item, sub, db, con, cfg)
+                elif (re.search('!HAULT', item.body)):
+                    hault(item, reddit, db, con, cfg)
+                else:
+                    item.reply(cfg['reply']['err']['unkCmd'].format(stateReply[state]))
+
+                item.mark_read()
+        except Exception as e:
+            traceback.print_exc()
+
+        time.sleep(10)
 
     con.close()
     db.close()
@@ -106,15 +134,12 @@ def gameState(item, reddit, con, cfg):
 
             if ((target == "0") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['pause'])
-                comment.mod.approve()
                 comment.mod.distinguish(how='yes', sticky=True)
             elif ((target == "1") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['start'].format(players))
-                comment.mod.approve()
                 comment.mod.distinguish(how='yes', sticky=True)
             elif ((target == "2") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'])
-                comment.mod.approve()
                 comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute("COMMIT;")
@@ -372,7 +397,6 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
                 sleep(0.1)
 
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
-            comment.mod.approve()
             comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute("TRUNCATE TABLE VoteCall");
@@ -431,7 +455,6 @@ def reset(item, reddit, sub, db, con, cfg):
             con.execute("COMMIT;")
 
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['reset'])
-            comment.mod.approve()
             comment.mod.distinguish(how='yes', sticky=True)
 
             item.reply("**Resetting Game**")
@@ -457,7 +480,6 @@ def hault(item, reddit, db, con, cfg):
             con.execute("COMMIT;")
 
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['hault'])
-            comment.mod.approve()
             comment.mod.distinguish(how='yes', sticky=True)
 
             item.reply("**Stopping Game**")
