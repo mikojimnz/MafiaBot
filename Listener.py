@@ -5,6 +5,7 @@ import os
 import mysql.connector
 import mysql.connector.pooling
 import praw
+import re
 import signal
 import sys
 import time
@@ -43,6 +44,12 @@ def main():
                 if ((comment.submission.id == cfg['targetPost']) and (comment.id not in cache)):
                     if (len(cache) > 1000):
                         cache = []
+
+                    if(re.search("!(join|leave|vote|digup|rules|help|stats)", comment.body)):
+                        comment.reply(cfg['reply']['err']['notPM'])
+                    elif(re.search("![\w\s\d]+\s?", comment.body)):
+                        comment.reply(cfg['reply']['err']['unkPM'])
+
                     cache.append(comment.id)
                     con.execute(cfg['preStm']['comment'], (comment.author.name,))
                     con.execute("COMMIT;")

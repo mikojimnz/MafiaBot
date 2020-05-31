@@ -78,7 +78,7 @@
     "Chopped and blended"
   ],
   "preStm": {
-    "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0') ON DUPLICATE KEY UPDATE `username`=`username`,`alive`='0';",
+    "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0','-999') ON DUPLICATE KEY UPDATE `username`=`username`,`alive`='0';",
     "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE `username`=%s AND `comment`>%s;",
@@ -91,6 +91,7 @@
       "SELECT username FROM Mafia WHERE `alive`='1';",
       "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
       "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE `comment`=0;",
+      "SELECT username FROM Mafia WHERE `inactive`>=%s;",
       "DELETE FROM Mafia WHERE `inactive`>=%s;"
     ],
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
@@ -108,7 +109,8 @@
     "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know you're playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
-      "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!"
+      "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
+      "You were inactive for two days and were automatically kicked from the game. Please wait until after the current game ends to rejoin."
     ],
     "digupUser": "**Intelligence Report**\n\nu/{} is believed to be {} and is currently {}\n\n^(This information is believed to be {}% credible.)",
     "digupUserBody": [
@@ -146,6 +148,7 @@
     "err": {
       "cycle": "You cannot vote at this time.",
       "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
+      "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
       "role": "You cannot use this command in this role.",
       "spec": "You are a spectator. You cannot use this command.",
@@ -157,7 +160,8 @@
           "has not yet started.",
           "has already started."
         ]
-      ]
+      ],
+      "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT)."
     }
   },
   "sticky": {
@@ -167,7 +171,6 @@
     "min30": "Round ending in 30 minutes!\nWho is working for who?!",
     "min15": "Round ending in 15 minutes!\nCast your final kills soon!",
     "min5": "Round ending in 5 minutes!\nCast your final kills now!",
-    "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
     "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",

@@ -414,7 +414,6 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
             con.execute(cfg['preStm']['cycle'][3], (cfg['voteThreshold'],))
             result = con.fetchall()
-
             for row in result:
                 n = random.randint(0,len(cfg['deathMsg']) - 1)
                 sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
@@ -423,9 +422,15 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
             con.execute(cfg['preStm']['cycle'][4])
             result = con.fetchall()
-
             for row in result:
                 sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
+                sleep(0.1)
+
+            con.execute(cfg['preStm']['cycle'][7], (cfg['kickAfter'],))
+            result = con.fetchall()
+            for row in result:
+                sub.flair.delete(eddit.redditor(row[0]))
+                reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
                 sleep(0.1)
 
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
@@ -433,7 +438,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
             con.execute(cfg['preStm']['cycle'][5])
             con.execute(cfg['preStm']['cycle'][6])
-            con.execute(cfg['preStm']['cycle'][7], (cfg['kickAfter'],))
+            con.execute(cfg['preStm']['cycle'][8], (cfg['kickAfter'],))
             con.execute("TRUNCATE TABLE VoteCall");
             con.execute("COMMIT;")
             if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(target)))
