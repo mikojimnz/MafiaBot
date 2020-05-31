@@ -104,28 +104,29 @@ def main():
             traceback.print_exc()
             sleep(10)
 
-        selfEpoch += 1
-        sleep(1)
+        if (state == 1):
+            selfEpoch += 1
+            sleep(1)
 
-        if (selfEpoch % cfg['cycle']['min30'] == 0):
-            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min30'])
-            comment.mod.distinguish(how='yes', sticky=False)
-        elif (selfEpoch % cfg['cycle']['min15'] == 0):
-            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min15'])
-            comment.mod.distinguish(how='yes', sticky=False)
-        elif (selfEpoch % cfg['cycle']['min5'] == 0):
-            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min5'])
-            comment.mod.distinguish(how='yes', sticky=False)
-        elif (selfEpoch % cfg['cycle']['cycleDelay'] == 0):
-            item = type('', (), {})()
-            item.author = type('', (), {})()
-            item.author.name = "*SELF*"
-            item.body = "!cycle"
-            item.created_utc = time.time()
-            curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-            save(state, curCycle, curPos)
-            selfEpoch = 0
-            print("SCHD: ")
+            if (selfEpoch % cfg['cycle']['min30'] == 0):
+                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min30'])
+                comment.mod.distinguish(how='yes', sticky=False)
+            elif (selfEpoch % cfg['cycle']['min15'] == 0):
+                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min15'])
+                comment.mod.distinguish(how='yes', sticky=False)
+            elif (selfEpoch % cfg['cycle']['min5'] == 0):
+                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min5'])
+                comment.mod.distinguish(how='yes', sticky=False)
+            elif (selfEpoch % cfg['cycle']['cycleDelay'] == 0):
+                item = type('', (), {})()
+                item.author = type('', (), {})()
+                item.author.name = "*SELF*"
+                item.body = "!cycle"
+                item.created_utc = time.time()
+                curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
+                save(state, curCycle, curPos)
+                selfEpoch = 0
+                print("SCHD: ")
 
     con.close()
     db.close()
