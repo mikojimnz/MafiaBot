@@ -1,4 +1,13 @@
 {
+  "adminUsr":
+  [
+    "*SELF*",
+    "DozenIncBOT",
+    "goldenninjadragon"
+  ],
+  "cycle": {
+    "cycleDelay": 43200
+  },
   "targetPost":"gtdhg7",
   "praw": "DozenIncBOT",
   "sub": "KillingEve",
@@ -26,10 +35,10 @@
       "ANALYST"
     ],
     {
-      "ASSASSIN": "0",
-      "HANDLER": "1",
-      "OPERATIVE": "2",
-      "ANALYST": "3"
+      "ASSASSIN": 0,
+      "HANDLER": 1,
+      "OPERATIVE": 2,
+      "ANALYST": 3
     }
   ],
   "deathMsg": [
@@ -64,13 +73,9 @@
     "Chopped and blended"
   ],
   "preStm": {
-    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;" ,
+    "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0') ON DUPLICATE KEY UPDATE `username`=`username`,`alive`='0';",
+    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
-    "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
-    "leave": "DELETE FROM Mafia WHERE `username`=%s;",
-    "log":"INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
-    "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;",
-    "getAll": "SELECT username FROM Mafia;",
     "cycle": [
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
@@ -78,10 +83,16 @@
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "SELECT username FROM Mafia WHERE `alive`='1';"
     ],
+    "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
+    "getAll": "SELECT username FROM Mafia;",
+    "leave": "DELETE FROM Mafia WHERE `username`=%s;",
+    "log":"INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
       "SET SQL_SAFE_UPDATES = 0;",
-      "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', 'root', 'Game Initalized');"
-    ]
+      "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', '*SELF*', 'Game Initalized');"
+    ],
+    "restart": "UPDATE Mafia SET `alive`='1' WHERE `alive`='0';",
+    "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
     "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know your playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
@@ -105,7 +116,17 @@
     "gameEnd": "The game has ended.\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
     "gamePause": "The game has been paused.\n\nPlease check the game thread more info.",
     "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}",
-    "getSts": "Current Stats:\n\nGame is {} on round {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n",
+    "getSts":
+    [
+      [
+        "Current Stats:\n\nGame is {} on round {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
+      ],
+      [
+        "not active",
+        "active",
+        "over"
+      ]
+    ],
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "showHelp": "List of available commands:\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game. You cannot rejoin once the game has started\n* !leave: Leave the game.\n* !rules: Shows the rules.\n* !stats\n* !vote USERNAME: Vote on which user to be eliminated. For Assassins and Handlers only.",
@@ -117,7 +138,15 @@
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
       "role": "You cannot use this command in this role.",
       "spec": "You are a spectator. You cannot use this command.",
-      "unkCmd": "Invalid Command.\n\nNote: The game {}"
+      "unkCmd": [
+        [
+          "Invalid Command.\n\nNote: The game {}"
+        ],
+        [
+          "has not yet started.",
+          "has already started."
+        ]
+      ]
     }
   },
   "sticky": {
@@ -126,6 +155,7 @@
     "hault": "`Warning: HAULT command recieved. Stopping processes.`\n\n`Info: inbox.stream() listener closed (1)`\n\n`Info: Database connection closed (1)`",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
+    "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   }
 }

@@ -8,10 +8,11 @@ import mysql.connector.pooling
 import praw
 import random
 import re
-import time
-import traceback
+import sched
 import signal
 import sys
+import time
+import traceback
 
 from mysql.connector import errorcode
 from mysql.connector.cursor import MySQLCursorPrepared
@@ -24,19 +25,19 @@ def main():
     with open("save.json") as jsonFile2:
         sve = json.load(jsonFile2)
 
+    selfEpoch = 0
     state = int(sve['state'])
     curCycle = int(sve['curCycle'])
     curPos = int(sve['curPos'])
-
-    stateReply = ["has not yet started.", "has already started."]
-
     reddit = praw.Reddit(cfg['praw'])
     sub = reddit.subreddit(cfg['sub'])
     db = mysql.connector.pooling.MySQLConnectionPool(pool_name=None, raise_on_warnings=True, connection_timeout=3600, **cfg['sql'])
     pool = db.get_connection()
     con = pool.cursor(prepared=True)
+
     con.execute(cfg['preStm']['main'][0])
     con.execute(cfg['preStm']['main'][1].format(time.time()))
+    con.execute(cfg['preStm']['addDummy'])
     con.execute("COMMIT;")
     con.execute("SHOW PROCESSLIST")
     conStat = con.fetchall()
@@ -47,16 +48,13 @@ def main():
 
     while True:
         try:
-            for item in reddit.inbox.stream():
+            for item in reddit.inbox.stream(pause_after=-1):
+                if item is None:
+                    break
+
                 if ((re.search('!join', item.body)) and (state == 0)):
                     curPos = addUser(item, sub, con, cfg, curPos)
-
-                    with open("save.json", "r+") as jsonFile2:
-                        tmp = json.load(jsonFile2)
-                        tmp['curPos'] = curPos
-                        jsonFile2.seek(0)
-                        json.dump(tmp, jsonFile2)
-                        jsonFile2.truncate()
+                    save(state, curCycle, curPos)
                 elif (re.search('!leave', item.body)):
                     removeUser(item, sub, con, cfg)
                 elif ((re.search('!vote', item.body)) and (state == 1)):
@@ -71,49 +69,61 @@ def main():
                     showRules(item, cfg)
                 elif (re.search('!gamestate', item.body)):
                     state = gameState(item, reddit, con, cfg)
-
-                    with open("save.json", "r+") as jsonFile2:
-                        tmp = json.load(jsonFile2)
-                        tmp['state'] = state
-                        jsonFile2.seek(0)
-                        json.dump(tmp, jsonFile2)
-                        jsonFile2.truncate()
+                    save(state, curCycle, curPos)
                 elif ((re.search('!cycle', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-
-                    with open("save.json", "r+") as jsonFile2:
-                        tmp = json.load(jsonFile2)
-                        tmp['curCycle'] = curCycle
-                        jsonFile2.seek(0)
-                        json.dump(tmp, jsonFile2)
-                        jsonFile2.truncate()
+                    save(state, curCycle, curPos)
                 elif (re.search('!ANNOUNCEMENT', item.body)):
                     announce(item, reddit, con, cfg)
+                elif (re.search('!RESTART', item.body)):
+                    restart(item, sub, db, con, cfg)
                 elif (re.search('!RESET', item.body)):
                     reset(item, sub, db, con, cfg)
                 elif (re.search('!HAULT', item.body)):
                     hault(item, reddit, db, con, cfg)
                 else:
-                    item.reply(cfg['reply']['err']['unkCmd'].format(stateReply[state]))
+                    item.reply(cfg['reply']['err']['unkCmd'][0][0].format(cfg['reply']['err']['unkCmd'][1][state]))
 
                 item.mark_read()
         except Exception as e:
             traceback.print_exc()
+            sleep(10)
 
-        time.sleep(10)
+        selfEpoch += 1
+        sleep(1)
+
+        if (selfEpoch % cfg['clock']['cycleDelay'] == 0):
+            item = type('', (), {})()
+            item.author = type('', (), {})()
+            item.author.name = "*SELF*"
+            item.body = "!cycle"
+            item.created_utc = time.time()
+            curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
+            save(state, curCycle, curPos)
+            selfEpoch = 0
+            print("SCHD: ")
 
     con.close()
     db.close()
+
+def save(state, curCycle, curPos):
+    with open("save.json", "r+") as jsonFile2:
+        tmp = json.load(jsonFile2)
+        tmp['state'] = state
+        tmp['curCycle'] = curCycle
+        tmp['curPos'] = curPos
+        jsonFile2.seek(0)
+        json.dump(tmp, jsonFile2)
+        jsonFile2.truncate()
 
 def gameState(item, reddit, con, cfg):
     pattern = re.search("!gamestate\s([0-9]{1,1})(\s-s)?", item.body)
     target = pattern.group(1)
     silent = pattern.group(2)
     players = 0
-    commen = None
 
     try:
-        if (item.author.name != "goldenninjadragon"):
+        if (item.author.name not in cfg['adminUsr']):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: gameState"))
             con.execute("COMMIT;")
             return
@@ -143,7 +153,7 @@ def gameState(item, reddit, con, cfg):
                 comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute("COMMIT;")
-            item.reply("**gamestate changed to {}**".format(target))
+            if (item.author.name != "*SELF*"): item.reply("**gamestate changed to {}**".format(target))
             print("Moving to gamestate {}".format(target))
             return int(target)
     except mysql.connector.Error as err:
@@ -229,12 +239,6 @@ def digupUser(item, sub, con, cfg):
     random.seed(time.time())
     cred = random.randint(1,75)
     role = 0
-    roles = {
-    "ASSASSIN": 0,
-    "HANDLER": 1,
-    "OPERATIVE": 2,
-    "ANALYST": 3
-    }
 
     if pattern:
         target = pattern.group(1)
@@ -261,21 +265,21 @@ def digupUser(item, sub, con, cfg):
 
             if ((cred >= 1) and (cred < 25)):
                 if (random.randint(0,7) == 0):
-                    role = roles[r[0][0]]
+                    role = cfg['roles'][1][r[0][0]]
                 else:
-                    role = (roles[r[0][0]] + random.randint(1,2)) % 4
+                    role = (cfg['roles'][1][r[0][0]] + random.randint(1,2)) % 4
             elif ((cred >= 25) and (cred < 50)):
                 if (random.randint(0,4) == 0):
-                    role = roles[r[0][0]]
+                    role = cfg['roles'][1][r[0][0]]
                 else:
-                    role = (roles[r[0][0]] + random.randint(1,2)) % 4
+                    role = (cfg['roles'][1][r[0][0]] + random.randint(1,2)) % 4
             elif ((cred >= 50) and (cred < 75)):
                 if (random.randint(0,2) == 0):
-                    role = roles[r[0][0]]
+                    role = cfg['roles'][1][r[0][0]]
                 else:
-                    role = (roles[r[0][0]] + random.randint(1,2)) % 4
+                    role = (cfg['roles'][1][r[0][0]] + random.randint(1,2)) % 4
             else:
-                role = roles[r[0][0]]
+                role = cfg['roles'][1][r[0][0]]
 
             item.reply(cfg['reply']['digupUser'].format(target, cfg['reply']['digupUserBody'][0][role], cfg['reply']['digupUserBody'][1][r[0][1]], str(cred)))
             print("  > {} has investgated {}".format(item.author.name, target))
@@ -295,7 +299,6 @@ def getStats(item, con, cfg, state, curCycle):
     killed = -1
     good = -1
     bad = -1
-    stateReply = ["not active", "active", "over"]
 
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Get Stats"))
@@ -323,7 +326,7 @@ def getStats(item, con, cfg, state, curCycle):
             bad += result[1][1] + result[2][1] + 1
 
         con.execute("COMMIT;")
-        item.reply(cfg['reply']['getSts'].format(stateReply[state], day, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
+        item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], day, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -351,7 +354,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
     random.seed(time.time())
 
     try:
-        if (item.author.name != "goldenninjadragon"):
+        if (item.author.name not in cfg['adminUsr']):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: cycle"))
             con.execute("COMMIT;")
             return
@@ -401,7 +404,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
             con.execute("TRUNCATE TABLE VoteCall");
             con.execute("COMMIT;")
-            item.reply("**Moved to cycle {}**".format(str(target)))
+            if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(target)))
             print("Moved to cycle {}\n".format(str(target)))
 
             return target
@@ -415,7 +418,7 @@ def announce(item, reddit, con, cfg):
     target = pattern.group(1)
 
     try:
-        if (item.author.name != "goldenninjadragon"):
+        if (item.author.name not in cfg['adminUsr']):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: announce"))
             con.execute("COMMIT;")
             return
@@ -434,11 +437,43 @@ def announce(item, reddit, con, cfg):
         con.close()
         os._exit(-1)
 
+def restart(item, sub, db, con, cfg):
+    item.mark_read()
+
+    try:
+        if (item.author.name not in cfg['adminUsr']):
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: restart"))
+            con.execute("COMMIT;")
+            return
+        else:
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE RESTART"))
+            con.execute(cfg['preStm']['restart'])
+            con.execute("SELECT `username` FROM Mafia")
+            result = con.fetchall()
+
+            for row in result:
+                sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+
+            con.execute("TRUNCATE TABLE VoteCall;");
+            con.execute("COMMIT;")
+
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['restart'])
+            comment.mod.distinguish(how='yes', sticky=True)
+
+            if (item.author.name != "*SELF*"): item.reply("**Resetting Game**")
+            print("REMOTE RESTART RECIEVED")
+            con.close()
+            os._exit(1)
+    except mysql.connector.Error as err:
+        print("EXCEPTION {}".format(err))
+        con.close()
+        os._exit(-1)
+
 def reset(item, reddit, sub, db, con, cfg):
     item.mark_read()
 
     try:
-        if (item.author.name != "goldenninjadragon"):
+        if (item.author.name not in cfg['adminUsr']):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: reset"))
             con.execute("COMMIT;")
             return
@@ -457,7 +492,7 @@ def reset(item, reddit, sub, db, con, cfg):
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['reset'])
             comment.mod.distinguish(how='yes', sticky=True)
 
-            item.reply("**Resetting Game**")
+            if (item.author.name != "*SELF*"): item.reply("**Resetting Game**")
             print("REMOTE RESET RECIEVED")
             con.close()
             os._exit(1)
@@ -466,12 +501,11 @@ def reset(item, reddit, sub, db, con, cfg):
         con.close()
         os._exit(-1)
 
-
 def hault(item, reddit, db, con, cfg):
     item.mark_read()
 
     try:
-        if (item.author.name != "goldenninjadragon"):
+        if (item.author.name not in cfg['adminUsr']):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: hault"))
             con.execute("COMMIT;")
             return
@@ -482,7 +516,7 @@ def hault(item, reddit, db, con, cfg):
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['hault'])
             comment.mod.distinguish(how='yes', sticky=True)
 
-            item.reply("**Stopping Game**")
+            if (item.author.name != "*SELF*"): item.reply("**Stopping Game**")
             print("REMOTE HAULT RECIEVED")
             con.close()
             os._exit(1)
