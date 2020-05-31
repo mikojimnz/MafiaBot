@@ -15,7 +15,8 @@
   "praw": "DozenIncBOT",
   "sub": "KillingEve",
   "cmtThreshold": 1,
-  "voteThreshold": 5,
+  "voteThreshold": 3,
+  "kickAfter": 4,
   "sql": {
     "user": "dummy",
     "password": "1234",
@@ -88,7 +89,9 @@
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "SELECT username FROM Mafia WHERE `alive`='1';",
-      "UPDATE Mafia SET `comment`=0 WHERE `comment`>0"
+      "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
+      "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE `comment`=0;",
+      "DELETE FROM Mafia WHERE `inactive`>=%s;"
     ],
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
     "getAll": "SELECT username FROM Mafia;",
@@ -102,7 +105,7 @@
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
-    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know your playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
+    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know you're playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!"
@@ -164,6 +167,7 @@
     "min30": "Round ending in 30 minutes!\nWho is working for who?!",
     "min15": "Round ending in 15 minutes!\nCast your final kills soon!",
     "min5": "Round ending in 5 minutes!\nCast your final kills now!",
+    "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
     "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",

@@ -432,6 +432,8 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute(cfg['preStm']['cycle'][5])
+            con.execute(cfg['preStm']['cycle'][6])
+            con.execute(cfg['preStm']['cycle'][7], (cfg['kickAfter'],))
             con.execute("TRUNCATE TABLE VoteCall");
             con.execute("COMMIT;")
             if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(target)))
