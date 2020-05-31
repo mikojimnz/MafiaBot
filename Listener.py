@@ -41,6 +41,8 @@ def main():
         try:
             for comment in sub.stream.comments(skip_existing=True):
                 if ((comment.submission.id == cfg['targetPost']) and (comment.id not in cache)):
+                    if (len(cache) > 1000):
+                        cache = []
                     cache.append(comment.id)
                     con.execute(cfg['preStm']['comment'], (comment.author.name,))
                     con.execute("COMMIT;")
