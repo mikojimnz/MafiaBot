@@ -8,7 +8,6 @@ import mysql.connector.pooling
 import praw
 import random
 import re
-import sched
 import signal
 import sys
 import time
@@ -86,15 +85,6 @@ def main():
                     item.reply(cfg['reply']['err']['unkCmd'][0][0].format(cfg['reply']['err']['unkCmd'][1][state]))
 
                 item.mark_read()
-
-            for comment in sub.stream.comments(skip_existing=True,pause_after=-1):
-                if comment is None:
-                    break
-
-                if ((comment.submission.id == cfg['targetPost']) and (comment.id not in cache)):
-                    cache.append(comment.id)
-                    con.execute(cfg['preStm']['comment'].format(comment.author.name))
-                    con.execute("COMMIT;")
 
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
@@ -572,7 +562,7 @@ def exit_gracefully(signum, frame):
         if input("\nDo you really want to quit? (y/n)> ").lower().startswith('y'):
             sys.exit(1)
     except KeyboardInterrupt:
-        print("Ok ok, quitting")
+        print("\nQuitting")
         sys.exit(1)
 
     signal.signal(signal.SIGINT, exit_gracefully)
