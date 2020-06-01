@@ -133,7 +133,7 @@ def save(state, curCycle, curPos):
 
 def gameState(item, reddit, con, cfg):
     pattern = re.search("!gamestate\s([0-9]{1,1})(\s-s)?", item.body)
-    target = pattern.group(1)
+    setState = pattern.group(1)
     silent = pattern.group(2)
     players = 0
 
@@ -143,34 +143,34 @@ def gameState(item, reddit, con, cfg):
             con.execute("COMMIT;")
             return
         else:
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Changed gameState to " + target))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Changed gameState to {}".format(setState)))
             con.execute(cfg['preStm']['getAll'])
             result = con.fetchall()
             players = len(result)
 
             for row in result:
-                if ((target == "0") and (silent == None)):
+                if ((setState == "0") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has paused!", cfg['reply']['gamePause'])
-                elif ((target == "1") and (silent == None)):
+                elif ((setState == "1") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format(cfg['sub'], cfg['targetPost']))
-                elif ((target == "2") and (silent == None)):
+                elif ((setState == "2") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
                 sleep(0.1)
 
-            if ((target == "0") and (silent == None)):
+            if ((setState == "0") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['pause'])
                 comment.mod.distinguish(how='yes', sticky=True)
-            elif ((target == "1") and (silent == None)):
+            elif ((setState == "1") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['start'].format(players))
                 comment.mod.distinguish(how='yes', sticky=True)
-            elif ((target == "2") and (silent == None)):
+            elif ((setState == "2") and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'])
                 comment.mod.distinguish(how='yes', sticky=True)
 
             con.execute("COMMIT;")
-            if (item.author.name != "*SELF*"): item.reply("**gamestate changed to {}**".format(target))
-            print("Moving to gamestate {}".format(target))
-            return int(target)
+            if (item.author.name != "*SELF*"): item.reply("**gamestate changed to {}**".format(setState))
+            print("Moving to gamestate {}".format(setState))
+            return int(setState)
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -211,10 +211,10 @@ def removeUser(item, sub, con, cfg):
 
 def voteUser(item, sub, con, cfg, curCycle):
     pattern = re.search("!vote\s([A-Za-z0-9_]{1,20})", item.body)
-    target = ""
+    name = ""
 
     if pattern:
-        target = pattern.group(1)
+        name = pattern.group(1)
         try:
             con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
             r = con.fetchall()
@@ -236,18 +236,18 @@ def voteUser(item, sub, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
-            con.execute(cfg['preStm']['digupUser'], (target,))
+            con.execute(cfg['preStm']['digupUser'], (name,))
             r = con.fetchall()
 
-            if (len(r) <= 0):
+            if ((len(r) <= 0) or (r[0][1]) == 0):
                 item.reply(cfg['reply']['err']['notFound'])
                 return
 
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Vote: {}".format(target)))
-            con.execute(cfg['preStm']['voteUser'], (item.author.name, target, target))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Vote: {}".format(name)))
+            con.execute(cfg['preStm']['voteUser'], (item.author.name, name, name))
             con.execute("COMMIT;")
             item.reply(cfg['reply']['voteUser'])
-            print("  > {} has voted to kill {}".format(item.author.name, target))
+            print("  > {} has voted to kill {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
             con.close()
@@ -257,13 +257,13 @@ def voteUser(item, sub, con, cfg, curCycle):
 
 def digupUser(item, sub, con, cfg):
     pattern = re.search("!digup\s([A-Za-z0-9_]{1,20})", item.body)
-    target = ""
+    name = ""
     random.seed(time.time())
     cred = random.randint(1,75)
     role = 0
 
     if pattern:
-        target = pattern.group(1)
+        name = pattern.group(1)
         try:
             con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
             r = con.fetchall()
@@ -282,8 +282,8 @@ def digupUser(item, sub, con, cfg):
                 item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Investigate: {}".format(target)))
-            con.execute(cfg['preStm']['digupUser'], (target,))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Investigate: {}".format(name)))
+            con.execute(cfg['preStm']['digupUser'], (name,))
             r = con.fetchall()
 
             if (len(r) <= 0):
@@ -310,8 +310,8 @@ def digupUser(item, sub, con, cfg):
             else:
                 role = cfg['roles'][1][r[0][0]]
 
-            item.reply(cfg['reply']['digupUser'].format(target, cfg['reply']['digupUserBody'][0][role], cfg['reply']['digupUserBody'][1][r[0][1]], str(cred)))
-            print("  > {} has investgated {}".format(item.author.name, target))
+            item.reply(cfg['reply']['digupUser'].format(name, cfg['reply']['digupUserBody'][0][role], cfg['reply']['digupUserBody'][1][r[0][1]], str(cred)))
+            print("  > {} has investgated {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
             con.close()
@@ -320,8 +320,7 @@ def digupUser(item, sub, con, cfg):
         item.reply(cfg['reply']['err']['nmFmt'])
 
 def getStats(item, con, cfg, state, curCycle):
-    target = curCycle + 1
-    day = int(math.ceil(target/2))
+    day = int(math.ceil((curCycle + 1)/2))
     role = ""
     user = 0
     alive = -1
@@ -369,8 +368,8 @@ def showRules(item, cfg):
 
 def cycle(item, reddit, sub, con, cfg, curCycle):
     pattern = re.search("!cycle", item.body)
-    target = curCycle + 1
-    day = int(math.ceil(target/2))
+    cycle = curCycle + 1
+    day = int(math.ceil(cycle/2))
     alive = -1
     killed = -1
     good = -1
@@ -388,7 +387,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             con.execute("COMMIT;")
             return
         else:
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to " + str(target)))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to {}".format(cycle)))
             con.execute(cfg['preStm']['cycle'][0], (cfg['voteThreshold'],))
             con.execute(cfg['preStm']['cycle'][1])
             result = con.fetchall()
@@ -426,7 +425,10 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
                 sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
                 sleep(0.1)
 
-            con.execute(cfg['preStm']['cycle'][7], (cfg['kickAfter'],))
+            con.execute(cfg['preStm']['cycle'][5])
+            con.execute(cfg['preStm']['cycle'][6])
+            con.execute(cfg['preStm']['cycle'][7])
+            con.execute(cfg['preStm']['cycle'][8], (cfg['kickAfter'],))
             result = con.fetchall()
             for row in result:
                 sub.flair.delete(eddit.redditor(row[0]))
@@ -436,15 +438,13 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
             comment.mod.distinguish(how='yes', sticky=True)
 
-            con.execute(cfg['preStm']['cycle'][5])
-            con.execute(cfg['preStm']['cycle'][6])
-            con.execute(cfg['preStm']['cycle'][8], (cfg['kickAfter'],))
+            con.execute(cfg['preStm']['cycle'][9], (cfg['kickAfter'],))
             con.execute("TRUNCATE TABLE VoteCall");
             con.execute("COMMIT;")
-            if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(target)))
-            print("Moved to cycle {}\n".format(str(target)))
+            if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(cycle)))
+            print("Moved to cycle {}\n".format(str(cycle)))
 
-            return target
+            return cycle
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -452,7 +452,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
 def announce(item, reddit, con, cfg):
     pattern = re.search("!ANNOUNCEMENT\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\;\',./’]+)", item.body)
-    target = pattern.group(1)
+    msg = pattern.group(1)
 
     try:
         if (item.author.name not in cfg['adminUsr']):
@@ -465,7 +465,7 @@ def announce(item, reddit, con, cfg):
             result = con.fetchall()
 
             for row in result:
-                reddit.redditor(row[0]).message("Annoucment", target)
+                reddit.redditor(row[0]).message("Annoucment", msg)
                 sleep(0.1)
 
             con.execute("COMMIT;")
