@@ -83,7 +83,7 @@
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
-    "addUser": "Hello u/{} you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know you're playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
+    "addUser": "Hello u/{}, you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know you're playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
@@ -133,6 +133,7 @@
         "over"
       ]
     ],
+    "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.",
     "noParticipate": "You must participate in the investigation by commenting in the game thread to use this command.",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",

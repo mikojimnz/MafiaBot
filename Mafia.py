@@ -76,7 +76,7 @@ def main():
                 elif (re.search('!ANNOUNCEMENT', item.body)):
                     announce(item, reddit, con, cfg)
                 elif (re.search('!RESTART', item.body)):
-                    restart(item, sub, db, con, cfg)
+                    restart(item, reddit, sub, db, con, cfg)
                 elif (re.search('!RESET', item.body)):
                     reset(item, sub, db, con, cfg)
                 elif (re.search('!HAULT', item.body)):
@@ -119,7 +119,6 @@ def main():
                 print("SCHD: ")
 
     con.close()
-    db.close()
 
 def save(state, curCycle, curPos):
     with open("save.json", "r+") as jsonFile2:
@@ -474,7 +473,7 @@ def announce(item, reddit, con, cfg):
         con.close()
         os._exit(-1)
 
-def restart(item, sub, db, con, cfg):
+def restart(item, reddit, sub, db, con, cfg):
     item.mark_read()
 
     try:
@@ -486,11 +485,21 @@ def restart(item, sub, db, con, cfg):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE RESTART"))
             con.execute(cfg['preStm']['restart'])
             con.execute(cfg['preStm']['cycle'][5])
+            con.execute(cfg['preStm']['cycle'][6])
             con.execute("SELECT `username` FROM Mafia")
             result = con.fetchall()
+            curpos = 0
 
             for row in result:
-                sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+                if (curPos >= len(cfg['roles'][0])):
+                    curPos = 0
+
+                con.execute(cfg['preStm']['addUser'], (time.time(), row[0], cfg['roles'][0][curPos]))
+                reddit.redditor(row[0]).message("A new game is starting", cfg['reply']['newGame'].format(row[0], cfg['roles'][0][curPos]))
+                curPos += 1
+                sub.flair.set(row[0], text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+                sleep(0.1)
+
             con.execute("TRUNCATE TABLE VoteCall;");
             con.execute("COMMIT;")
 
