@@ -4,13 +4,12 @@
     "DozenIncBOT",
     "goldenninjadragon"
   ],
-  "cmtThreshold": 0,
-  "cycle": {
-    "min30": 19800,
-    "min15": 20700,
-    "min5": 21300,
-    "cycleDelay": 21600
+  "allowJoinUptTo": 2,
+  "clock": {
+    "hour1": 3,
+    "hour2": 9
   },
+  "cmtThreshold": 0,
   "deathMsg": [
     "Stabbed in the heart",
     "Stabbed in the eye",

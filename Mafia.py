@@ -1,5 +1,6 @@
 #!/usr/bin/pyton3
 
+import datetime
 import json
 import os
 import math
@@ -24,7 +25,6 @@ def main():
     with open("save.json") as jsonFile2:
         sve = json.load(jsonFile2)
 
-    selfEpoch = sve['gameEpoch']
     state = sve['state']
     curCycle = sve['curCycle']
     curPos = sve['curPos']
@@ -44,7 +44,6 @@ def main():
 
     print("Connected as {}".format(str(reddit.user.me())))
     print("Database Connections: {}".format(len(conStat)))
-    print("selfEpoch: {}".format(selfEpoch))
     print("state: {}".format(state))
     print("curCycle: {}".format(curCycle))
     print("curPos: {}".format(curPos))
@@ -56,9 +55,9 @@ def main():
                 if item is None:
                     break
 
-                if ((re.search('!join', item.body)) and (state == 0)):
+                if ((re.search('!join', item.body)) and (curCycle > cfg['allowJoinUptTo'])):
                     curPos = addUser(item, sub, con, cfg, curPos)
-                    save(selfEpoch, state, curCycle, curPos)
+                    save(state, curCycle, curPos)
                 elif (re.search('!leave', item.body)):
                     removeUser(item, sub, con, cfg)
                 elif ((re.search('!vote', item.body)) and (state == 1)):
@@ -79,10 +78,10 @@ def main():
                     showRules(item, cfg)
                 elif (re.search('!gamestate', item.body)):
                     state = gameState(item, reddit, con, cfg)
-                    save(selfEpoch, state, curCycle, curPos)
+                    save(state, curCycle, curPos)
                 elif ((re.search('!cycle', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-                    save(selfEpoch, state, curCycle, curPos)
+                    save(state, curCycle, curPos)
                 elif (re.search('!ANNOUNCEMENT', item.body)):
                     announce(item, reddit, con, cfg)
                 elif (re.search('!RESTART', item.body)):
@@ -105,35 +104,34 @@ def main():
             sleep(10)
 
         if (state == 1):
-            selfEpoch += 1
-            sleep(1)
+            t = datetime.datetime.now()
 
-            if ((selfEpoch % 60) == 0):
-                save(selfEpoch, state, curCycle, curPos)
-
-            if (selfEpoch % cfg['cycle']['min30'] == 0):
+            if (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 30) and (t.second == 0)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min30'])
-            elif (selfEpoch % cfg['cycle']['min15'] == 0):
+                print("Cycle: 30 min warning")
+            elif (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 45) and (t.second == 0)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min15'])
-            elif (selfEpoch % cfg['cycle']['min5'] == 0):
+                print("Cycle: 15 min warning")
+            elif (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 55) and (t.second == 0)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min5'])
-            elif (selfEpoch % cfg['cycle']['cycleDelay'] == 0):
+                print("Cycle: 5 min warning")
+            elif (((t.hour % 12 == cfg['clock']['hour1']) or (t.hour % 12 == cfg['clock']['hour2'])) and (t.minute == 0) and (t.second == 0)):
                 item = type('', (), {})()
                 item.author = type('', (), {})()
                 item.author.name = "*SELF*"
                 item.body = "!cycle"
                 item.created_utc = time.time()
                 curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-                save(selfEpoch, state, curCycle, curPos)
-                selfEpoch = 0
-                print("SCHD: ")
+                save(state, curCycle, curPos)
+                print("Cycle: Auto Run")
+
+            sleep(1)
 
     con.close()
 
-def save(selfEpoch, state, curCycle, curPos):
+def save(state, curCycle, curPos):
     with open("save.json", "r+") as jsonFile2:
         tmp = json.load(jsonFile2)
-        tmp['gameEpoch'] = selfEpoch
         tmp['state'] = state
         tmp['curCycle'] = curCycle
         tmp['curPos'] = curPos
