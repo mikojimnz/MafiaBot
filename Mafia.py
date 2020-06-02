@@ -363,7 +363,7 @@ def digupUser(item, sub, con, cfg):
             r = con.fetchall()
 
             if (len(r) <= 0):
-                item.reply(cfg['reply']['noParticipate'])
+                item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Investigate: {}".format(name)))
@@ -422,7 +422,7 @@ def locateUser(item, sub, con, cfg):
             r = con.fetchall()
 
             if (len(r) <= 0):
-                item.reply(cfg['reply']['noParticipate'])
+                item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Locate: {}".format(name)))
