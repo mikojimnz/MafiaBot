@@ -55,7 +55,7 @@ def main():
                 if item is None:
                     break
 
-                if ((re.search('!join', item.body)) and (curCycle > cfg['allowJoinUptTo'])):
+                if ((re.search('!join', item.body)) and (curCycle < cfg['allowJoinUptTo'])):
                     curPos = addUser(item, sub, con, cfg, curPos)
                     save(state, curCycle, curPos)
                 elif (re.search('!leave', item.body)):
