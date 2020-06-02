@@ -159,7 +159,7 @@
     "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}\n\nYou do not need to be present at all times to play. However, if you are inactive for more than 2 days you will be kicked for inactivity.",
     "getSts": [
       [
-        "Current Stats:\n\nGame is {} on round {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
+        "Current Stats:\n\nGame is {} on day {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
       ],
       [
         "not active",

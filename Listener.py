@@ -45,7 +45,7 @@ def main():
                     if (len(cache) > 1000):
                         cache = []
 
-                    if(re.search("!(join|leave|vote|digup|rules|help|stats)", comment.body)):
+                    if(re.search("^!(join|leave|vote|digup|rules|help|stats)", comment.body)):
                         comment.reply(cfg['reply']['err']['notPM'])
 
                     cache.append(comment.id)

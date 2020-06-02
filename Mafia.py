@@ -467,9 +467,9 @@ def getStats(item, con, cfg, state, curCycle):
         con.execute(cfg['preStm']['cycle'][1])
         result = con.fetchall()
 
-        if (len(result[0]) == 2):
+        if (len(result) == 2):
             alive = result[0][1]
-            killed = result[0][0] - 1
+            killed = result[1][1] - 1
 
         con.execute(cfg['preStm']['cycle'][2])
         result = con.fetchall()
