@@ -59,8 +59,12 @@ def main():
                     removeUser(item, sub, con, cfg)
                 elif ((re.search('!vote', item.body)) and (state == 1)):
                     voteUser(item, sub, con, cfg, curCycle)
+                elif ((re.search('!burn', item.body)) and (state == 1)):
+                    burnUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search('!digup', item.body)) and (state == 1)):
                     digupUser(item, sub, con, cfg)
+                elif ((re.search('!locate', item.body)) and (state == 1)):
+                    locateUser(item, sub, con, cfg)
                 elif ((re.search('!stats', item.body)) and (state == 1)):
                     getStats(item, con, cfg, state, curCycle)
                 elif (re.search('!help', item.body)):
@@ -79,8 +83,8 @@ def main():
                     restart(item, reddit, sub, db, con, cfg)
                 elif (re.search('!RESET', item.body)):
                     reset(item, sub, db, con, cfg)
-                elif (re.search('!HAULT', item.body)):
-                    hault(item, reddit, db, con, cfg)
+                elif (re.search('!HALT', item.body)):
+                    halt(item, reddit, db, con, cfg)
                 else:
                     item.reply(cfg['reply']['err']['unkCmd'][0][0].format(cfg['reply']['err']['unkCmd'][1][state]))
 
@@ -180,11 +184,14 @@ def addUser(item, sub, con, cfg, curPos):
         if (curPos >= len(cfg['roles'][0])):
             curPos = 0
 
-        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], cfg['sub'], cfg['targetPost']))
+        random.seed(time.time())
+        loc = cfg['location'][random.randint(0, len(cfg['location']) - 1)]
+
+        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], loc, cfg['sub'], cfg['targetPost']))
         sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
-        con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos]))
+        con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos], loc))
         con.execute("COMMIT;")
         print("  > {} has joined".format(item.author.name))
         curPos += 1
@@ -209,11 +216,11 @@ def removeUser(item, sub, con, cfg):
         os._exit(-1)
 
 def voteUser(item, sub, con, cfg, curCycle):
-    pattern = re.search("!vote\s([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("!vote\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
 
     if pattern:
-        name = pattern.group(1)
+        name = pattern.group(2)
         try:
             con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
             r = con.fetchall()
@@ -224,7 +231,7 @@ def voteUser(item, sub, con, cfg, curCycle):
             elif ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
                 item.reply(cfg['reply']['err']['role'])
                 return
-            elif (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 != 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 == 0))):
+            elif (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 == 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 != 0))):
                 item.reply(cfg['reply']['err']['cycle'])
                 return
 
@@ -254,15 +261,89 @@ def voteUser(item, sub, con, cfg, curCycle):
     else:
         item.reply(cfg['reply']['err']['nmFmt'])
 
+def burnUser(item, reddit, sub, con, cfg, curCycle):
+    pattern = re.search("!burn", item.body)
+    cycle = curCycle + 1
+    day = int(math.ceil(cycle/2))
+    selfRole = ""
+    burned = ""
+    burnedRole = ""
+    side = 0
+
+    try:
+        con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(cfg['reply']['err']['spec'])
+            return
+
+        con.execute(cfg['preStm']['chkBurn'], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(cfg['reply']['err']['burnUsed'])
+            return
+
+        selfRole = r[0][1]
+
+        if ((selfRole == "ASSASSIN") or (selfRole == "HANDLER")):
+            side = 0
+        else:
+            side = 1
+
+        con.execute(cfg['preStm']['burn'][side], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(cfg['reply']['err']['noBurnLeft'])
+            return
+
+        random.seed(time.time())
+        rand = random.randint(0, len(r) - 1)
+        burned = r[rand][0]
+        burnedRole = r[rand][1]
+
+        if ((selfRole == "ASSASSIN") or (selfRole == "HANDLER")):
+            side = 2
+        else:
+            side = 3
+
+        con.execute(cfg['preStm']['burn'][side])
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(cfg['reply']['err']['noBurnLeft'])
+            return
+
+        target = r[random.randint(0, len(r) - 1)]
+
+        con.execute(cfg['preStm']['burn'][4], (item.author.name,))
+        con.execute(cfg['preStm']['burn'][5], (burned,))
+        con.execute("COMMIT;")
+
+        n = random.randint(0,len(cfg['deathMsg']) - 1)
+        sub.flair.set(reddit.redditor(burned), text=cfg['flairs']['dead'].format(burnedRole, cfg['deathMsg'][n], day), flair_template_id=cfg['flairID']['dead'])
+        reddit.redditor(burned).message("You have been burned!", cfg['reply']['burnedUser'].format(item.author.name))
+        item.reply(cfg['reply']['burnUser'].format(target[0], target[1]))
+        comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['burnUser'].format(item.author.name, burned))
+        comment.mod.distinguish(how='yes', sticky=False)
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} burned {}".format(item.author.name, burned)))
+        print("  > {} has burned {}".format(item.author.name, burned))
+    except mysql.connector.Error as err:
+        print("EXCEPTION {}".format(err))
+        con.close()
+        os._exit(-1)
+
 def digupUser(item, sub, con, cfg):
-    pattern = re.search("!digup\s([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     random.seed(time.time())
     cred = random.randint(1,75)
     role = 0
 
     if pattern:
-        name = pattern.group(1)
+        name = pattern.group(2)
         try:
             con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
             r = con.fetchall()
@@ -278,7 +359,7 @@ def digupUser(item, sub, con, cfg):
             r = con.fetchall()
 
             if (len(r) <= 0):
-                item.reply(cfg['reply']['err']['noParticipate'])
+                item.reply(cfg['reply']['noParticipate'])
                 return
 
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Investigate: {}".format(name)))
@@ -311,6 +392,47 @@ def digupUser(item, sub, con, cfg):
 
             item.reply(cfg['reply']['digupUser'].format(name, cfg['reply']['digupUserBody'][0][role], cfg['reply']['digupUserBody'][1][r[0][1]], str(cred)))
             print("  > {} has investgated {}".format(item.author.name, name))
+        except mysql.connector.Error as err:
+            print("EXCEPTION {}".format(err))
+            con.close()
+            os._exit(-1)
+    else:
+        item.reply(cfg['reply']['err']['nmFmt'])
+
+def locateUser(item, sub, con, cfg):
+    pattern = re.search("!locate\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    name = ""
+    role = 0
+
+    if pattern:
+        name = pattern.group(2)
+        try:
+            con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['spec'])
+                return
+
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name,cfg['cmtThreshold']))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['noParticipate'])
+                return
+
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Locate: {}".format(name)))
+            con.execute(cfg['preStm']['locateUser'], (name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['notFound'])
+                return
+
+            con.execute("COMMIT;")
+
+            item.reply(cfg['reply']['locateUser'].format(name, r[0][0]))
+            print("  > {} has located {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
             con.close()
@@ -547,23 +669,23 @@ def reset(item, reddit, sub, db, con, cfg):
         con.close()
         os._exit(-1)
 
-def hault(item, reddit, db, con, cfg):
+def halt(item, reddit, db, con, cfg):
     item.mark_read()
 
     try:
         if (item.author.name not in cfg['adminUsr']):
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: hault"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: halt"))
             con.execute("COMMIT;")
             return
         else:
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE HAULT"))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE HALT"))
             con.execute("COMMIT;")
 
-            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['hault'])
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['halt'])
             comment.mod.distinguish(how='yes', sticky=True)
 
             if (item.author.name != "*SELF*"): item.reply("**Stopping Game**")
-            print("REMOTE HAULT RECIEVED")
+            print("REMOTE HALT RECIEVED")
             con.close()
             os._exit(1)
     except mysql.connector.Error as err:

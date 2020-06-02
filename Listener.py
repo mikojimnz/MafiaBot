@@ -47,8 +47,6 @@ def main():
 
                     if(re.search("!(join|leave|vote|digup|rules|help|stats)", comment.body)):
                         comment.reply(cfg['reply']['err']['notPM'])
-                    elif(re.search("![\w\s\d]+\s?", comment.body)):
-                        comment.reply(cfg['reply']['err']['unkPM'])
 
                     cache.append(comment.id)
                     con.execute(cfg['preStm']['comment'], (comment.author.name,))

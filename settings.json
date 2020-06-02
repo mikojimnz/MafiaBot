@@ -52,20 +52,48 @@
     "dead": "56b93830-a271-11ea-ae64-0ec385b6d385"
   },
   "kickAfter": 4,
+  "location": [
+    "London",
+    "Paris",
+    "Cuba",
+    "Not Cuba",
+    "Poland",
+    "Russia",
+    "Barcelona",
+    "Tuscany",
+    "Vienna",
+    "Spain",
+    "Berlin",
+    "New Malden",
+    "Moscow",
+    "Amsterdam",
+    "Oxford",
+    "Royal Albert Hall",
+    "Scotland"
+  ],
   "praw": "DozenIncBOT",
   "preStm": {
     "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0','-999') ON DUPLICATE KEY UPDATE `username`=`username`,`alive`='0';",
-    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;",
-    "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
+    "burn": [
+      "SELECT `username`,`role` FROM Mafia WHERE (`role`='OPERATIVE' OR `role`='ANALYST' AND NOT `username`=%s);",
+      "SELECT `username`,`role` FROM Mafia WHERE (`role`='ASSASSIN' OR `role`='HANDLER' AND NOT `username`=%s);",
+      "SELECT `username`,`role` FROM Mafia WHERE (`role`='OPERATIVE' OR `role`='ANALYST' AND `alive`=1);",
+      "SELECT `username`,`role` FROM Mafia WHERE (`role`='ASSASSIN' OR `role`='HANDLER' AND `alive`=1);",
+      "UPDATE Mafia SET `burn`=0 WHERE `username`=%s",
+      "UPDATE Mafia SET `alive`=0 WHERE `username`=%s"
+    ],
+    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`) VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;",
+    "chkBurn": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `burn`=1;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE `username`=%s AND `comment`>%s;",
+    "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": [
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
-      "SELECT username FROM Mafia WHERE `alive`='1';",
-      "UPDATE Mafia SET `inactive` = `0` WHERE `comment`>0;",
+      "SELECT `username` FROM Mafia WHERE `alive`='1';",
+      "UPDATE Mafia SET `inactive` = 0 WHERE `comment`>0;",
       "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE `comment`=0;",
       "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
       "SELECT username FROM Mafia WHERE `inactive`>=%s;",
@@ -74,16 +102,19 @@
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
     "getAll": "SELECT username FROM Mafia;",
     "leave": "DELETE FROM Mafia WHERE `username`=%s;",
+    "locateUser": "SELECT `loc` FROM Mafia WHERE `username`=%s;",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
       "SET SQL_SAFE_UPDATES = 0;",
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', '*SELF*', 'Game Initalized');"
     ],
-    "restart": "UPDATE Mafia SET `alive`='1' WHERE `alive`='0';",
+    "restart": "UPDATE Mafia SET `alive`='1',`burn`=1,`loc`='London' WHERE `alive`='0';",
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
-    "addUser": "Hello u/{}, you have joined the game!\n\nYour role is: *{}*.\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know you're playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
+    "addUser": "Hello u/{}, you have joined the game!\n\nYour role is: *{}*.\nLocation: {}\n\nSHHHH!!! Don't tell anyone! [Leave a comment so people know you're playing.](https://reddit.com/r/{}/comments/{})\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
+    "burnUser": "You have burned a teammate!\n\nIntelligence Report:\n\nu/{} is a {}",
+    "burnedUser": "You have burned by u/{}!\n\nYou are now a spectator. Others can view how you died on your user flair.",
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
@@ -103,7 +134,9 @@
       ]
     ],
     "err": {
+      "burnUsed": "You have already used your abulity to burn.",
       "cycle": "You cannot vote at this time.",
+      "noBurnLeft": "There is no one left to burn",
       "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
       "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
@@ -133,11 +166,12 @@
         "over"
       ]
     ],
+    "locateUser": "u/{} is located at {}",
     "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.",
     "noParticipate": "You must participate in the investigation by commenting in the game thread to use this command.",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
-    "showHelp": "List of available commands:\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !rules: Shows the rules.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated. For Assassins and Handlers only.",
+    "showHelp": "List of available commands:\n* !burn: Burns one of your teammates for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !locate: Shows the location of the user.\n* !rules: Shows the rules.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated. For Assassins and Operatives only.",
     "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side. Roles with investigative powers must share their intelligence to help inform others.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Round lasts 6 hours. 2 Day/Night cycles, 4 rounds per day.\n4. A user must receive at least 3 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.\n5. At the end of each cycle, an announcement will be made how many people are alive how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
     "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends."
   },
@@ -164,8 +198,9 @@
   },
   "sticky": {
     "cycle": "It is now **{}** on day {}.\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
+    "burnUser": "u/{} has burned their own member, u/{} for intelligence",
     "end": "The game has ended! Thanks for playing!\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
-    "hault": "`Warning: HAULT command recieved. Stopping processes.`\n\n`Info: inbox.stream() listener closed (1)`\n\n`Info: Database connection closed (1)`",
+    "halt": "`Warning: HALT command recieved. Stopping processes.`\n\n`Info: inbox.stream() listener closed (1)`\n\n`Info: Database connection closed (1)`",
     "min30": "Round ending in 30 minutes!\nWho is working for who?!",
     "min15": "Round ending in 15 minutes!\nCast your final kills soon!",
     "min5": "Round ending in 5 minutes!\nCast your final kills now!",
