@@ -24,10 +24,10 @@ def main():
     with open("save.json") as jsonFile2:
         sve = json.load(jsonFile2)
 
-    selfEpoch = 0
-    state = int(sve['state'])
-    curCycle = int(sve['curCycle'])
-    curPos = int(sve['curPos'])
+    selfEpoch = sve['gameEpoch']
+    state = sve['state']
+    curCycle = sve['curCycle']
+    curPos = sve['curPos']
     reddit = praw.Reddit(cfg['praw'])
     sub = reddit.subreddit(cfg['sub'])
     db = mysql.connector.pooling.MySQLConnectionPool(pool_name=None, raise_on_warnings=True, connection_timeout=3600, **cfg['sql'])
@@ -44,6 +44,10 @@ def main():
 
     print("Connected as {}".format(str(reddit.user.me())))
     print("Database Connections: {}".format(len(conStat)))
+    print("selfEpoch: {}".format(selfEpoch))
+    print("state: {}".format(state))
+    print("curCycle: {}".format(curCycle))
+    print("curPos: {}".format(curPos))
     print("______")
 
     while True:
@@ -54,7 +58,7 @@ def main():
 
                 if ((re.search('!join', item.body)) and (state == 0)):
                     curPos = addUser(item, sub, con, cfg, curPos)
-                    save(state, curCycle, curPos)
+                    save(selfEpoch, state, curCycle, curPos)
                 elif (re.search('!leave', item.body)):
                     removeUser(item, sub, con, cfg)
                 elif ((re.search('!vote', item.body)) and (state == 1)):
@@ -73,10 +77,10 @@ def main():
                     showRules(item, cfg)
                 elif (re.search('!gamestate', item.body)):
                     state = gameState(item, reddit, con, cfg)
-                    save(state, curCycle, curPos)
+                    save(selfEpoch, state, curCycle, curPos)
                 elif ((re.search('!cycle', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-                    save(state, curCycle, curPos)
+                    save(selfEpoch, state, curCycle, curPos)
                 elif (re.search('!ANNOUNCEMENT', item.body)):
                     announce(item, reddit, con, cfg)
                 elif (re.search('!RESTART', item.body)):
@@ -102,15 +106,15 @@ def main():
             selfEpoch += 1
             sleep(1)
 
+            if ((selfEpoch % 300) == 0):
+                save(selfEpoch, state, curCycle, curPos)
+
             if (selfEpoch % cfg['cycle']['min30'] == 0):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min30'])
-                comment.mod.distinguish(how='yes', sticky=False)
             elif (selfEpoch % cfg['cycle']['min15'] == 0):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min15'])
-                comment.mod.distinguish(how='yes', sticky=False)
             elif (selfEpoch % cfg['cycle']['min5'] == 0):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min5'])
-                comment.mod.distinguish(how='yes', sticky=False)
             elif (selfEpoch % cfg['cycle']['cycleDelay'] == 0):
                 item = type('', (), {})()
                 item.author = type('', (), {})()
@@ -124,9 +128,10 @@ def main():
 
     con.close()
 
-def save(state, curCycle, curPos):
+def save(selfEpoch, state, curCycle, curPos):
     with open("save.json", "r+") as jsonFile2:
         tmp = json.load(jsonFile2)
+        tmp['gameEpoch'] = selfEpoch
         tmp['state'] = state
         tmp['curCycle'] = curCycle
         tmp['curPos'] = curPos
@@ -327,7 +332,6 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
         reddit.redditor(burned).message("You have been burned!", cfg['reply']['burnedUser'].format(item.author.name))
         item.reply(cfg['reply']['burnUser'].format(target[0], target[1]))
         comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['burnUser'].format(item.author.name, burned))
-        comment.mod.distinguish(how='yes', sticky=False)
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} burned {}".format(item.author.name, burned)))
         print("  > {} has burned {}".format(item.author.name, burned))
     except mysql.connector.Error as err:
