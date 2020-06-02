@@ -106,7 +106,7 @@ def main():
             selfEpoch += 1
             sleep(1)
 
-            if ((selfEpoch % 300) == 0):
+            if ((selfEpoch % 60) == 0):
                 save(selfEpoch, state, curCycle, curPos)
 
             if (selfEpoch % cfg['cycle']['min30'] == 0):
@@ -122,7 +122,7 @@ def main():
                 item.body = "!cycle"
                 item.created_utc = time.time()
                 curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
-                save(state, curCycle, curPos)
+                save(selfEpoch, state, curCycle, curPos)
                 selfEpoch = 0
                 print("SCHD: ")
 
@@ -240,7 +240,7 @@ def voteUser(item, sub, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['cycle'])
                 return
 
-            con.execute(cfg['preStm']['chkCmt'], (item.author.name,cfg['cmtThreshold']))
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
             r = con.fetchall()
 
             if (len(r) <= 0):
@@ -359,7 +359,7 @@ def digupUser(item, sub, con, cfg):
                 item.reply(cfg['reply']['err']['role'])
                 return
 
-            con.execute(cfg['preStm']['chkCmt'], (item.author.name,cfg['cmtThreshold']))
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
             r = con.fetchall()
 
             if (len(r) <= 0):
@@ -539,6 +539,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             con.execute(cfg['preStm']['cycle'][3], (cfg['voteThreshold'],))
             result = con.fetchall()
             for row in result:
+                random.seed(time.time())
                 n = random.randint(0,len(cfg['deathMsg']) - 1)
                 sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
                 reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, alive, good, bad, killed, alive + killed))

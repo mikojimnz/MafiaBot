@@ -145,7 +145,7 @@
       "spec": "You are a spectator. You cannot use this command.",
       "unkCmd": [
         [
-          "Invalid Command.\n\nNote: The game {}"
+          "Invalid Command. Type !help for a list of commands.\n\nNote: The game {}"
         ],
         [
           "has not yet started.",
@@ -211,5 +211,5 @@
   },
   "sub": "KillingEve",
   "targetPost": "gu47tj",
-  "voteThreshold": 3
+  "voteThreshold": 1
 }
