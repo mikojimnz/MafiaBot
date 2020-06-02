@@ -4,7 +4,7 @@
     "DozenIncBOT",
     "goldenninjadragon"
   ],
-  "cmtThreshold": 1,
+  "cmtThreshold": 0,
   "cycle": {
     "min30": 19800,
     "min15": 20700,
@@ -51,7 +51,7 @@
     "alive": "4d49d8fe-a271-11ea-8428-0e7ec366ebb3",
     "dead": "56b93830-a271-11ea-ae64-0ec385b6d385"
   },
-  "kickAfter": 4,
+  "kickAfter": 8,
   "location": [
     "London",
     "Paris",
@@ -73,12 +73,12 @@
   ],
   "praw": "DozenIncBOT",
   "preStm": {
-    "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0','-999') ON DUPLICATE KEY UPDATE `username`=`username`,`alive`='0';",
+    "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0','-999') ON DUPLICATE KEY UPDATE `username`=`username`,`role`='DUMMY', `alive`='0';",
     "burn": [
-      "SELECT `username`,`role` FROM Mafia WHERE (`role`='OPERATIVE' OR `role`='ANALYST' AND NOT `username`=%s);",
-      "SELECT `username`,`role` FROM Mafia WHERE (`role`='ASSASSIN' OR `role`='HANDLER' AND NOT `username`=%s);",
-      "SELECT `username`,`role` FROM Mafia WHERE (`role`='OPERATIVE' OR `role`='ANALYST' AND `alive`=1);",
-      "SELECT `username`,`role` FROM Mafia WHERE (`role`='ASSASSIN' OR `role`='HANDLER' AND `alive`=1);",
+      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='ASSASSIN' OR `role`='HANDLER') AND `comment`>0 AND NOT `username`=%s);",
+      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='OPERATIVE' OR `role`='ANALYST') AND `comment`>0 AND NOT `username`=%s);",
+      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='OPERATIVE' OR `role`='ANALYST') AND `alive`=1);",
+      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='ASSASSIN' OR `role`='HANDLER') AND `alive`=1);",
       "UPDATE Mafia SET `burn`=0 WHERE `username`=%s",
       "UPDATE Mafia SET `alive`=0 WHERE `username`=%s"
     ],
@@ -101,6 +101,10 @@
     ],
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
     "getAll": "SELECT username FROM Mafia;",
+    "getList": [
+      "SELECT `username` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
+      "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
+    ],
     "leave": "DELETE FROM Mafia WHERE `username`=%s;",
     "locateUser": "SELECT `loc` FROM Mafia WHERE `username`=%s;",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
@@ -108,7 +112,8 @@
       "SET SQL_SAFE_UPDATES = 0;",
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', '*SELF*', 'Game Initalized');"
     ],
-    "restart": "UPDATE Mafia SET `alive`='1',`burn`=1,`loc`='London' WHERE `alive`='0';",
+    "replaceUser": "REPLACE INTO Mafia (`utc`,`username`,`role`, `loc`) VALUES (%s, %s, %s, %s)",
+    "restart": "UPDATE Mafia SET `alive`='1',`burn`=1,`comment`=0,`inactive`=0,`loc`='London';",
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
@@ -137,7 +142,7 @@
       "burnUsed": "You have already used your abulity to burn.",
       "cycle": "You cannot vote at this time.",
       "noBurnLeft": "There is no one left to burn",
-      "noParticipate": "You must participate in the investigation by commenting in the game thread to use this command.",
+      "noParticipate": "To use this command, you must comment at least once per round to matain active status. Users who become inactive will be kicked.",
       "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
       "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
@@ -157,6 +162,7 @@
     "gameEnd": "The game has ended.\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
     "gamePause": "The game has been paused.\n\nPlease check the game thread more info.",
     "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}\n\nYou do not need to be present at all times to play. However, if you are inactive for more than 2 days you will be kicked for inactivity.",
+    "getList": "Total players: {}\n\nDead: {}\n{}\n\nAlive: {}\n{}",
     "getSts": [
       [
         "Current Stats:\n\nGame is {} on day {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
@@ -172,7 +178,7 @@
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user. For Handlers and Analysts only.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !locate: Shows the location of the user.\n* !rules: Shows the rules.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated. For Assassins and Operatives only.",
-    "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side. Roles with investigative powers must share their intelligence to help inform others.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Round lasts 6 hours. 2 Day/Night cycles, 4 rounds per day.\n4. A user must receive at least 3 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.\n5. At the end of each cycle, an announcement will be made how many people are alive how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
+    "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side. Roles with investigative powers must share their intelligence to help inform others.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Round lasts 6 hours. 2 Day/Night cycles, 4 rounds per day.\n4. A user must receive at least 2 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.\n5. At the end of each cycle, an announcement will be made how many people are alive how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
     "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends."
   },
   "roles": [
@@ -210,6 +216,6 @@
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   },
   "sub": "KillingEve",
-  "targetPost": "gu47tj",
-  "voteThreshold": 1
+  "targetPost": "gve7ar",
+  "voteThreshold": 2
 }

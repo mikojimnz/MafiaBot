@@ -69,6 +69,8 @@ def main():
                     digupUser(item, sub, con, cfg)
                 elif ((re.search('!locate', item.body)) and (state == 1)):
                     locateUser(item, sub, con, cfg)
+                elif ((re.search('!list', item.body))):
+                    getList(item, con, cfg, state)
                 elif ((re.search('!stats', item.body)) and (state == 1)):
                     getStats(item, con, cfg, state, curCycle)
                 elif (re.search('!help', item.body)):
@@ -233,12 +235,14 @@ def voteUser(item, sub, con, cfg, curCycle):
             if (len(r) <= 0):
                 item.reply(cfg['reply']['err']['spec'])
                 return
-            elif ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
-                item.reply(cfg['reply']['err']['role'])
-                return
-            elif (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 == 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 != 0))):
-                item.reply(cfg['reply']['err']['cycle'])
-                return
+
+            if (curCycle != 0):
+                if ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
+                    item.reply(cfg['reply']['err']['role'])
+                    return
+                elif (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 == 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 != 0))):
+                    item.reply(cfg['reply']['err']['cycle'])
+                    return
 
             con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
             r = con.fetchall()
@@ -444,6 +448,36 @@ def locateUser(item, sub, con, cfg):
     else:
         item.reply(cfg['reply']['err']['nmFmt'])
 
+def getList(item, con, cfg, state):
+    dead = ""
+    alive = ""
+    deadNum = 0
+    aliveNum = 0
+
+    try:
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Get List"))
+        con.execute(cfg['preStm']['getList'][0])
+        result = con.fetchall()
+
+        for row in result:
+            dead += "\n* u/{}".format(row[0])
+            deadNum += 1
+
+        con.execute(cfg['preStm']['getList'][1])
+        result = con.fetchall()
+
+        for row in result:
+            alive += "\n* u/{}".format(row[0])
+            aliveNum += 1
+
+        con.execute("COMMIT;")
+        item.reply(cfg['reply']['getList'].format(deadNum + aliveNum, deadNum, dead, aliveNum, alive))
+        print("{} requested players".format(item.author.name))
+    except mysql.connector.Error as err:
+        print("EXCEPTION {}".format(err))
+        con.close()
+        os._exit(-1)
+
 def getStats(item, con, cfg, state, curCycle):
     day = int(math.ceil((curCycle + 1)/2))
     role = ""
@@ -615,13 +649,15 @@ def restart(item, reddit, sub, db, con, cfg):
             con.execute(cfg['preStm']['cycle'][6])
             con.execute("SELECT `username` FROM Mafia")
             result = con.fetchall()
-            curpos = 0
+            curPos = 0
 
             for row in result:
                 if (curPos >= len(cfg['roles'][0])):
                     curPos = 0
 
-                con.execute(cfg['preStm']['addUser'], (time.time(), row[0], cfg['roles'][0][curPos]))
+                random.seed(time.time())
+                loc = cfg['location'][random.randint(0, len(cfg['location']) - 1)]
+                con.execute(cfg['preStm']['replaceUser'], (time.time(), row[0], cfg['roles'][0][curPos], loc))
                 reddit.redditor(row[0]).message("A new game is starting", cfg['reply']['newGame'].format(row[0], cfg['roles'][0][curPos]))
                 curPos += 1
                 sub.flair.set(row[0], text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
