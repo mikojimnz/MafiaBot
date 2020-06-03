@@ -4,7 +4,8 @@
     "DozenIncBOT",
     "goldenninjadragon"
   ],
-  "allowAllVoteUpTo": 0,
+  "allowAllVoteAlways": 4,
+  "allowAllVoteUpTo": 4,
   "allowBurnOn": 8,
   "allowJoinUptTo": 2,
   "clock": {
@@ -89,6 +90,10 @@
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": [
+      "SELECT DISTINCT `vote` From VoteCall",
+      "SELECT `vote` FROM VoteCall WHERE `username`=%s;",
+      "SELECT `username` FROM VoteCall WHERE (NOT `username`=%s AND `vote`=%s);",
+      "UPDATE VoteCall SET `vote`='' WHERE `vote`=%s;",
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
@@ -124,7 +129,8 @@
     "cycle": [
       "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
-      "You were inactive for two days and were automatically kicked from the game. Please wait until after the current game ends to rejoin."
+      "You were inactive for two days and were automatically kicked from the game. Please wait until after the current game ends to rejoin.",
+      "You have escaped your hit! Take back revenge now!"
     ],
     "digupUser": "**Intelligence Report**\n\nu/{} is believed to be {} and is currently {}\n\n^(This information is believed to be {}% credible.)",
     "digupUserBody": [
@@ -175,6 +181,7 @@
         "over"
       ]
     ],
+    "hitAlert": "u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.",
     "locateUser": "u/{} is located at {}",
     "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.",
     "msgTitle": "Mafia: The Twelve vs MI6",

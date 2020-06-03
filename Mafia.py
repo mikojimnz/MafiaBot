@@ -61,7 +61,7 @@ def main():
                 elif (re.search('!leave', item.body)):
                     removeUser(item, sub, con, cfg)
                 elif ((re.search('!vote', item.body)) and (state == 1)):
-                    voteUser(item, sub, con, cfg, curCycle)
+                    voteUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search('!burn', item.body)) and (state == 1)):
                     burnUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search('!digup', item.body)) and (state == 1)):
@@ -106,15 +106,18 @@ def main():
         if (state == 1):
             t = datetime.datetime.now()
 
-            if (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 30) and (t.second == 0)):
+            if (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 30) and (t.second <= 1)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min30'])
                 print("Cycle: 30 min warning")
-            elif (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 45) and (t.second == 0)):
+                sleep(2)
+            elif (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 45) and (t.second <= 1)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min15'])
                 print("Cycle: 15 min warning")
-            elif (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 55) and (t.second == 0)):
+                sleep(2)
+            elif (((t.hour % 12 == cfg['clock']['hour1'] - 1) or (t.hour % 12 == cfg['clock']['hour2'] - 1)) and (t.minute == 55) and (t.second <= 1)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['min5'])
                 print("Cycle: 5 min warning")
+                sleep(2)
             elif (((t.hour % 12 == cfg['clock']['hour1']) or (t.hour % 12 == cfg['clock']['hour2'])) and (t.minute == 0) and (t.second == 0)):
                 item = type('', (), {})()
                 item.author = type('', (), {})()
@@ -124,8 +127,7 @@ def main():
                 curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
                 save(state, curCycle, curPos)
                 print("Cycle: Auto Run")
-
-            sleep(1)
+                sleep(2)
 
     con.close()
 
@@ -220,7 +222,7 @@ def removeUser(item, sub, con, cfg):
         con.close()
         os._exit(-1)
 
-def voteUser(item, sub, con, cfg, curCycle):
+def voteUser(item, reddit, sub, con, cfg, curCycle):
     pattern = re.search("!vote\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
 
@@ -234,7 +236,7 @@ def voteUser(item, sub, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['spec'])
                 return
 
-            if (curCycle >= cfg['allowAllVoteUpTo']):
+            if ((cfg['allowAllVoteAlways'] != True) or (curCycle >= cfg['allowAllVoteUpTo'])):
                 if ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
                     item.reply(cfg['reply']['err']['role'])
                     return
@@ -259,7 +261,9 @@ def voteUser(item, sub, con, cfg, curCycle):
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Vote: {}".format(name)))
             con.execute(cfg['preStm']['voteUser'], (item.author.name, name, name))
             con.execute("COMMIT;")
+
             item.reply(cfg['reply']['voteUser'])
+            reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlert'].format(name))
             print("  > {} has voted to kill {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
@@ -350,7 +354,7 @@ def digupUser(item, sub, con, cfg):
     pattern = re.search("!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     random.seed(time.time())
-    cred = random.randint(1,75)
+    cred = random.randint(25,75)
     role = 0
 
     if pattern:
@@ -363,8 +367,7 @@ def digupUser(item, sub, con, cfg):
                 item.reply(cfg['reply']['err']['spec'])
                 return
             elif ((str(r[0][1]) == "ASSASSIN") or (str(r[0][1]) == "OPERATIVE")):
-                item.reply(cfg['reply']['err']['role'])
-                return
+                cred = random.randint(1,25)
 
             con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
             r = con.fetchall()
@@ -529,7 +532,6 @@ def showRules(item, cfg):
     item.reply(cfg['reply']['showRules'])
 
 def cycle(item, reddit, sub, con, cfg, curCycle):
-    pattern = re.search("!cycle", item.body)
     cycle = curCycle + 1
     day = int(math.ceil(cycle/2))
     alive = -1
@@ -544,70 +546,92 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
     random.seed(time.time())
 
     try:
-        if (item.author.name not in cfg['adminUsr']):
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "ATTEMPTED ADMIN COMMAND: cycle"))
-            con.execute("COMMIT;")
-            return
-        else:
-            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to {}".format(cycle)))
-            con.execute(cfg['preStm']['cycle'][0], (cfg['voteThreshold'],))
-            con.execute(cfg['preStm']['cycle'][1])
-            result = con.fetchall()
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to {}".format(cycle)))
 
-            if (len(result) == 2):
-                alive = result[0][1]
-                killed = result[1][1] - 1
+        con.execute(cfg['preStm']['cycle'][0])
+        result = con.fetchall()
 
-            print("\nAlive: {} | Killed {}".format(alive,killed))
+        for row in result:
+            con.execute(cfg['preStm']['chkUsr'], (row[0],))
+            role = con.fetchall()
+            con.execute(cfg['preStm']['cycle'][1], (row[0],))
+            target = con.fetchall()
 
-            con.execute(cfg['preStm']['cycle'][2])
-            result = con.fetchall()
+            if ((len(role) >= 1) and (len(target) >= 1)):
+                if (role[0][1] == "ANALYST") or (role[0][1] == "HANDLER"):
+                    continue
 
-            if (len(result) == 4):
-                good += result[0][1] + result[3][1] + 1
-                bad += result[1][1] + result[2][1] + 1
+                con.execute(cfg['preStm']['cycle'][2], (row[0],row[0]))
+                list = con.fetchall()
 
-            for row in result:
-                print("{} {} still alive".format(row[1], row[0]))
+                for user in list:
+                    if (target[0][0] == user[0][0]):
+                        print("success")
+                        con.execute(cfg['preStm']['log'], (time.time(), target[0][0], "{} has escaped their hit".format(target[0][0])))
+                        con.execute(cfg['preStm']['cycle'][3], (row[0],))
+                        con.execute("COMMIT;")
 
-            print("MI6 remaining: {}".format(good))
-            print("The Twelve remaining: {}".format(bad))
+                        reddit.redditor(target[0]).message("You have escaped!", cfg['reply']['cycle'][3])
+                        print("  > {} escaped".format(target[0]))
 
-            con.execute(cfg['preStm']['cycle'][3], (cfg['voteThreshold'],))
-            result = con.fetchall()
-            for row in result:
-                random.seed(time.time())
-                n = random.randint(0,len(cfg['deathMsg']) - 1)
-                sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
-                reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, alive, good, bad, killed, alive + killed))
-                sleep(0.1)
+        con.execute(cfg['preStm']['cycle'][4], (cfg['voteThreshold'],))
+        con.execute(cfg['preStm']['cycle'][5])
+        result = con.fetchall()
 
-            con.execute(cfg['preStm']['cycle'][4])
-            result = con.fetchall()
-            for row in result:
-                sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
-                sleep(0.1)
+        if (len(result) == 2):
+            alive = result[0][1]
+            killed = result[1][1] - 1
 
-            con.execute(cfg['preStm']['cycle'][5])
-            con.execute(cfg['preStm']['cycle'][6])
-            con.execute(cfg['preStm']['cycle'][7])
-            con.execute(cfg['preStm']['cycle'][8], (cfg['kickAfter'],))
-            result = con.fetchall()
-            for row in result:
-                sub.flair.delete(eddit.redditor(row[0]))
-                reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
-                sleep(0.1)
+        print("\nAlive: {} | Killed {}".format(alive,killed))
 
-            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
-            comment.mod.distinguish(how='yes', sticky=True)
+        con.execute(cfg['preStm']['cycle'][6])
+        result = con.fetchall()
 
-            con.execute(cfg['preStm']['cycle'][9], (cfg['kickAfter'],))
-            con.execute("TRUNCATE TABLE VoteCall");
-            con.execute("COMMIT;")
-            if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(cycle)))
-            print("Moved to cycle {}\n".format(str(cycle)))
+        if (len(result) == 4):
+            good += result[0][1] + result[3][1] + 1
+            bad += result[1][1] + result[2][1] + 1
 
-            return cycle
+        for row in result:
+            print("{} {} still alive".format(row[1], row[0]))
+
+        print("MI6 remaining: {}".format(good))
+        print("The Twelve remaining: {}".format(bad))
+
+        con.execute(cfg['preStm']['cycle'][7], (cfg['voteThreshold'],))
+        result = con.fetchall()
+        for row in result:
+            random.seed(time.time())
+            n = random.randint(0,len(cfg['deathMsg']) - 1)
+            sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1],cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
+            reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, alive, good, bad, killed, alive + killed))
+            sleep(0.1)
+
+        con.execute(cfg['preStm']['cycle'][8])
+        result = con.fetchall()
+        for row in result:
+            sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
+            sleep(0.1)
+
+        con.execute(cfg['preStm']['cycle'][9])
+        con.execute(cfg['preStm']['cycle'][10])
+        con.execute(cfg['preStm']['cycle'][11])
+        con.execute(cfg['preStm']['cycle'][12], (cfg['kickAfter'],))
+        result = con.fetchall()
+        for row in result:
+            sub.flair.delete(reddit.redditor(row[0]))
+            reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
+            sleep(0.1)
+
+        print("10")
+        comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, alive, good, bad, killed, alive + killed))
+        comment.mod.distinguish(how='yes', sticky=True)
+        con.execute(cfg['preStm']['cycle'][13], (cfg['kickAfter'],))
+        con.execute("TRUNCATE TABLE VoteCall");
+        con.execute("COMMIT;")
+        if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {}**".format(str(cycle)))
+        print("Moved to cycle {}\n".format(str(cycle)))
+
+        return cycle
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
