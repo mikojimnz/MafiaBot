@@ -61,13 +61,15 @@ def main():
                 elif (re.search('!leave', item.body)):
                     removeUser(item, sub, con, cfg)
                 elif ((re.search('!vote', item.body)) and (state == 1)):
-                    voteUser(item, reddit, sub, con, cfg, curCycle)
+                    voteUser(item, reddit, con, cfg, curCycle)
                 elif ((re.search('!burn', item.body)) and (state == 1)):
                     burnUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search('!digup', item.body)) and (state == 1)):
-                    digupUser(item, sub, con, cfg)
+                    digupUser(item, con, cfg)
                 elif ((re.search('!locate', item.body)) and (state == 1)):
-                    locateUser(item, sub, con, cfg)
+                    locateUser(item, con, cfg)
+                elif ((re.search('!request', item.body)) and (state == 1)):
+                    requestUser(item, reddit, con, cfg)
                 elif ((re.search('!list', item.body))):
                     getList(item, con, cfg, state)
                 elif ((re.search('!stats', item.body)) and (state == 1)):
@@ -76,10 +78,10 @@ def main():
                     showHelp(item, cfg)
                 elif (re.search('!rules', item.body)):
                     showRules(item, cfg)
-                elif (re.search('!gamestate', item.body)):
+                elif (re.search('!GAMESTATE', item.body)):
                     state = gameState(item, reddit, con, cfg)
                     save(state, curCycle, curPos)
-                elif ((re.search('!cycle', item.body)) and (state == 1)):
+                elif ((re.search('!CYCLE', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
                     save(state, curCycle, curPos)
                 elif (re.search('!ANNOUNCEMENT', item.body)):
@@ -142,7 +144,7 @@ def save(state, curCycle, curPos):
         jsonFile2.truncate()
 
 def gameState(item, reddit, con, cfg):
-    pattern = re.search("!gamestate\s([0-9]{1,1})(\s-s)?", item.body)
+    pattern = re.search("!GAMESTATE\s([0-9]{1,1})(\s-s)?", item.body)
     setState = pattern.group(1)
     silent = pattern.group(2)
     players = 0
@@ -222,7 +224,7 @@ def removeUser(item, sub, con, cfg):
         con.close()
         os._exit(-1)
 
-def voteUser(item, reddit, sub, con, cfg, curCycle):
+def voteUser(item, reddit, con, cfg, curCycle):
     pattern = re.search("!vote\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     mode = {
@@ -360,7 +362,7 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
         con.close()
         os._exit(-1)
 
-def digupUser(item, sub, con, cfg):
+def digupUser(item, con, cfg):
     pattern = re.search("!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     random.seed(time.time())
@@ -423,7 +425,7 @@ def digupUser(item, sub, con, cfg):
     else:
         item.reply(cfg['reply']['err']['nmFmt'])
 
-def locateUser(item, sub, con, cfg):
+def locateUser(item, con, cfg):
     pattern = re.search("!locate\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     role = 0
@@ -457,6 +459,47 @@ def locateUser(item, sub, con, cfg):
 
             item.reply(cfg['reply']['locateUser'].format(name, r[0][0]))
             print("  > {} has located {}".format(item.author.name, name))
+        except mysql.connector.Error as err:
+            print("EXCEPTION {}".format(err))
+            con.close()
+            os._exit(-1)
+    else:
+        item.reply(cfg['reply']['err']['nmFmt'])
+
+def requestUser(item, reddit, con, cfg):
+    pattern = re.search("!request\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    name = ""
+
+    if pattern:
+        name = pattern.group(2)
+        try:
+            con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['spec'])
+                return
+
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['noParticipate'])
+                return
+
+            con.execute(cfg['preStm']['digupUser'], (name,))
+            r = con.fetchall()
+
+            if ((len(r) <= 0) or (r[0][1]) == 0):
+                item.reply(cfg['reply']['err']['notFound'])
+                return
+
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} Requested: {}".format(item.author.name, name)))
+            con.execute("COMMIT;")
+
+            item.reply(cfg['reply']['requestUser'])
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['requestUser'].format(name))
+            print("  > {} has requested info on {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
             con.close()

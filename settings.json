@@ -187,7 +187,8 @@
     "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.\n\nThis hit will expire after this round, round {}.",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
-    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate: Shows the location of the user.\n* !rules: Shows the rules.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated.",
+    "requestUser": "Your info request has been posted.",
+    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate: Shows the location of the user.\n* !request USERNAME: Ask for intel anonymously on a player.\n* !rules: Shows the rules.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated.",
     "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Round lasts 6 hours. 2 Day/Night cycles, 4 rounds per day.\n4. A user must receive at least 2 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.\n5. At the end of each round, an announcement will be made about how many people are alive and how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
     "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends."
   },
@@ -221,6 +222,7 @@
     "min15": "Round ending in 15 minutes!\nCast your final kills soon!",
     "min5": "Round ending in 5 minutes!\nCast your final kills now!",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
+    "requestUser": "A request for intel on u/{} has been filed anonymously.",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
     "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
