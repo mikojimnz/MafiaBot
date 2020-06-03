@@ -225,6 +225,10 @@ def removeUser(item, sub, con, cfg):
 def voteUser(item, reddit, sub, con, cfg, curCycle):
     pattern = re.search("!vote\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
+    mode = {
+    0: "Night",
+    1: "Day"
+    }
 
     if pattern:
         name = pattern.group(2)
@@ -240,9 +244,10 @@ def voteUser(item, reddit, sub, con, cfg, curCycle):
                 if ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
                     item.reply(cfg['reply']['err']['role'])
                     return
-                elif (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 == 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 != 0))):
-                    item.reply(cfg['reply']['err']['cycle'])
-                    return
+
+            if (((str(r[0][1]) == "ASSASSIN") and (curCycle % 2 == 0)) or ((str(r[0][1]) == "OPERATIVE") and (curCycle % 2 != 0))):
+                item.reply(cfg['reply']['err']['cycle'].format(mode[curCycle % 2]))
+                return
 
             con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
             r = con.fetchall()
@@ -265,9 +270,9 @@ def voteUser(item, reddit, sub, con, cfg, curCycle):
             item.reply(cfg['reply']['voteUser'])
 
             if ((str(r[0][1]) == "ASSASSIN") or (str(r[0][1]) == "OPERATIVE")):
-                reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlertEsc'].format(name))
+                reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlertEsc'].format(name, curCycle))
             else:
-                reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlert'].format(name))
+                reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlert'].format(name, curCycle))
 
             print("  > {} has voted to kill {}".format(item.author.name, name))
         except mysql.connector.Error as err:
