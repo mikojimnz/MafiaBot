@@ -4,6 +4,8 @@
     "DozenIncBOT",
     "goldenninjadragon"
   ],
+  "allowAllVoteUpTo": 0,
+  "allowBurnOn": 8,
   "allowJoinUptTo": 2,
   "clock": {
     "hour1": 3,
@@ -141,6 +143,7 @@
       "burnUsed": "You have already used your abulity to burn.",
       "cycle": "You cannot vote at this time.",
       "noBurnLeft": "There is no one left to burn",
+      "noBurnYet": "The burn command is not yet unlocked.",
       "noParticipate": "To use this command, you must comment at least once per round to matain active status. Users who become inactive will be kicked.",
       "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
       "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",

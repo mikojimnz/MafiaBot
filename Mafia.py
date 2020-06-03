@@ -234,7 +234,7 @@ def voteUser(item, sub, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['spec'])
                 return
 
-            if (curCycle != 0):
+            if (curCycle >= cfg['allowAllVoteUpTo']):
                 if ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
                     item.reply(cfg['reply']['err']['role'])
                     return
@@ -276,6 +276,11 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
     burned = ""
     burnedRole = ""
     side = 0
+
+
+    if (curCycle <= cfg['allowBurnOn']):
+        item.reply(cfg['reply']['err']['noBurnYet'])
+        return
 
     try:
         con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
@@ -470,7 +475,7 @@ def getList(item, con, cfg, state):
 
         con.execute("COMMIT;")
         item.reply(cfg['reply']['getList'].format(deadNum + aliveNum, deadNum, dead, aliveNum, alive))
-        print("{} requested players".format(item.author.name))
+        print("  > {} requested players".format(item.author.name))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
