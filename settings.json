@@ -99,7 +99,7 @@
       "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "SELECT `username` FROM Mafia WHERE `alive`='1';",
-      "UPDATE Mafia SET `inactive` = 0 WHERE `comment`>0;",
+      "UPDATE Mafia SET `inactive` = 0 WHERE (`comment`>0 AND `alive`=1);",
       "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE `comment`=0;",
       "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
       "SELECT username FROM Mafia WHERE `inactive`>=%s;",
