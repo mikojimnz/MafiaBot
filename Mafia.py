@@ -236,7 +236,7 @@ def voteUser(item, reddit, sub, con, cfg, curCycle):
                 item.reply(cfg['reply']['err']['spec'])
                 return
 
-            if ((cfg['allowAllVoteAlways'] != True) or (curCycle >= cfg['allowAllVoteUpTo'])):
+            if ((cfg['allowAllVoteAlways'] == 0) or (curCycle >= cfg['allowAllVoteUpTo'])):
                 if ((str(r[0][1]) == "HANDLER") or (str(r[0][1]) == "ANALYST")):
                     item.reply(cfg['reply']['err']['role'])
                     return
@@ -263,7 +263,12 @@ def voteUser(item, reddit, sub, con, cfg, curCycle):
             con.execute("COMMIT;")
 
             item.reply(cfg['reply']['voteUser'])
-            reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlert'].format(name))
+
+            if ((str(r[0][1]) == "ASSASSIN") or (str(r[0][1]) == "OPERATIVE")):
+                reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlertEsc'].format(name))
+            else:
+                reddit.redditor(name).message("A hit has been put on you!", cfg['reply']['hitAlert'].format(name))
+
             print("  > {} has voted to kill {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
@@ -504,14 +509,14 @@ def getStats(item, con, cfg, state, curCycle):
         else:
             role = "spectator"
 
-        con.execute(cfg['preStm']['cycle'][1])
+        con.execute(cfg['preStm']['cycle'][5])
         result = con.fetchall()
 
         if (len(result) == 2):
             alive = result[0][1]
             killed = result[1][1] - 1
 
-        con.execute(cfg['preStm']['cycle'][2])
+        con.execute(cfg['preStm']['cycle'][6])
         result = con.fetchall()
 
         if (len(result) == 4):

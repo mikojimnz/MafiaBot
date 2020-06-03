@@ -4,7 +4,7 @@
     "DozenIncBOT",
     "goldenninjadragon"
   ],
-  "allowAllVoteAlways": 4,
+  "allowAllVoteAlways": 1,
   "allowAllVoteUpTo": 4,
   "allowBurnOn": 8,
   "allowJoinUptTo": 2,
@@ -181,7 +181,8 @@
         "over"
       ]
     ],
-    "hitAlert": "u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.",
+    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.",
+    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!",
     "locateUser": "u/{} is located at {}",
     "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.",
     "msgTitle": "Mafia: The Twelve vs MI6",
