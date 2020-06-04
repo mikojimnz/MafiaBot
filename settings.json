@@ -6,7 +6,7 @@
   ],
   "allowAllVoteAlways": 1,
   "allowAllVoteUpTo": 4,
-  "allowBurnOn": 8,
+  "allowBurnOn": 7,
   "allowJoinUptTo": 2,
   "clock": {
     "hour1": 3,
@@ -96,7 +96,7 @@
       "UPDATE VoteCall SET `vote`='' WHERE `vote`=%s;",
       "UPDATE Mafia SET `alive`='0' WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
       "SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
-      "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role;",
+      "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role ORDER BY role desc;",
       "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "SELECT `username` FROM Mafia WHERE `alive`='1';",
       "UPDATE Mafia SET `inactive` = 0 WHERE (`comment`>0 AND `alive`=1);",
