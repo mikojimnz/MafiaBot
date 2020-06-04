@@ -124,7 +124,7 @@ def main():
                 item = type('', (), {})()
                 item.author = type('', (), {})()
                 item.author.name = "*SELF*"
-                item.body = "!cycle"
+                item.body = "!CYCLE"
                 item.created_utc = time.time()
                 curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
                 save(state, curCycle, curPos)
