@@ -182,7 +182,7 @@
       ]
     ],
     "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this round, round {}.",
-    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!",
+    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this round, round {}.",
     "locateUser": "u/{} is located at {}",
     "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.\n\nThis hit will expire after this round, round {}.",
     "msgTitle": "Mafia: The Twelve vs MI6",

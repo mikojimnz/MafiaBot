@@ -55,6 +55,9 @@ def main():
                 if item is None:
                     break
 
+                if (item.was_comment == True):
+                    continue
+
                 if ((re.search('!join', item.body)) and (curCycle < cfg['allowJoinUptTo'])):
                     curPos = addUser(item, sub, con, cfg, curPos)
                     save(state, curCycle, curPos)
@@ -568,8 +571,8 @@ def getStats(item, con, cfg, state, curCycle):
         result = con.fetchall()
 
         if (len(result) == 4):
-            good += result[0][1] + result[3][1] + 1
-            bad += result[1][1] + result[2][1] + 1
+            bad += result[0][1] + result[3][1] + 1
+            good += result[1][1] + result[2][1] + 1
 
         con.execute("COMMIT;")
         item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], day, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
@@ -641,8 +644,8 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         result = con.fetchall()
 
         if (len(result) == 4):
-            good += result[0][1] + result[3][1] + 1
-            bad += result[1][1] + result[2][1] + 1
+            bad += result[0][1] + result[3][1] + 1
+            good += result[1][1] + result[2][1] + 1
 
         for row in result:
             print("{} {} still alive".format(row[1], row[0]))
