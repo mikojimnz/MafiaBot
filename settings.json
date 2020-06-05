@@ -46,8 +46,8 @@
     "Run over by train"
   ],
   "flairs": {
-    "alive": "Mafia: Alive - Day {}",
-    "dead": "{}: {} on Day {}"
+    "alive": "Mafia: Alive - Round {}",
+    "dead": "{}: {} on Round {}"
   },
   "flairID": {
     "alive": "4d49d8fe-a271-11ea-8428-0e7ec366ebb3",
@@ -127,9 +127,9 @@
     "burnUser": "You have burned a teammate!\n\nIntelligence Report:\n\nu/{} is a {}",
     "burnedUser": "You have been exposed by u/{} on round {}!\n\nThank you for playing. You are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",
     "cycle": [
-      "**You Were Killed!**\n\nYou were {} on day {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
-      "**You survived another day!**\n\nNow day {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
-      "You were inactive for two days and were automatically kicked from the game. Please wait until after the current game ends to rejoin.",
+      "**You Were Killed!**\n\nYou were \"{}\" on round {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
+      "**You survived another day!**\n\nNow round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
+      "You were inactive for 48 hours and were automatically kicked from the game. Please wait until after the current game ends to rejoin.",
       "You have escaped your hit! Take back revenge now!"
     ],
     "digupUser": "**Intelligence Report**\n\nu/{} is believed to be {} and is currently {}\n\n^(This information is believed to be {}% credible.)",
@@ -150,7 +150,7 @@
       "cycle": "You cannot vote at this time. It is currently {}",
       "noBurnLeft": "There is no one left to burn",
       "noBurnYet": "The burn command is not yet unlocked.",
-      "noParticipate": "To use this command, you must comment at least once per round to maintain active status. Users who become inactive for more than 2 days (8 rounds) will be kicked.",
+      "noParticipate": "To use this command, you must comment at least once per round to maintain active status. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
       "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
       "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
@@ -169,11 +169,11 @@
     },
     "gameEnd": "The game has ended.\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
     "gamePause": "The game has been paused.\n\nPlease check the game thread more info.",
-    "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}\n\nYou do not need to be present at all times to play. However, if you are inactive for more than 2 days you will be kicked for inactivity.",
+    "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}\n\nYou do not need to be present at all times to play. However, if you are inactive for more than 48 hours you will be kicked for inactivity.",
     "getList": "Total players: {}\n\nDead: {}\n{}\n\nAlive: {}\n{}",
     "getSts": [
       [
-        "Current Stats:\n\nGame is {} on day {} (Round: {}).\nIt is {}.\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
+        "Current Stats:\n\nGame is {}.\nIt is {} on round {} (Cycle: {}).\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
       ],
       [
         "not active",
@@ -181,16 +181,16 @@
         "over"
       ]
     ],
-    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this round, round {}.",
-    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this round, round {}.",
+    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this cycle, cycle {}.",
+    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this cycle, cycle {}.",
     "locateUser": "u/{} is located at {}",
-    "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.\n\nThis hit will expire after this round, round {}.",
+    "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.\n\nThis hit will expire after this cycle, cycle {}.",
     "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "requestUser": "Your info request has been posted.",
     "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate: Shows the location of the user.\n* !request USERNAME: Ask for intel anonymously on a player.\n* !rules: Shows the rules.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated.",
-    "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Round lasts 6 hours. 2 Day/Night cycles, 4 rounds per day.\n4. A user must receive at least 2 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.\n5. At the end of each round, an announcement will be made about how many people are alive and how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
-    "voteUser": "Your vote has been tallied. You can change your vote until the round ends."
+    "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Cycle lasts 6 hours. 2 Day/Night rounds, 4 cycles per day.\n4. A user must receive at least 2 votes to be executed. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.\n5. At the end of each cycle, an announcement will be made about how many people are alive and how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
+    "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends."
   },
   "roles": [
     [
@@ -214,13 +214,13 @@
     "user": "dummy"
   },
   "sticky": {
-    "cycle": "It is now **{}** on day {} (Round {}).\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
+    "cycle": "It is now **{}** on Round {} (Cycle {}).\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
     "burnUser": "u/{} has burned their own member, u/{} for intelligence",
     "end": "The game has ended! Thanks for playing!\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
-    "halt": "`Warning: HALT command recieved. Stopping processes.`\n\n`Info: inbox.stream() listener closed (1)`\n\n`Info: Database connection closed (1)`",
-    "min30": "Round ending in 30 minutes!\nWho is working for who?!",
-    "min15": "Round ending in 15 minutes!\nCast your final kills soon!",
-    "min5": "Round ending in 5 minutes!\nCast your final kills now!",
+    "halt": "`Warning: HALT command recieved. Stopping processes.",
+    "min30": "Cycle ending in 30 minutes!\nWho is working for who?!",
+    "min15": "Cycle ending in 15 minutes!\nCast your final kills soon!",
+    "min5": "Cycle ending in 5 minutes!\nCast your final kills now!",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "requestUser": "A request for intel on u/{} has been filed anonymously.",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",

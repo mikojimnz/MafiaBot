@@ -45,7 +45,7 @@ def main():
     print("Connected as {}".format(str(reddit.user.me())))
     print("Database Connections: {}".format(len(conStat)))
     print("state: {}".format(state))
-    print("curCycle: {} (Round: {})".format(curCycle, curCycle + 1))
+    print("curCycle: {} (Cycle: {})".format(curCycle, curCycle + 1))
     print("curPos: {}".format(curPos))
     print("______")
 
@@ -583,7 +583,7 @@ def getStats(item, con, cfg, state, curCycle):
             good = result[0][1] + result[3][1]
 
         con.execute("COMMIT;")
-        item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], day, round, mode[curCycle % 2], role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
+        item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], mode[curCycle % 2], day, round, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
