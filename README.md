@@ -26,18 +26,6 @@ Play against other members to find out who amongst each other you can trust and 
 
 Send a PM to u/DozenIncBOT with !join. Subject does not matter. **A chat message is not a private message.**
 
-**New Additions:**
-
-* **All users can now kill**
-* Players will be notified if a hit is placed on them.
-* Assassins and Operatives can !digup info but it is highly unreliable compared to Analysts and Handlers
-* Analysts and Handlers have higher accuracy in using !digup command.
-* Assassins and Operatives can escape their kill if they put a hit back on the correct person
-* Burn your own teammates is now unlocked after Round 8 (Day 4)
-* !locate gives a clue of a player's role based on their location
-* !list show players who have died and are still alive.
-* !request command asks for help anonymously.
-
 **Tips:**
 
 * You do not need to make a new PM for each command. Simply reply to any existing PM from the bot.
