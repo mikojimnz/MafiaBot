@@ -525,7 +525,7 @@ def getList(item, con, cfg, state):
         result = con.fetchall()
 
         for row in result:
-            dead += "\n* u/{}".format(row[0])
+            dead += "\n* u/{}: {}".format(row[0], row[1])
             deadNum += 1
 
         con.execute(cfg['preStm']['getList'][1])

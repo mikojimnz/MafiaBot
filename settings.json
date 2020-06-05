@@ -108,7 +108,7 @@
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
     "getAll": "SELECT username FROM Mafia;",
     "getList": [
-      "SELECT `username` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
+      "SELECT `username`,`role` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
       "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
     ],
     "leave": "DELETE FROM Mafia WHERE `username`=%s;",
