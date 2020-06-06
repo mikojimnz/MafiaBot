@@ -9,8 +9,8 @@
   "allowJoinUptTo": 1,
   "allowVoteAnyTime": 1,
   "clock": {
-    "hour1": 3,
-    "hour2": 9
+    "hour1": 2,
+    "hour2": 8
   },
   "cmtThreshold": 0,
   "deathMsg": [
