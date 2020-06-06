@@ -598,7 +598,7 @@ def showRules(item, cfg):
 def cycle(item, reddit, sub, con, cfg, curCycle):
     round = curCycle + 1
     nextRound = round + 1
-    day = int(math.ceil(round/2))
+    day = int(math.ceil(nextRound/2))
     alive = -1
     killed = -1
     good = -1
@@ -612,6 +612,16 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to {}".format(nextRound)))
+
+        con.execute(cfg['preStm']['cycle']['resetInactive'])
+        con.execute(cfg['preStm']['cycle']['incrementInactive'])
+        con.execute(cfg['preStm']['cycle']['resetComment'])
+        con.execute(cfg['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
+        result = con.fetchall()
+        for row in result:
+            sub.flair.delete(reddit.redditor(row[0]))
+            reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
+            sleep(0.1)
 
         con.execute(cfg['preStm']['cycle']['getVotes'])
         result = con.fetchall()
@@ -640,15 +650,6 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
                         print("  > {} escaped".format(target[0]))
 
         con.execute(cfg['preStm']['cycle']['killPlayer'], (cfg['voteThreshold'],))
-        con.execute(cfg['preStm']['cycle']['resetInactive'])
-        con.execute(cfg['preStm']['cycle']['incrementInactive'])
-        con.execute(cfg['preStm']['cycle']['resetComment'])
-        con.execute(cfg['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
-        result = con.fetchall()
-        for row in result:
-            sub.flair.delete(reddit.redditor(row[0]))
-            reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
-            sleep(0.1)
 
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
@@ -690,7 +691,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         con.execute("TRUNCATE TABLE VoteCall");
         con.execute("COMMIT;")
 
-        comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[curCycle % 2], day, nextRound, alive, good, bad, killed, alive + killed))
+        comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['cycle'].format(mode[round % 2], day, nextRound, alive, good, bad, killed, alive + killed))
         comment.mod.distinguish(how='yes', sticky=True)
         if (item.author.name != "*SELF*"): item.reply("**Moved to cycle {} (Round: {})**".format(round, nextRound))
         print("Moved to cycle {}\n".format(str(nextRound)))
