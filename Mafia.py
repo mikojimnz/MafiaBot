@@ -196,7 +196,10 @@ def addUser(item, sub, con, cfg, curPos):
             curPos = 0
 
         random.seed(time.time())
-        loc = cfg['location'][random.randint(0, len(cfg['location']) - 1)]
+        if ((curPos == 0) or (curPos == 1)):
+            loc = cfg['location'][0][random.randint(0, len(cfg['location'][0]) - 1)]
+        else:
+            loc = cfg['location'][1][random.randint(0, len(cfg['location'][1]) - 1)]
 
         item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], loc, cfg['sub'], cfg['targetPost']))
         sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
@@ -417,7 +420,6 @@ def reviveUser(item, reddit, sub, con, cfg, curCycle):
             os._exit(-1)
     else:
         item.reply(cfg['reply']['err']['nmFmt'])
-
 
 def digupUser(item, con, cfg):
     pattern = re.search("!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
@@ -859,7 +861,11 @@ def restart(item, reddit, sub, db, con, cfg):
                     curPos = 0
 
                 random.seed(time.time())
-                loc = cfg['location'][random.randint(0, len(cfg['location']) - 1)]
+                if ((curPos == 0) or (curPos == 1)):
+                    loc = cfg['location'][0][random.randint(0, len(cfg['location'][0]) - 1)]
+                else:
+                    loc = cfg['location'][1][random.randint(0, len(cfg['location'][1]) - 1)]
+
                 con.execute(cfg['preStm']['replaceUser'], (time.time(), row[0], cfg['roles'][0][curPos], loc))
                 reddit.redditor(row[0]).message("A new game is starting", cfg['reply']['newGame'].format(row[0], cfg['roles'][0][curPos]))
                 curPos += 1
