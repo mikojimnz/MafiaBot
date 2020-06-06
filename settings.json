@@ -47,13 +47,14 @@
   ],
   "flairs": {
     "alive": "Mafia: Alive - Round {}",
-    "dead": "{}: {} on Round {}"
+    "dead": "{}: {} on Round {}",
+    "survived": "{}: Survived to Round {}"
   },
   "flairID": {
     "alive": "4d49d8fe-a271-11ea-8428-0e7ec366ebb3",
     "dead": "56b93830-a271-11ea-ae64-0ec385b6d385"
   },
-  "kickAfter": 8,
+  "kickAfter": 7,
   "location": [
     "London",
     "Paris",
@@ -98,15 +99,16 @@
       "getAliveCnt":"SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
       "getRoleCnt": "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role ORDER BY role desc;",
       "getDead": "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
-      "getAlive": "SELECT `username` FROM Mafia WHERE `alive`='1';",
+      "getAlive": "SELECT `username`,`role` FROM Mafia WHERE `alive`='1';",
       "resetInactive": "UPDATE Mafia SET `inactive` = 0 WHERE (`comment`>0 AND `alive`=1);",
-      "incrementInactive": "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE `comment`=0;",
+      "incrementInactive": "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE (`comment`=0 AND `alive` = 1);",
       "resetComment": "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
       "getInactive": "SELECT username FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);",
       "removeInactive": "DELETE FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);"
     },
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
-    "getAll": "SELECT username FROM Mafia;",
+    "getAll": "SELECT `username` FROM Mafia;",
+    "getDead": "SELECT `username`,`role` FROM Mafia WHERE `alive`=0;",
     "getList": [
       "SELECT `username`,`role` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
       "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
@@ -167,7 +169,7 @@
       ],
       "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT)."
     },
-    "gameEnd": "The game has ended.\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
+    "gameEnd": "The game has ended. [**Check the game thread to see who won**](https://reddit.com/r/{}/comments/{})\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
     "gamePause": "The game has been paused.\n\nPlease check the game thread more info.",
     "gameStart": "The game has started.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}\n\nYou do not need to be present at all times to play. However, if you are inactive for more than 48 hours you will be kicked for inactivity.",
     "getList": "Total players: {}\n\nDead: {}\n{}\n\nAlive: {}\n{}",
@@ -216,7 +218,7 @@
   "sticky": {
     "cycle": "It is now **{}** on Round {} (Cycle {}).\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
     "burnUser": "u/{} has burned their own member, u/{} for intelligence",
-    "end": "The game has ended! Thanks for playing!\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
+    "end": "The game has ended! Thanks for playing!\n\n**{} WINS!**\n* Survivors: {}\n* Killed: {}\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
     "halt": "`Warning: HALT command recieved. Stopping processes.",
     "min30": "Cycle ending in 30 minutes!\nWho is working for who?!",
     "min15": "Cycle ending in 15 minutes!\nCast your final kills soon!",
@@ -229,5 +231,5 @@
   },
   "sub": "KillingEve",
   "targetPost": "gve7ar",
-  "voteThreshold": 2
+  "voteThreshold": 1
 }

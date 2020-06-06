@@ -82,7 +82,7 @@ def main():
                 elif (re.search('!rules', item.body)):
                     showRules(item, cfg)
                 elif (re.search('!GAMESTATE', item.body)):
-                    state = gameState(item, reddit, con, cfg)
+                    state = gameState(item, reddit, sub, con, cfg)
                     save(state, curCycle, curPos)
                 elif ((re.search('!CYCLE', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
@@ -146,7 +146,7 @@ def save(state, curCycle, curPos):
         json.dump(tmp, jsonFile2)
         jsonFile2.truncate()
 
-def gameState(item, reddit, con, cfg):
+def gameState(item, reddit, sub, con, cfg):
     pattern = re.search("!GAMESTATE\s([0-9]{1,1})(\s-s)?", item.body)
     setState = pattern.group(1)
     silent = pattern.group(2)
@@ -168,8 +168,6 @@ def gameState(item, reddit, con, cfg):
                     reddit.redditor(row[0]).message("The game has paused!", cfg['reply']['gamePause'])
                 elif ((setState == "1") and (silent == None)):
                     reddit.redditor(row[0]).message("The game has started!", cfg['reply']['gameStart'].format(cfg['sub'], cfg['targetPost']))
-                elif ((setState == "2") and (silent == None)):
-                    reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
                 sleep(0.1)
 
             if ((setState == "0") and (silent == None)):
@@ -179,8 +177,7 @@ def gameState(item, reddit, con, cfg):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['start'].format(players))
                 comment.mod.distinguish(how='yes', sticky=True)
             elif ((setState == "2") and (silent == None)):
-                comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'])
-                comment.mod.distinguish(how='yes', sticky=True)
+                endGame(item, reddit, sub, con, cfg)
 
             con.execute("COMMIT;")
             if (item.author.name != "*SELF*"): item.reply("**gamestate changed to {}**".format(setState))
@@ -623,6 +620,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
             sleep(0.1)
 
+        con.execute(cfg['preStm']['cycle']['removeInactive'])
         con.execute(cfg['preStm']['cycle']['getVotes'])
         result = con.fetchall()
 
@@ -702,6 +700,66 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         con.close()
         os._exit(-1)
 
+def endGame(item, reddit, sub, con, cfg):
+    round = curCycle + 1
+    alive = -1
+    killed = -1
+    good = -1
+    bad = -1
+    winner = ""
+
+    con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Game Ended"))
+    con.execute(cfg['preStm']['cycle']['resetInactive'])
+    con.execute(cfg['preStm']['cycle']['incrementInactive'])
+    con.execute(cfg['preStm']['cycle']['resetComment'])
+    con.execute(cfg['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
+    result = con.fetchall()
+    for row in result:
+        sub.flair.delete(reddit.redditor(row[0]))
+        reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
+        sleep(0.1)
+
+    on.execute(cfg['preStm']['cycle']['getAliveCnt'])
+    result = con.fetchall()
+
+    if (len(result) == 2):
+        alive = result[0][1]
+        killed = result[1][1] - 1
+
+    print("\nAlive: {} | Killed {}".format(alive,killed))
+
+    con.execute(cfg['preStm']['cycle']['getRoleCnt'])
+    result = con.fetchall()
+
+    if (len(result) == 4):
+        bad = result[1][1] + result[2][1]
+        good = result[0][1] + result[3][1]
+
+    con.execute(cfg['preStm']['getDead'])
+    result = con.fetchall()
+    for row in result:
+        reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'].format(cfg['sub'], cfg['gve7ar']))
+        sleep(0.1)
+
+    con.execute(cfg['preStm']['cycle']['getAlive'])
+    result = con.fetchall()
+
+    for row in result:
+        reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
+        sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['surved'].format(row[1], day), flair_template_id=cfg['flairID']['alive'])
+        sleep(0.1)
+
+    con.execute("COMMIT;")
+
+    if (good > bad):
+        winner = "MI6"
+    else:
+        winner = "The Twelve"
+
+    comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['end'].format(winner, alive, killed))
+    comment.mod.distinguish(how='yes', sticky=True)
+    print("Game Ended")
+
 def announce(item, reddit, con, cfg):
     pattern = re.search("!ANNOUNCEMENT\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\;\',./’]+)", item.body)
     msg = pattern.group(1)
@@ -758,6 +816,7 @@ def restart(item, reddit, sub, db, con, cfg):
 
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['restart'])
             comment.mod.distinguish(how='yes', sticky=True)
+            save(0, 0, 0)
 
             if (item.author.name != "*SELF*"): item.reply("**Resetting Game**")
             print("REMOTE RESTART RECIEVED")
@@ -790,6 +849,7 @@ def reset(item, reddit, sub, db, con, cfg):
 
             comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['reset'])
             comment.mod.distinguish(how='yes', sticky=True)
+            save(0, 0, 0)
 
             if (item.author.name != "*SELF*"): item.reply("**Resetting Game**")
             print("REMOTE RESET RECIEVED")
