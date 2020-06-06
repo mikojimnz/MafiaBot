@@ -1,4 +1,4 @@
-# DozenIncBOT
+# MafiaBot
 Reddit Mafia Bot for r/KillingEve
 
 **Who will survive? MI6 or The Twelve ?!**
