@@ -67,6 +67,8 @@ def main():
                     voteUser(item, reddit, con, cfg, curCycle)
                 elif ((re.search('!burn', item.body)) and (state == 1)):
                     burnUser(item, reddit, sub, con, cfg, curCycle)
+                elif ((re.search('!revive', item.body)) and (state == 1)):
+                    reviveUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search('!digup', item.body)) and (state == 1)):
                     digupUser(item, con, cfg)
                 elif ((re.search('!locate', item.body)) and (state == 1)):
@@ -351,6 +353,7 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
 
         con.execute(cfg['preStm']['burn'][4], (item.author.name,))
         con.execute(cfg['preStm']['burn'][5], (burned,))
+        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} burned {}".format(item.author.name, burned)))
         con.execute("COMMIT;")
 
         n = random.randint(0,len(cfg['deathMsg']) - 1)
@@ -358,12 +361,63 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
         reddit.redditor(burned).message("You have been burned!", cfg['reply']['burnedUser'].format(item.author.name, round))
         item.reply(cfg['reply']['burnUser'].format(target[0], target[1]))
         comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['burnUser'].format(item.author.name, burned))
-        con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} burned {}".format(item.author.name, burned)))
         print("  > {} has burned {}".format(item.author.name, burned))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
         os._exit(-1)
+
+def reviveUser(item, reddit, sub, con, cfg, curCycle):
+    pattern = re.search("!revive\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    name = ""
+    round = curCycle + 1
+    day = int(math.ceil(round/2))
+
+    if (cfg['allowRevive'] == 0):
+        item.reply(cfg['reply']['err']['disallowRevive'])
+        return
+
+    if pattern:
+        name = pattern.group(2)
+        try:
+            con.execute(cfg['preStm']['chkUsr'], (item.author.name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['spec'])
+                return
+
+            con.execute(cfg['preStm']['revive'][0], (item.author.name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['reviveUsed'])
+                return
+
+            con.execute(cfg['preStm']['revive'][1], (name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['notFound'])
+                return
+
+            con.execute(cfg['preStm']['revive'][2], (item.author.name,))
+            con.execute(cfg['preStm']['revive'][3], (name,))
+            con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} revived {}".format(item.author.name, name)))
+            con.execute("COMMIT;")
+
+            sub.flair.set(reddit.redditor(name), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
+            reddit.redditor(name).message("You have been revived!", cfg['reply']['revivedUser'].format(item.author.name))
+            item.reply(cfg['reply']['reviveUser'].format(name))
+
+            print("  > {} has revived {}".format(item.author.name, name))
+        except mysql.connector.Error as err:
+            print("EXCEPTION {}".format(err))
+            con.close()
+            os._exit(-1)
+    else:
+        item.reply(cfg['reply']['err']['nmFmt'])
+
 
 def digupUser(item, con, cfg):
     pattern = re.search("!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
@@ -647,7 +701,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
                         reddit.redditor(target[0]).message("You have escaped!", cfg['reply']['cycle'][3])
                         print("  > {} escaped".format(target[0]))
 
-        con.execute(cfg['preStm']['cycle']['killPlayer'], (cfg['voteThreshold'],))
+        con.execute(cfg['preStm']['cycle']['killPlayer'], (curCycle, cfg['voteThreshold']))
 
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
