@@ -25,6 +25,7 @@ def main():
     with open("save.json") as jsonFile2:
         sve = json.load(jsonFile2)
 
+    exceptCnt = 0
     state = sve['state']
     curCycle = sve['curCycle']
     curPos = sve['curPos']
@@ -108,7 +109,9 @@ def main():
             os._exit(-1)
         except Exception as e:
             traceback.print_exc()
-            sleep(10)
+            exceptCnt += 1
+            print("Exception #{}\nSleeping for {} minutes".format(exceptCnt, (60 * exceptCnt)))
+            sleep(60 * exceptCnt)
 
         if (state == 1):
             t = datetime.datetime.now()
