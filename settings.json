@@ -164,7 +164,8 @@
         ],
         [
           "has not yet started.",
-          "has already started."
+          "has already started.",
+          "has ended."
         ]
       ],
       "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT)."

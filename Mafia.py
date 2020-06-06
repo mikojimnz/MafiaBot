@@ -82,7 +82,7 @@ def main():
                 elif (re.search('!rules', item.body)):
                     showRules(item, cfg)
                 elif (re.search('!GAMESTATE', item.body)):
-                    state = gameState(item, reddit, sub, con, cfg)
+                    state = gameState(item, reddit, sub, con, cfg, curCycle)
                     save(state, curCycle, curPos)
                 elif ((re.search('!CYCLE', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
@@ -146,7 +146,7 @@ def save(state, curCycle, curPos):
         json.dump(tmp, jsonFile2)
         jsonFile2.truncate()
 
-def gameState(item, reddit, sub, con, cfg):
+def gameState(item, reddit, sub, con, cfg, curCycle):
     pattern = re.search("!GAMESTATE\s([0-9]{1,1})(\s-s)?", item.body)
     setState = pattern.group(1)
     silent = pattern.group(2)
@@ -177,7 +177,7 @@ def gameState(item, reddit, sub, con, cfg):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['start'].format(players))
                 comment.mod.distinguish(how='yes', sticky=True)
             elif ((setState == "2") and (silent == None)):
-                endGame(item, reddit, sub, con, cfg)
+                endGame(item, reddit, sub, con, cfg, curCycle)
 
             con.execute("COMMIT;")
             if (item.author.name != "*SELF*"): item.reply("**gamestate changed to {}**".format(setState))
@@ -700,7 +700,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         con.close()
         os._exit(-1)
 
-def endGame(item, reddit, sub, con, cfg):
+def endGame(item, reddit, sub, con, cfg, curCycle):
     round = curCycle + 1
     alive = -1
     killed = -1
@@ -719,7 +719,7 @@ def endGame(item, reddit, sub, con, cfg):
         reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
         sleep(0.1)
 
-    on.execute(cfg['preStm']['cycle']['getAliveCnt'])
+    con.execute(cfg['preStm']['cycle']['getAliveCnt'])
     result = con.fetchall()
 
     if (len(result) == 2):
@@ -738,7 +738,7 @@ def endGame(item, reddit, sub, con, cfg):
     con.execute(cfg['preStm']['getDead'])
     result = con.fetchall()
     for row in result:
-        reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'].format(cfg['sub'], cfg['gve7ar']))
+        reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'].format(cfg['sub'], cfg['targetPost']))
         sleep(0.1)
 
     con.execute(cfg['preStm']['cycle']['getAlive'])
@@ -746,7 +746,7 @@ def endGame(item, reddit, sub, con, cfg):
 
     for row in result:
         reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
-        sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['surved'].format(row[1], day), flair_template_id=cfg['flairID']['alive'])
+        sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['survived'].format(row[1], round), flair_template_id=cfg['flairID']['alive'])
         sleep(0.1)
 
     con.execute("COMMIT;")
