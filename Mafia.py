@@ -702,6 +702,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
 def endGame(item, reddit, sub, con, cfg, curCycle):
     round = curCycle + 1
+    day = int(math.ceil(round/2))
     alive = -1
     killed = -1
     good = -1
@@ -746,7 +747,7 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
 
     for row in result:
         reddit.redditor(row[0]).message("The game has ended!", cfg['reply']['gameEnd'])
-        sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['survived'].format(row[1], round), flair_template_id=cfg['flairID']['alive'])
+        sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['survived'].format(row[1], day), flair_template_id=cfg['flairID']['alive'])
         sleep(0.1)
 
     con.execute("COMMIT;")
