@@ -1,6 +1,3 @@
-# MafiaBot
-Reddit Mafia Bot for r/KillingEve
-
 **Who will survive? MI6 or The Twelve ?!**
 
 Play against other members to find out who amongst each other you can trust and who will betray you. Adapted from the card game *Mafia* played in 3x05. Only the stealthy and cunning will survive.
@@ -9,22 +6,14 @@ Play against other members to find out who amongst each other you can trust and 
 
 **How To Play**
 
+*It is not recommended to play on mobile web. Please use Reddit Desktop, official Reddit App, or third party client that supports live chat.*
+
 1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.
-2. You must investigate each other to determine who is on what side. **Roles with investigative powers must share their intelligence to help inform others.**
-3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. **Each Round lasts 6 hours. 2 Day/Night cycles, 4 rounds per day.**
+2. You must investigate each other to determine who is on what side.
+3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. **Each Cycle lasts 6 hours. 2 Day/Night Rounds, 4 Cycles per day.**
 4. **A user must receive at least 2 votes to be executed**. Teams members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the investigation may not use the !vote or !digup commands.
 5. At the end of each cycle, an announcement will be made how many people are alive how many were killed.
 6. You must choose your allies carefully to seek out the enemy.
-
-**Current Game Cycle**
-
-* Start June 2, 9PM ET / 1AM GMT
-* This is a passive game, attention is not required 24/7
-* You are allowed to be inactive up to 2 (real life) days
-
-[**Join the game**](https://www.reddit.com/message/compose/?to=DozenIncBOT)
-
-Send a PM to u/DozenIncBOT with !join. Subject does not matter. **A chat message is not a private message.**
 
 **Tips:**
 
@@ -51,7 +40,8 @@ All commands must be sent privately to u/DozenIncBOT
 |!list|Shows dead and alive players.|
 |!request USERNAME|Ask for intel anonymously on a player.|
 |!burn|Exposes one of your team members for guaranteed intelligence about the other team. Can only be used once. Can be used by all. Unlocked after round 8.|
-|!vote USERNAME|Vote on who to eliminate. Can be changed until the Round ends.|
+|!revive USERNAME|Brings back a player from the dead. Can only be used once|
+|!vote USERNAME|Vote on who to eliminate. Can be changed until the Cycle ends.|
 |!digup USERNAME|Investigate the roles of other users. Has varying degree of reliability.|
 |!locate USERNAME|Shows the user's location. May give a clue as to what side they are on. Can be used by all.|
 |!stats|Gets the current stats for the game.|
