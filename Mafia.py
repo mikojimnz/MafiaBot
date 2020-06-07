@@ -883,7 +883,7 @@ def restart(item, reddit, sub, db, con, cfg):
             save(0, 0, 0)
 
             if (item.author.name != "*SELF*"): item.reply("**Resetting Game**")
-            print("REMOTE RESTART RECIEVED")
+            print("REMOTE RESTART RECEIVED")
             con.close()
             os._exit(1)
     except mysql.connector.Error as err:
@@ -916,7 +916,7 @@ def reset(item, reddit, sub, db, con, cfg):
             save(0, 0, 0)
 
             if (item.author.name != "*SELF*"): item.reply("**Resetting Game**")
-            print("REMOTE RESET RECIEVED")
+            print("REMOTE RESET RECEIVED")
             con.close()
             os._exit(1)
     except mysql.connector.Error as err:
@@ -940,7 +940,7 @@ def halt(item, reddit, db, con, cfg):
             comment.mod.distinguish(how='yes', sticky=True)
 
             if (item.author.name != "*SELF*"): item.reply("**Stopping Game**")
-            print("REMOTE HALT RECIEVED")
+            print("REMOTE HALT RECEIVED")
             con.close()
             os._exit(1)
     except mysql.connector.Error as err:
