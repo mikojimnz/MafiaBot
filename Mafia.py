@@ -37,7 +37,7 @@ def main():
     cache = []
 
     con.execute(cfg['preStm']['main'][0])
-    con.execute(cfg['preStm']['main'][1].format(time.time()))
+    con.execute(cfg['preStm']['main'][1], (time.time(),))
     con.execute(cfg['preStm']['addDummy'])
     con.execute("COMMIT;")
     con.execute("SHOW PROCESSLIST")

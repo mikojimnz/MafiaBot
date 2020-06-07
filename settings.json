@@ -132,7 +132,7 @@
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
       "SET SQL_SAFE_UPDATES = 0;",
-      "INSERT INTO Log (`utc`,`username`,`action`) VALUES ('{}', '*SELF*', 'Game Initalized');"
+      "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, '*SELF*', 'Game Initalized');"
     ],
     "replaceUser": "REPLACE INTO Mafia (`utc`,`username`,`role`, `loc`) VALUES (%s, %s, %s, %s)",
     "restart": "UPDATE Mafia SET `alive`='1',`burn`=1,`comment`=0,`inactive`=0,`loc`='London';",
