@@ -835,7 +835,7 @@ def announce(item, reddit, con, cfg):
             result = con.fetchall()
 
             for row in result:
-                reddit.redditor(row[0]).message("Annoucment", msg)
+                reddit.redditor(row[0]).message("Announcement", msg)
                 sleep(0.1)
 
             con.execute("COMMIT;")
