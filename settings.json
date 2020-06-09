@@ -115,6 +115,7 @@
       "getAliveCnt":"SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive asc;",
       "getRoleCnt": "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role ORDER BY role desc;",
       "getDead": "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
+      "getKilledMe": "SELECT `username` FROM VoteCall WHERE `vote`=%s",
       "getAlive": "SELECT `username`,`role` FROM Mafia WHERE `alive`='1';",
       "resetInactive": "UPDATE Mafia SET `inactive` = 0 WHERE (`comment`>0 AND `alive`=1);",
       "incrementInactive": "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE (`comment`=0 AND `alive` = 1);",
@@ -151,7 +152,7 @@
     "burnUser": "You have burned a teammate!\n\nIntelligence Report:\n\nu/{} is a {}",
     "burnedUser": "You have been exposed by u/{} on round {}!\n\nThank you for playing. You are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",
     "cycle": [
-      "**You Were Killed!**\n\nYou were \"{}\" on round {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
+      "**You Were Killed!**\n\nYou were \"{}\" on round {}.\nBy:\n{}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
       "**You survived another day!**\n\nNow round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
       "You were inactive for 48 hours and were automatically kicked from the game. Please wait until after the current game ends to rejoin.",
       "You have escaped your hit! Take back revenge now!"

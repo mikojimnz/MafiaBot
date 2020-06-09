@@ -744,10 +744,17 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         con.execute(cfg['preStm']['cycle']['getDead'], (cfg['voteThreshold'],))
         result = con.fetchall()
         for row in result:
+            killedMe = ""
+            con.execute(cfg['preStm']['cycle']['getKilledMe'], (row[0],))
+            r = con.fetchall()
+
+            for v in r:
+                killedMe += "* u/{}\n".format(r[0][0])
+
             random.seed(time.time())
             n = random.randint(0,len(cfg['deathMsg']) - 1)
             sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1], cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
-            reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, alive, good, bad, killed, alive + killed))
+            reddit.redditor(row[0]).message("You have been killed!", cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, killedMe, alive, good, bad, killed, alive + killed))
             sleep(0.1)
 
         con.execute(cfg['preStm']['cycle']['getAlive'])
