@@ -100,9 +100,11 @@
       "UPDATE Mafia SET `alive`=0 WHERE `username`=%s"
     ],
     "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`, `diedOnCycle`) VALUES (%s, %s, %s, %s, 0) ON DUPLICATE KEY UPDATE `alive`=1,`diedOnCycle`=0;",
+    "addExistingUser": "UPDATE Mafia SET `alive`=1 WHERE `username`=%s;",
     "chkBurn": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `burn`=1;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE `username`=%s AND `comment`>%s;",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
+    "chkUsrState": "SELECT `role`,`loc`,`alive`,`burn`,`revive` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
       "getVotes": "SELECT DISTINCT `vote` From VoteCall",
@@ -210,7 +212,6 @@
     "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this cycle, cycle {}.",
     "locateUser": "u/{} is located at {}",
     "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.\n\nThis hit will expire after this cycle, cycle {}.",
-    "msgTitle": "Mafia: The Twelve vs MI6",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "requestUser": "Your info request has been posted.",
     "reviveUser": "You have revived {}!",

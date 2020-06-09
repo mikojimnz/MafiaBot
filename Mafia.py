@@ -194,9 +194,20 @@ def gameState(item, reddit, sub, con, cfg, curCycle):
         os._exit(-1)
 
 def addUser(item, sub, con, cfg, curPos):
+    curPos = 0
+
     try:
-        if (curPos >= len(cfg['roles'][0])):
-            curPos = 0
+        con.execute(cfg['preStm']['chkUsrState'],(item.author.name,))
+        result = con.fetchall()
+
+        if(len(result) > 0):
+            con.execute(cfg['preStm']['addExistingUser'], (item.author.name,))
+            item.reply(cfg['reply']['addUser'].format(item.author.name, result[0][0], result[0][1], cfg['sub'], cfg['targetPost']))
+            sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+            return
+        else:
+            if ((curPos >= len(cfg['roles'][0]))):
+                curPos = 0
 
         random.seed(time.time())
         if ((curPos == 0) or (curPos == 1)):
@@ -204,7 +215,7 @@ def addUser(item, sub, con, cfg, curPos):
         else:
             loc = cfg['location'][1][random.randint(0, len(cfg['location'][1]) - 1)]
 
-        item.author.message(cfg['reply']['msgTitle'], cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], loc, cfg['sub'], cfg['targetPost']))
+        item.reply(cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], loc, cfg['sub'], cfg['targetPost']))
         sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
