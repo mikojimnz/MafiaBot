@@ -638,7 +638,7 @@ def getStats(item, con, cfg, state, curCycle):
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
 
-        if (len(result) == 2):
+        if (len(result) >= 2):
             killed = result[0][1] - 1
             alive = result[1][1]
 
@@ -722,7 +722,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
 
-        if (len(result) == 2):
+        if (len(result) >= 2):
             killed = result[0][1] - 1
             alive = result[1][1]
 
@@ -793,7 +793,7 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
     con.execute(cfg['preStm']['cycle']['getAliveCnt'])
     result = con.fetchall()
 
-    if (len(result) == 2):
+    if (len(result) >= 2):
         killed = result[0][1] - 1
         alive = result[1][1]
 
