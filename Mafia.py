@@ -110,7 +110,7 @@ def main():
         except Exception as e:
             traceback.print_exc()
             exceptCnt += 1
-            print("Exception #{}\nSleeping for {} minutes".format(exceptCnt, (60 * exceptCnt)))
+            print("Exception #{}\nSleeping for {} seconds".format(exceptCnt, (60 * exceptCnt)))
             sleep(60 * exceptCnt)
 
         if (state == 1):
