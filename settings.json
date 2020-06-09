@@ -99,7 +99,7 @@
       "UPDATE Mafia SET `burn`=0 WHERE `username`=%s",
       "UPDATE Mafia SET `alive`=0 WHERE `username`=%s"
     ],
-    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`, `diedOnCycle`) VALUES (%s, %s, %s, %s, 0) ON DUPLICATE KEY UPDATE `username`=`username`;",
+    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`, `diedOnCycle`) VALUES (%s, %s, %s, %s, 0) ON DUPLICATE KEY UPDATE `alive`=1,`diedOnCycle`=0;",
     "chkBurn": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `burn`=1;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE `username`=%s AND `comment`>%s;",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
@@ -127,7 +127,7 @@
       "SELECT `username`,`role` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
       "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
     ],
-    "leave": "UPDATE Mafia SET `alive`=2,'diedOnCycle'=-1 WHERE `username`=%s;",
+    "leave": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=-1 WHERE `username`=%s;",
     "locateUser": "SELECT `loc` FROM Mafia WHERE `username`=%s;",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
