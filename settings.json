@@ -7,7 +7,7 @@
   "allowAllVote": 1,
   "allowBurnOn": 7,
   "allowJoinUptTo": 1,
-  "allowRevive": 1,
+  "allowRevive": 0,
   "allowVoteAnyTime": 0,
   "clock": {
     "hour1": 2,
@@ -99,7 +99,7 @@
       "UPDATE Mafia SET `burn`=0 WHERE `username`=%s",
       "UPDATE Mafia SET `alive`=0 WHERE `username`=%s"
     ],
-    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`) VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;",
+    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`, `diedOnCycle`) VALUES (%s, %s, %s, %s, 0) ON DUPLICATE KEY UPDATE `username`=`username`;",
     "chkBurn": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `burn`=1;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE `username`=%s AND `comment`>%s;",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=1;",
@@ -110,7 +110,7 @@
       "getVoters": "SELECT `username` FROM VoteCall WHERE (NOT `username`=%s AND `vote`=%s);",
       "voteEscaped": "UPDATE VoteCall SET `vote`='' WHERE `vote`=%s;",
       "killPlayer": "UPDATE Mafia SET `alive`='0',`diedOnCycle`=%s WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
-      "getAliveCnt":"SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive desc;",
+      "getAliveCnt":"SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive asc;",
       "getRoleCnt": "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role ORDER BY role desc;",
       "getDead": "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "getAlive": "SELECT `username`,`role` FROM Mafia WHERE `alive`='1';",
@@ -120,14 +120,14 @@
       "getInactive": "SELECT username FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);",
       "removeInactive": "DELETE FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);"
     },
-    "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE `username`=%s;",
-    "getAll": "SELECT `username` FROM Mafia;",
+    "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE (`username`=%s AND (`alive`=0 OR `alive`=1));",
+    "getAll": "SELECT `username` FROM Mafia WHERE (`alive`=0 OR `alive`=1);",
     "getDead": "SELECT `username`,`role` FROM Mafia WHERE `alive`=0;",
     "getList": [
       "SELECT `username`,`role` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
       "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
     ],
-    "leave": "DELETE FROM Mafia WHERE `username`=%s;",
+    "leave": "UPDATE Mafia SET `alive`=2,'diedOnCycle'=-1 WHERE `username`=%s;",
     "locateUser": "SELECT `loc` FROM Mafia WHERE `username`=%s;",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
@@ -135,7 +135,7 @@
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, '*SELF*', 'Game Initalized');"
     ],
     "replaceUser": "REPLACE INTO Mafia (`utc`,`username`,`role`, `loc`) VALUES (%s, %s, %s, %s)",
-    "restart": "UPDATE Mafia SET `alive`='1',`burn`=1,`comment`=0,`inactive`=0,`loc`='London';",
+    "restart": "UPDATE Mafia SET `loc`='London',`alive`='1',`diedOnCycle`=0,`burn`=1,`revive`=1,`comment`=0,`inactive`=0;",
     "revive": [
       "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `revive`=1;",
       "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=0;",
@@ -255,6 +255,6 @@
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   },
   "sub": "KillingEve",
-  "targetPost": "gve7ar",
+  "targetPost": "gycs65",
   "voteThreshold": 1
 }
