@@ -260,5 +260,6 @@
   },
   "sub": "KillingEve",
   "targetPost": "gycs65",
-  "voteThreshold": 1
+  "voteOneAfter": 11,
+  "voteThreshold": 2
 }

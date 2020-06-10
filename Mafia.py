@@ -91,7 +91,7 @@ def main():
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
                     save(state, curCycle, curPos)
                 elif (re.search('^!BROADCAST', item.body)):
-                    announce(item, reddit, con, cfg)
+                    broadcast(item, reddit, con, cfg)
                 elif (re.search('^!RESTART', item.body)):
                     restart(item, reddit, sub, db, con, cfg)
                 elif (re.search('^!RESET', item.body)):
@@ -674,8 +674,14 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
     0: "Day",
     1: "Night"
     }
+    threshold = 1
 
     random.seed(time.time())
+
+    if (curCycle > cfg['voteOneAfter']):
+        threshold = 1
+    else:
+        threshold = cfg['voteThreshold']
 
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "curCycle incremented to {}".format(nextRound)))
@@ -717,7 +723,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
                         reddit.redditor(target[0]).message("You have escaped!", cfg['reply']['cycle'][3])
                         print("  > {} escaped".format(target[0]))
 
-        con.execute(cfg['preStm']['cycle']['killPlayer'], (curCycle, cfg['voteThreshold']))
+        con.execute(cfg['preStm']['cycle']['killPlayer'], (curCycle, threshold))
 
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
@@ -741,7 +747,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         print("MI6 remaining: {}".format(good))
         print("The Twelve remaining: {}".format(bad))
 
-        con.execute(cfg['preStm']['cycle']['getDead'], (cfg['voteThreshold'],))
+        con.execute(cfg['preStm']['cycle']['getDead'], (threshold],))
         result = con.fetchall()
         for row in result:
             killedMe = ""
