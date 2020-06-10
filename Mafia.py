@@ -747,7 +747,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         print("MI6 remaining: {}".format(good))
         print("The Twelve remaining: {}".format(bad))
 
-        con.execute(cfg['preStm']['cycle']['getDead'], (threshold],))
+        con.execute(cfg['preStm']['cycle']['getDead'], (threshold,))
         result = con.fetchall()
         for row in result:
             killedMe = ""
