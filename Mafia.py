@@ -59,44 +59,44 @@ def main():
                 if (item.was_comment == True):
                     continue
 
-                if ((re.search('!join', item.body)) and (curCycle <= cfg['allowJoinUptTo'])):
+                if ((re.search('^!join', item.body)) and (curCycle <= cfg['allowJoinUptTo'])):
                     curPos = addUser(item, sub, con, cfg, curPos)
                     save(state, curCycle, curPos)
-                elif (re.search('!leave', item.body)):
-                    removeUser(item, sub, con, cfg)
-                elif ((re.search('!vote', item.body)) and (state == 1)):
+                elif (re.search('^!leave', item.body)):
+                    removeUser(item, sub, con, cfg, curCycle)
+                elif ((re.search('^!vote', item.body)) and (state == 1)):
                     voteUser(item, reddit, con, cfg, curCycle)
-                elif ((re.search('!burn', item.body)) and (state == 1)):
+                elif ((re.search('^!burn', item.body)) and (state == 1)):
                     burnUser(item, reddit, sub, con, cfg, curCycle)
-                elif ((re.search('!revive', item.body)) and (state == 1)):
+                elif ((re.search('^!revive', item.body)) and (state == 1)):
                     reviveUser(item, reddit, sub, con, cfg, curCycle)
-                elif ((re.search('!digup', item.body)) and (state == 1)):
+                elif ((re.search('^!digup', item.body)) and (state == 1)):
                     digupUser(item, con, cfg)
-                elif ((re.search('!locate', item.body)) and (state == 1)):
+                elif ((re.search('^!locate', item.body)) and (state == 1)):
                     locateUser(item, con, cfg)
-                elif ((re.search('!request', item.body)) and (state == 1)):
+                elif ((re.search('^!request', item.body)) and (state == 1)):
                     requestUser(item, reddit, con, cfg)
-                elif ((re.search('!list', item.body))):
+                elif ((re.search('^!list', item.body))):
                     getList(item, con, cfg, state)
-                elif ((re.search('!stats', item.body)) and (state == 1)):
+                elif ((re.search('^!stats', item.body)) and (state == 1)):
                     getStats(item, con, cfg, state, curCycle)
-                elif (re.search('!help', item.body)):
+                elif (re.search('^!help', item.body)):
                     showHelp(item, cfg)
-                elif (re.search('!rules', item.body)):
+                elif (re.search('^!rules', item.body)):
                     showRules(item, cfg)
-                elif (re.search('!GAMESTATE', item.body)):
+                elif (re.search('^!GAMESTATE', item.body)):
                     state = gameState(item, reddit, sub, con, cfg, curCycle)
                     save(state, curCycle, curPos)
-                elif ((re.search('!CYCLE', item.body)) and (state == 1)):
+                elif ((re.search('^!CYCLE', item.body)) and (state == 1)):
                     curCycle = cycle(item, reddit, sub, con, cfg, curCycle)
                     save(state, curCycle, curPos)
-                elif (re.search('!ANNOUNCEMENT', item.body)):
+                elif (re.search('^!BROADCAST', item.body)):
                     announce(item, reddit, con, cfg)
-                elif (re.search('!RESTART', item.body)):
+                elif (re.search('^!RESTART', item.body)):
                     restart(item, reddit, sub, db, con, cfg)
-                elif (re.search('!RESET', item.body)):
+                elif (re.search('^!RESET', item.body)):
                     reset(item, sub, db, con, cfg)
-                elif (re.search('!HALT', item.body)):
+                elif (re.search('^!HALT', item.body)):
                     halt(item, reddit, db, con, cfg)
                 else:
                     item.reply(cfg['reply']['err']['unkCmd'][0][0].format(cfg['reply']['err']['unkCmd'][1][state]))
@@ -152,7 +152,7 @@ def save(state, curCycle, curPos):
         jsonFile2.truncate()
 
 def gameState(item, reddit, sub, con, cfg, curCycle):
-    pattern = re.search("!GAMESTATE\s([0-9]{1,1})(\s-s)?", item.body)
+    pattern = re.search("^!GAMESTATE\s([0-9]{1,1})(\s-s)?", item.body)
     setState = pattern.group(1)
     silent = pattern.group(2)
     players = 0
@@ -229,10 +229,10 @@ def addUser(item, sub, con, cfg, curPos):
         con.close()
         os._exit(-1)
 
-def removeUser(item, sub, con, cfg):
+def removeUser(item, sub, con, cfg, curCycle):
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Left Game"))
-        con.execute(cfg['preStm']['leave'], (item.author.name,))
+        con.execute(cfg['preStm']['leave'], (curCycle, item.author.name))
         con.execute("COMMIT;")
 
         item.reply(cfg['reply']['removeUser'])
@@ -244,7 +244,7 @@ def removeUser(item, sub, con, cfg):
         os._exit(-1)
 
 def voteUser(item, reddit, con, cfg, curCycle):
-    pattern = re.search("!vote\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("^!vote\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     round = curCycle + 1
     day = int(math.ceil(round/2))
@@ -307,7 +307,7 @@ def voteUser(item, reddit, con, cfg, curCycle):
         item.reply(cfg['reply']['err']['nmFmt'])
 
 def burnUser(item, reddit, sub, con, cfg, curCycle):
-    pattern = re.search("!burn", item.body)
+    pattern = re.search("^!burn", item.body)
     round = curCycle + 1
     day = int(math.ceil(round/2))
     selfRole = ""
@@ -385,7 +385,7 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
         os._exit(-1)
 
 def reviveUser(item, reddit, sub, con, cfg, curCycle):
-    pattern = re.search("!revive\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("^!revive\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     round = curCycle + 1
     day = int(math.ceil(round/2))
@@ -436,7 +436,7 @@ def reviveUser(item, reddit, sub, con, cfg, curCycle):
         item.reply(cfg['reply']['err']['nmFmt'])
 
 def digupUser(item, con, cfg):
-    pattern = re.search("!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("^!digup\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     random.seed(time.time())
     cred = random.randint(25,75)
@@ -499,7 +499,7 @@ def digupUser(item, con, cfg):
         item.reply(cfg['reply']['err']['nmFmt'])
 
 def locateUser(item, con, cfg):
-    pattern = re.search("!locate\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("^!locate\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
     role = 0
 
@@ -540,7 +540,7 @@ def locateUser(item, con, cfg):
         item.reply(cfg['reply']['err']['nmFmt'])
 
 def requestUser(item, reddit, con, cfg):
-    pattern = re.search("!request\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
+    pattern = re.search("^!request\s(u/)?([A-Za-z0-9_]{1,20})", item.body)
     name = ""
 
     if pattern:
@@ -615,10 +615,10 @@ def getStats(item, con, cfg, state, curCycle):
     day = int(math.ceil((round)/2))
     role = ""
     user = 0
-    alive = -1
-    killed = -1
-    good = -1
-    bad = -1
+    alive = 0
+    killed = 0
+    good = 0
+    bad = 0
     mode = {
     0: "Day",
     1: "Night"
@@ -666,10 +666,10 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
     round = curCycle + 1
     nextRound = round + 1
     day = int(math.ceil(nextRound/2))
-    alive = -1
-    killed = -1
-    good = -1
-    bad = -1
+    alive = 0
+    killed = 0
+    good = 0
+    bad = 0
     mode = {
     0: "Day",
     1: "Night"
@@ -839,8 +839,8 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
     comment.mod.distinguish(how='yes', sticky=True)
     print("Game Ended")
 
-def announce(item, reddit, con, cfg):
-    pattern = re.search("!ANNOUNCEMENT\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\;\',./’]+)", item.body)
+def broadcast(item, reddit, con, cfg):
+    pattern = re.search("^!BROADCAST\s([\s\w\d!@#$%^&*()_+{}|:\"<>?\-=\[\]\;\',./’]+)", item.body)
     msg = pattern.group(1)
 
     try:
