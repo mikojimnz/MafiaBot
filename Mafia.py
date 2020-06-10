@@ -749,7 +749,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             r = con.fetchall()
 
             for v in r:
-                killedMe += "* u/{}\n".format(r[0][0])
+                killedMe += "* u/{}\n".format(v[0])
 
             random.seed(time.time())
             n = random.randint(0,len(cfg['deathMsg']) - 1)
