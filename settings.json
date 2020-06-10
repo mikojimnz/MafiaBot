@@ -121,7 +121,7 @@
       "incrementInactive": "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE (`comment`=0 AND `alive` = 1);",
       "resetComment": "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
       "getInactive": "SELECT username FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);",
-      "removeInactive": "UPDATE Mafia SET `alive`=3 (`inactive`>=%s AND `alive`=1);"
+      "removeInactive": "UPDATE Mafia SET `alive`=3 WHERE (`inactive`>=%s AND `alive`=1);"
     },
     "digupUser": "SELECT `role`,`alive` FROM Mafia WHERE (`username`=%s AND (`alive`=0 OR `alive`=1));",
     "getAll": "SELECT `username` FROM Mafia WHERE (`alive`=0 OR `alive`=1);",
