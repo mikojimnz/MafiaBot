@@ -696,7 +696,7 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
             reddit.redditor(row[0]).message("You have been kicked!", cfg['reply']['cycle'][2])
             sleep(0.1)
 
-        con.execute(cfg['preStm']['cycle']['removeInactive'])
+        con.execute(cfg['preStm']['cycle']['removeInactive'], (cfg['kickAfter'],))
         con.execute(cfg['preStm']['cycle']['getVotes'])
         result = con.fetchall()
 
