@@ -88,6 +88,7 @@
       "Scotland"
     ]
   ],
+  "maxRequests": 3,
   "praw": "DozenIncBOT",
   "preStm": {
     "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0','-999') ON DUPLICATE KEY UPDATE `username`=`username`,`role`='DUMMY', `alive`='0';",
@@ -99,12 +100,12 @@
       "UPDATE Mafia SET `burn`=0 WHERE `username`=%s",
       "UPDATE Mafia SET `alive`=0 WHERE `username`=%s"
     ],
-    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`, `diedOnCycle`) VALUES (%s, %s, %s, %s, 0) ON DUPLICATE KEY UPDATE `alive`=1,`diedOnCycle`=0;",
-    "addExistingUser": "UPDATE Mafia SET `alive`=1 WHERE `username`=%s;",
+    "addUser": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`, `loc`, `diedOnCycle`, `request`) VALUES (%s, %s, %s, %s, 0, %s) ON DUPLICATE KEY UPDATE `alive`=1,`diedOnCycle`=0, `request`=%s;",
+    "addExistingUser": "UPDATE Mafia SET `alive`=1,`request`=%s WHERE `username`=%s;",
     "chkBurn": "SELECT `username`,`role` FROM Mafia WHERE (`username`=%s AND `burn`=1);",
     "chkCmt": "SELECT `username` FROM Mafia WHERE (`username`=%s AND `comment`>%s);",
     "chkUsr": "SELECT `username`,`role` FROM Mafia WHERE (`username`=%s AND `alive`=1);",
-    "chkUsrState": "SELECT `role`,`loc`,`alive`,`burn`,`revive` From Mafia WHERE `username`=%s",
+    "chkUsrState": "SELECT `role`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
       "getVotes": "SELECT DISTINCT `vote` From VoteCall",
@@ -112,8 +113,8 @@
       "getVoters": "SELECT `username` FROM VoteCall WHERE (NOT `username`=%s AND `vote`=%s);",
       "voteEscaped": "UPDATE VoteCall SET `vote`='' WHERE `vote`=%s;",
       "killPlayer": "UPDATE Mafia SET `alive`='0',`diedOnCycle`=%s WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
-      "getAliveCnt":"SELECT alive, COUNT(alive) AS count FROM Mafia GROUP BY alive ORDER BY alive asc;",
-      "getRoleCnt": "SELECT role, COUNT(role) AS count FROM Mafia WHERE `alive`='1' GROUP BY role ORDER BY role desc;",
+      "getAliveCnt":"SELECT (SELECT COUNT(role) FROM Mafia WHERE (`alive`='1' )) AS alive, (SELECT COUNT(role) FROM Mafia WHERE (`alive`='0')) AS dead",
+      "getRoleCnt": "SELECT (SELECT COUNT(role) FROM Mafia WHERE `alive`= 1 AND (`role`='ASSASSIN' OR `role`='HANDLER')) AS A, (SELECT COUNT(role) FROM Mafia WHERE `alive`= 1 AND (`role`='OPERATIVE' OR `role`='ANALYST')) AS B",
       "getDead": "SELECT v.vote,m.role,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "getKilledMe": "SELECT `username` FROM VoteCall WHERE `vote`=%s",
       "getAlive": "SELECT `username`,`role` FROM Mafia WHERE `alive`='1';",
@@ -130,6 +131,7 @@
       "SELECT `username`,`role` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
       "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
     ],
+    "getWinner": "SELECT (SELECT COUNT(role) FROM Mafia WHERE (`alive`='1' AND (`role`='OPERATIVE' OR `role`='ANALYST'))) AS MI6, (SELECT COUNT(role) FROM Mafia WHERE (`alive`='1' AND (`role`='ASSASSIN' OR `role`='HANDLER'))) AS TWELVE",
     "leave": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=%s WHERE `username`=%s;",
     "locateUser": "SELECT `loc` FROM Mafia WHERE (`username`=%s AND `alive`=1);",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
@@ -138,7 +140,11 @@
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, '*SELF*', 'Game Initalized');"
     ],
     "replaceUser": "REPLACE INTO Mafia (`utc`,`username`,`role`, `loc`) VALUES (%s, %s, %s, %s)",
-    "restart": "UPDATE Mafia SET `loc`='London',`alive`='1',`diedOnCycle`=0,`burn`=1,`revive`=1,`comment`=0,`inactive`=0;",
+    "request": [
+      "SELECT `username` FROM Mafia WHERE `username`=%s AND `request`>0;",
+      "UPDATE Mafia SET `request`=`request` - 1 WHERE `username`=%s"
+    ],
+    "restart": "UPDATE Mafia SET `loc`='London',`alive`='1',`diedOnCycle`=0,`burn`=1,`revive`=1,`request`=%s,`comment`=0,`inactive`=0;",
     "revive": [
       "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `revive`=1;",
       "SELECT `username`,`role` FROM Mafia WHERE `username`=%s AND `alive`=0;",
@@ -179,6 +185,7 @@
       "noBurnLeft": "There is no one left to burn",
       "noBurnYet": "The burn command is not yet unlocked.",
       "noParticipate": "To use this command, you must comment at least once per round to maintain active status. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
+      "noRequestLeft": "You have used your alloted requests",
       "notFound": "Cannot find user, the user is not playing in the game, or has been killed.",
       "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
       "nmFmt": "Invalid username. Do not include the `u/` prefix",
@@ -203,12 +210,16 @@
     "getList": "Total players: {}\n\nDead: {}\n{}\n\nAlive: {}\n{}",
     "getSts": [
       [
-        "Current Stats:\n\nGame is {}.\nIt is {} on round {} (Cycle: {}).\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\n"
+        "Current Stats:\n\nGame is {}.\nIt is {} on round {} (Cycle: {}).\n\nYour role is: {}\nYou are {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nGame Parameters\n* All roles can vote: {}\n* Vote anytime: {}\n* Revive: {}\n* Burn after cycle {}\n* Vote threshold: {}\n* Single vote after cycle {}\n* Max requests: {}\n* Kick inactive after {} cycles"
       ],
       [
         "not active",
         "active",
         "over"
+      ],
+      [
+        "Disabled",
+        "Enabled"
       ]
     ],
     "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this cycle, cycle {}.",
@@ -219,7 +230,7 @@
     "requestUser": "Your info request has been posted.",
     "reviveUser": "You have revived {}!",
     "revivedUser": "You have been revived by u/{}!\n\nGet back into the game and win!",
-    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel anonymously on a player.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated.",
+    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel on a player. Limited number of uses.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !vote USERNAME: Vote on which user to be eliminated.",
     "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side. You may work with each other outside of the game thread.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Cycle lasts 6 hours. 2 Day/Night rounds, 4 cycles per day.\n4. A user must receive at least 2 votes to be executed. Team members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the game thread may not use game commands.\n5. At the end of each cycle, an announcement will be made about how many people are alive and how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
     "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends."
   },
@@ -240,9 +251,9 @@
   "sql": {
     "database": "Reddit",
     "host": "127.0.0.1",
-    "password": "1234",
+    "password": "684239715",
     "port": "3306",
-    "user": "dummy"
+    "user": "DozenIncBOT"
   },
   "sticky": {
     "cycle": "It is now **{}** on Round {} (Cycle {}).\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
@@ -253,7 +264,7 @@
     "min15": "Cycle ending in 15 minutes!\nCast your final kills soon!",
     "min5": "Cycle ending in 5 minutes!\nCast your final kills now!",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
-    "requestUser": "A request for intel on u/{} has been filed anonymously.",
+    "requestUser": "A request for intel on u/{} has been filed by u/{}.",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
     "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."

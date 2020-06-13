@@ -201,7 +201,7 @@ def addUser(item, sub, con, cfg, curPos):
         result = con.fetchall()
 
         if(len(result) > 0):
-            con.execute(cfg['preStm']['addExistingUser'], (item.author.name,))
+            con.execute(cfg['preStm']['addExistingUser'], (cfg['maxRequests'], item.author.name))
             item.reply(cfg['reply']['addUser'].format(item.author.name, result[0][0], result[0][1], cfg['sub'], cfg['targetPost']))
             sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
             return
@@ -219,7 +219,7 @@ def addUser(item, sub, con, cfg, curPos):
         sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "Joined Game"))
-        con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos], loc))
+        con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos], loc, cfg['maxRequests'], cfg['maxRequests']))
         con.execute("COMMIT;")
         print("  > {} has joined".format(item.author.name))
         curPos += 1
@@ -560,6 +560,13 @@ def requestUser(item, reddit, con, cfg):
                 item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
+            con.execute(cfg['preStm']['request'][0], (item.author.name,))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['noRequestLeft'])
+                return
+
             con.execute(cfg['preStm']['digupUser'], (name,))
             r = con.fetchall()
 
@@ -567,11 +574,12 @@ def requestUser(item, reddit, con, cfg):
                 item.reply(cfg['reply']['err']['notFound'])
                 return
 
+            con.execute(cfg['preStm']['request'][1], (item.author.name,))
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "{} Requested: {}".format(item.author.name, name)))
             con.execute("COMMIT;")
 
             item.reply(cfg['reply']['requestUser'])
-            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['requestUser'].format(name))
+            comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['requestUser'].format(name, item.author.name))
             print("  > {} has requested info on {}".format(item.author.name, name))
         except mysql.connector.Error as err:
             print("EXCEPTION {}".format(err))
@@ -637,20 +645,21 @@ def getStats(item, con, cfg, state, curCycle):
 
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
-
-        if (len(result) >= 2):
-            killed = result[0][1] - 1
-            alive = result[1][1]
+        alive = result[0][0]
+        killed = result[0][1] - 1
 
         con.execute(cfg['preStm']['cycle']['getRoleCnt'])
         result = con.fetchall()
-
-        if (len(result) == 4):
-            bad = result[1][1] + result[2][1]
-            good = result[0][1] + result[3][1]
+        bad = result[0][0]
+        good = result[0][1]
 
         con.execute("COMMIT;")
-        item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], mode[curCycle % 2], day, round, role, cfg['reply']['digupUserBody'][1][user], alive, good, bad, killed, alive + killed))
+        item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], \
+            mode[curCycle % 2], day, round, role, cfg['reply']['digupUserBody'][1][user], \
+            alive, good, bad, killed, alive + killed, cfg['reply']['getSts'][2][cfg['allowAllVote']], \
+            cfg['reply']['getSts'][2][cfg['allowVoteAnyTime']], cfg['reply']['getSts'][2][cfg['allowRevive']], \
+            cfg['allowBurnOn'], cfg['voteThreshold'], cfg['voteOneAfter'], \
+            cfg['maxRequests'], cfg['kickAfter']))
     except mysql.connector.Error as err:
         print("EXCEPTION {}".format(err))
         con.close()
@@ -727,22 +736,15 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
         con.execute(cfg['preStm']['cycle']['getAliveCnt'])
         result = con.fetchall()
-
-        if (len(result) >= 2):
-            killed = result[0][1] - 1
-            alive = result[1][1]
+        alive  = result[0][0]
+        killed = result[0][1] - 1
 
         print("\nAlive: {} | Killed {}".format(alive,killed))
 
         con.execute(cfg['preStm']['cycle']['getRoleCnt'])
         result = con.fetchall()
-
-        if (len(result) == 4):
-            bad = result[1][1] + result[2][1]
-            good = result[0][1] + result[3][1]
-
-        for row in result:
-            print("{} {} still alive".format(row[1], row[0]))
+        bad = result[0][0]
+        good = result[0][1]
 
         print("MI6 remaining: {}".format(good))
         print("The Twelve remaining: {}".format(bad))
@@ -751,11 +753,15 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         result = con.fetchall()
         for row in result:
             killedMe = ""
-            con.execute(cfg['preStm']['cycle']['getKilledMe'], (row[0],))
-            r = con.fetchall()
 
-            for v in r:
-                killedMe += "* u/{}\n".format(v[0])
+            if (cfg['allowVoteAnyTime'] == 1):
+                con.execute(cfg['preStm']['cycle']['getKilledMe'], (row[0],))
+                r = con.fetchall()
+
+                for v in r:
+                    killedMe += "* u/{}\n".format(v[0])
+            else:
+                killedMe = "Hidden for this game mode."
 
             random.seed(time.time())
             n = random.randint(0,len(cfg['deathMsg']) - 1)
@@ -805,20 +811,15 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
 
     con.execute(cfg['preStm']['cycle']['getAliveCnt'])
     result = con.fetchall()
-
-    if (len(result) >= 2):
-        killed = result[0][1] - 1
-        alive = result[1][1]
-
+    alive  = result[0][0]
+    killed = result[0][1] - 1
 
     print("\nAlive: {} | Killed {}".format(alive,killed))
 
-    con.execute(cfg['preStm']['cycle']['getRoleCnt'])
+    con.execute(cfg['preStm']['getWinner'])
     result = con.fetchall()
-
-    if (len(result) == 4):
-        bad = result[1][1] + result[2][1]
-        good = result[0][1] + result[3][1]
+    good = result[0][0]
+    bad = result[0][1]
 
     con.execute(cfg['preStm']['getDead'])
     result = con.fetchall()
@@ -836,7 +837,9 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
 
     con.execute("COMMIT;")
 
-    if (good > bad):
+    if (good == bad):
+        winner = "NOBODY"
+    elif (good > bad):
         winner = "MI6"
     else:
         winner = "The Twelve"
@@ -879,7 +882,7 @@ def restart(item, reddit, sub, db, con, cfg):
             return
         else:
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, "REMOTE RESTART"))
-            con.execute(cfg['preStm']['restart'])
+            con.execute(cfg['preStm']['restart'], (cfg['maxRequests'],))
             con.execute("SELECT `username` FROM Mafia")
             result = con.fetchall()
             curPos = 0
