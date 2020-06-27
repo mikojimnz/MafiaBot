@@ -17,7 +17,7 @@ from random import randrange
 from time import sleep
 
 def main():
-    with open("settings.json") as jsonFile1:
+    with open('settings.json') as jsonFile1:
         cfg = json.load(jsonFile1)
 
     reddit = praw.Reddit(cfg['praw'])
@@ -29,13 +29,13 @@ def main():
 
     con.execute(cfg['preStm']['main'][0])
     con.execute(cfg['preStm']['addDummy'])
-    con.execute("COMMIT;")
-    con.execute("SHOW PROCESSLIST")
+    con.execute('COMMIT;')
+    con.execute('SHOW PROCESSLIST')
     conStat = con.fetchall()
 
-    print("Connected as {}".format(str(reddit.user.me())))
-    print("Database Connections: {}".format(len(conStat)))
-    print("______")
+    print(f'Connected as {str(reddit.user.me())}')
+    print(f'Database Connections: {len(conStat)}')
+    print('______')
 
     while True:
         try:
@@ -44,16 +44,16 @@ def main():
                     if (len(cache) > 1000):
                         cache = []
 
-                    if(re.search("^!(join|leave|vote|digup|rules|help|stats)", comment.body)):
+                    if(re.search(r'^!(join|leave|vote|digup|rules|help|stats)', comment.body)):
                         comment.reply(cfg['reply']['err']['notPM'])
 
                     cache.append(comment.id)
                     con.execute(cfg['preStm']['comment'], (comment.author.name,))
-                    con.execute("COMMIT;")
+                    con.execute('COMMIT;')
                     print(comment.author.name)
 
         except mysql.connector.Error as err:
-            print("EXCEPTION {}".format(err))
+            print(f'EXCEPTION {err}')
             con.close()
             os._exit(-1)
         except Exception as e:
@@ -67,15 +67,15 @@ def exit_gracefully(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
 
     try:
-        if input("\nDo you really want to quit? (y/n)> ").lower().startswith('y'):
+        if input('\nDo you really want to quit? (y/n)> ').lower().startswith('y'):
             sys.exit(1)
     except KeyboardInterrupt:
-        print("\nQuitting")
+        print('\nQuitting')
         sys.exit(1)
 
     signal.signal(signal.SIGINT, exit_gracefully)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, exit_gracefully)
     main()
