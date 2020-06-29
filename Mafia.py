@@ -78,7 +78,7 @@ def main():
                     requestUser(item, reddit, con, cfg)
                 elif ((re.search(r'^!list', item.body))):
                     getList(item, con, cfg, state)
-                elif ((re.search(r'^!stats', item.body)) and (state == 1)):
+                elif (re.search(r'^!stats', item.body)):
                     getStats(item, con, cfg, state, curCycle)
                 elif (re.search(r'^!help', item.body)):
                     showHelp(item, cfg)
@@ -197,7 +197,7 @@ def addUser(item, reddit, sub, con, cfg, curPos):
     try:
         if (curPos >= len(cfg['roles'][0])):
             curPos = 0
-            
+
         con.execute(cfg['preStm']['chkUsrState'],(item.author.name,))
         result = con.fetchall()
 
