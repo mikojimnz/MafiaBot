@@ -656,10 +656,11 @@ def getStats(item, con, cfg, state, curCycle):
         alive = result[0][0]
         killed = result[0][1] - 1
 
-        con.execute(cfg['preStm']['cycle']['getRoleCnt'])
-        result = con.fetchall()
-        bad = result[0][0]
-        good = result[0][1]
+        if (state > 0):
+            con.execute(cfg['preStm']['cycle']['getRoleCnt'])
+            result = con.fetchall()
+            bad = result[0][0]
+            good = result[0][1]
 
         con.execute('COMMIT;')
         item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], \
