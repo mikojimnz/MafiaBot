@@ -881,11 +881,21 @@ def restart(item, reddit, sub, db, con, cfg):
             con.execute('COMMIT;')
             return
         else:
+            with open('save.json', 'r+') as jsonFile2:
+                tmp = json.load(jsonFile2)
+                tmp['state'] = 0
+                tmp['curCycle'] = 0
+                tmp['curPos'] = 0
+                jsonFile2.seek(0)
+                json.dump(tmp, jsonFile2)
+                jsonFile2.truncate()
+
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, 'REMOTE RESTART'))
             con.execute(cfg['preStm']['restart'], (cfg['maxRequests'],))
             con.execute('SELECT `username` FROM Mafia')
             result = con.fetchall()
-            curPos = 0
+            random.shuffle(result)
+            curPos = 2
 
             for row in result:
                 if (curPos >= len(cfg['roles'][0])):

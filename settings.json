@@ -225,7 +225,7 @@
     "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this cycle, cycle {}.",
     "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this cycle, cycle {}.",
     "locateUser": "u/{} is located at {}",
-    "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.\n\nThis hit will expire after this cycle, cycle {}.",
+    "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "requestUser": "Your info request has been posted.",
     "reviveUser": "You have revived {}!",
