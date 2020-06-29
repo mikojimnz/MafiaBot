@@ -194,8 +194,6 @@ def gameState(item, reddit, sub, con, cfg, curCycle):
         os._exit(-1)
 
 def addUser(item, reddit, sub, con, cfg, curPos):
-    curPos = 0
-
     try:
         con.execute(cfg['preStm']['chkUsrState'],(item.author.name,))
         result = con.fetchall()
