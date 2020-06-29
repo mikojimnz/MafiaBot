@@ -60,10 +60,10 @@ def main():
                     continue
 
                 if ((re.search(r'^!join', item.body)) and (curCycle <= cfg['allowJoinUptTo'])):
-                    curPos = addUser(item, sub, con, cfg, curPos)
+                    curPos = addUser(item, reddit, sub, con, cfg, curPos)
                     save(state, curCycle, curPos)
                 elif (re.search(r'^!leave', item.body)):
-                    removeUser(item, sub, con, cfg, curCycle)
+                    removeUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search(r'^!vote', item.body)) and (state == 1)):
                     voteUser(item, reddit, con, cfg, curCycle)
                 elif ((re.search(r'^!burn', item.body)) and (state == 1)):
@@ -193,7 +193,7 @@ def gameState(item, reddit, sub, con, cfg, curCycle):
         con.close()
         os._exit(-1)
 
-def addUser(item, sub, con, cfg, curPos):
+def addUser(item, reddit, sub, con, cfg, curPos):
     curPos = 0
 
     try:
@@ -202,8 +202,9 @@ def addUser(item, sub, con, cfg, curPos):
 
         if(len(result) > 0):
             con.execute(cfg['preStm']['addExistingUser'], (cfg['maxRequests'], item.author.name))
-            item.reply(cfg['reply']['addUser'].format(item.author.name, result[0][0], result[0][1], cfg['sub'], cfg['targetPost']))
+            item.reply(cfg['reply']['addUser'].format(item.author.name, result[0][0].title(), result[0][1], cfg['sub'], cfg['targetPost']))
             sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+            reddit.submission(id=cfg['targetPost']).reply(f'u/{item.author.name} has rejoined.')
             return
         else:
             if ((curPos >= len(cfg['roles'][0]))):
@@ -217,6 +218,7 @@ def addUser(item, sub, con, cfg, curPos):
 
         item.reply(cfg['reply']['addUser'].format(item.author.name, cfg['roles'][0][curPos], loc, cfg['sub'], cfg['targetPost']))
         sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+        reddit.submission(id=cfg['targetPost']).reply(f'u/{item.author.name} has joined.')
 
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, 'Joined Game'))
         con.execute(cfg['preStm']['addUser'], (item.created_utc, item.author.name, cfg['roles'][0][curPos], loc, cfg['maxRequests'], cfg['maxRequests']))
@@ -229,7 +231,7 @@ def addUser(item, sub, con, cfg, curPos):
         con.close()
         os._exit(-1)
 
-def removeUser(item, sub, con, cfg, curCycle):
+def removeUser(item, reddit, sub, con, cfg, curCycle):
     try:
         con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, 'Left Game'))
         con.execute(cfg['preStm']['leave'], (curCycle, item.author.name))
@@ -237,6 +239,7 @@ def removeUser(item, sub, con, cfg, curCycle):
 
         item.reply(cfg['reply']['removeUser'])
         sub.flair.delete(item.author)
+        reddit.submission(id=cfg['targetPost']).reply(f'u/{item.author.name} has left.')
         print(f'  > {item.author.name} has left')
     except mysql.connector.Error as err:
         print(f'EXCEPTION {err}')
@@ -600,7 +603,11 @@ def getList(item, con, cfg, state):
         result = con.fetchall()
 
         for row in result:
-            dead += f'\n* u/{row[0]}: {row[1]}'
+            if (cfg['allowRevive'] == 1):
+                dead += f'\n* u/{row[0].title()}: ???'
+            else:
+                dead += f'\n* u/{row[0].title()}: {row[1]}'
+
             deadNum += 1
 
         con.execute(cfg['preStm']['getList'][1])
@@ -655,7 +662,7 @@ def getStats(item, con, cfg, state, curCycle):
 
         con.execute('COMMIT;')
         item.reply(cfg['reply']['getSts'][0][0].format(cfg['reply']['getSts'][1][state], \
-            mode[curCycle % 2], day, round, role, cfg['reply']['digupUserBody'][1][user], \
+            mode[curCycle % 2], day, round, role.title(), cfg['reply']['digupUserBody'][1][user], \
             alive, good, bad, killed, alive + killed, cfg['reply']['getSts'][2][cfg['allowAllVote']], \
             cfg['reply']['getSts'][2][cfg['allowVoteAnyTime']], cfg['reply']['getSts'][2][cfg['allowRevive']], \
             cfg['allowBurnOn'], cfg['voteThreshold'], cfg['voteOneAfter'], \
@@ -765,7 +772,12 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
 
             random.seed(time.time())
             n = random.randint(0,len(cfg['deathMsg']) - 1)
-            sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1], cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
+
+            if (cfg['allowRevive'] == 1):
+                sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format('???', cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
+            else:
+                sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1].title(), cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
+
             reddit.redditor(row[0]).message('You have been killed!', cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, killedMe, alive, good, bad, killed, alive + killed))
             sleep(0.1)
 
@@ -908,7 +920,7 @@ def restart(item, reddit, sub, db, con, cfg):
                     loc = cfg['location'][1][random.randint(0, len(cfg['location'][1]) - 1)]
 
                 con.execute(cfg['preStm']['replaceUser'], (time.time(), row[0], cfg['roles'][0][curPos], loc))
-                reddit.redditor(row[0]).message('A new game is starting', cfg['reply']['newGame'].format(row[0], cfg['roles'][0][curPos]))
+                reddit.redditor(row[0]).message('A new game is starting', cfg['reply']['newGame'].format(row[0], cfg['roles'][0][curPos].title()))
                 curPos += 1
                 sub.flair.set(row[0], text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
                 sleep(0.1)
