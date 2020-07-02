@@ -34,7 +34,7 @@ def main():
     db = mysql.connector.pooling.MySQLConnectionPool(pool_name=None, raise_on_warnings=True, connection_timeout=3600, **cfg['sql'])
     pool = db.get_connection()
     con = pool.cursor(prepared=True)
-    cache = []
+    lastCmd = ''
 
     con.execute(cfg['preStm']['main'][0])
     con.execute(cfg['preStm']['main'][1], (time.time(),))
@@ -58,6 +58,9 @@ def main():
 
                 if (item.was_comment == True):
                     continue
+
+                if (item.body.strip() == lastCmd):
+                    con.execute('RESET QUERY CACHE;')
 
                 if ((re.search(r'^!join', item.body)) and (curCycle <= cfg['allowJoinUptTo'])):
                     curPos = addUser(item, reddit, sub, con, cfg, curPos)
@@ -102,6 +105,7 @@ def main():
                     item.reply(cfg['reply']['err']['unkCmd'][0][0].format(cfg['reply']['err']['unkCmd'][1][state]))
 
                 item.mark_read()
+                lastCmd = item.body.strip()
 
         except mysql.connector.Error as err:
             print(f'EXCEPTION {err}')
