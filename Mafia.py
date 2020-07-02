@@ -194,10 +194,8 @@ def gameState(item, reddit, sub, con, cfg, curCycle):
         os._exit(-1)
 
 def addUser(item, reddit, sub, con, cfg, curPos):
-    try:
-        if (curPos >= len(cfg['roles'][0])):
-            curPos = 0
 
+    try:
         con.execute(cfg['preStm']['chkUsrState'],(item.author.name,))
         result = con.fetchall()
 
@@ -206,7 +204,7 @@ def addUser(item, reddit, sub, con, cfg, curPos):
             item.reply(cfg['reply']['addUser'].format(item.author.name, result[0][0].title(), result[0][1], cfg['sub'], cfg['targetPost']))
             sub.flair.set(item.author, text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
             reddit.submission(id=cfg['targetPost']).reply(f'u/{item.author.name} has rejoined.')
-            return
+            return curPos
         else:
             if ((curPos >= len(cfg['roles'][0]))):
                 curPos = 0
