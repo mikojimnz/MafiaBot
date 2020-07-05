@@ -433,6 +433,7 @@ def reviveUser(item, reddit, sub, con, cfg, curCycle):
             sub.flair.set(reddit.redditor(name), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
             reddit.redditor(name).message('You have been revived!', cfg['reply']['revivedUser'].format(item.author.name))
             item.reply(cfg['reply']['reviveUser'].format(name))
+            reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['revive'])
 
             print(f'  > {item.author.name} has revived {name}')
         except mysql.connector.Error as err:

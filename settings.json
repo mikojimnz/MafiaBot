@@ -267,6 +267,7 @@
     "requestUser": "A request for intel on u/{} has been filed by u/{}.",
     "reset": "The has ended and is being reset. Commands are no longer being read.\n\nPlease wait for an announcement when the game has restarted.",
     "restart": "The has ended and is being restarted. Roles will be reassigned\n\nPlease wait for an announcement when the game has restarted.",
+    "revive": "A player was revived.",
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   },
   "sub": "KillingEve",
