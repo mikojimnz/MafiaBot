@@ -295,13 +295,14 @@ def voteUser(item, reddit, con, cfg, curCycle):
 
             con.execute(cfg['preStm']['log'], (item.created_utc, item.author.name, f'Vote: {name}'))
             con.execute(cfg['preStm']['voteUser'], (item.author.name, name, name))
+            success = con.rowcount
             con.execute('COMMIT;')
 
             item.reply(cfg['reply']['voteUser'])
 
-            if ((str(r[0][1]) == 'ASSASSIN') or (str(r[0][1]) == 'OPERATIVE')):
+            if (((str(r[0][1]) == 'ASSASSIN') or (str(r[0][1]) == 'OPERATIVE')) and (success > 0)):
                 reddit.redditor(name).message('A hit has been put on you!', cfg['reply']['hitAlertEsc'].format(name, round))
-            else:
+            elif (success > 0):
                 reddit.redditor(name).message('A hit has been put on you!', cfg['reply']['hitAlert'].format(name, round))
 
             print(f'  > {item.author.name} has voted to kill {name}')
