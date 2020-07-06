@@ -177,7 +177,7 @@ def gameState(item, reddit, sub, con, cfg, curCycle):
                     reddit.redditor(row[0]).message('The game has paused!', cfg['reply']['gamePause'])
                 elif ((setState == '1') and (silent == None)):
                     reddit.redditor(row[0]).message('The game has started!', cfg['reply']['gameStart'].format(cfg['sub'], cfg['targetPost']))
-                sleep(0.1)
+                sleep(2)
 
             if ((setState == '0') and (silent == None)):
                 comment = reddit.submission(id=cfg['targetPost']).reply(cfg['sticky']['pause'])
@@ -335,6 +335,13 @@ def burnUser(item, reddit, sub, con, cfg, curCycle):
             item.reply(cfg['reply']['err']['spec'])
             return
 
+        con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(cfg['reply']['err']['noParticipate'])
+            return
+
         con.execute(cfg['preStm']['chkBurn'], (item.author.name,))
         r = con.fetchall()
 
@@ -409,6 +416,13 @@ def reviveUser(item, reddit, sub, con, cfg, curCycle):
 
             if (len(r) <= 0):
                 item.reply(cfg['reply']['err']['spec'])
+                return
+
+            con.execute(cfg['preStm']['chkCmt'], (item.author.name, cfg['cmtThreshold']))
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                item.reply(cfg['reply']['err']['noParticipate'])
                 return
 
             con.execute(cfg['preStm']['revive'][0], (item.author.name,))
@@ -714,9 +728,10 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
         con.execute(cfg['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
         result = con.fetchall()
         for row in result:
+            con.execute(cfg['preStm']['log'], (time.time(), row[0], 'Inactive Kick'))
             sub.flair.delete(reddit.redditor(row[0]))
             reddit.redditor(row[0]).message('You have been kicked!', cfg['reply']['cycle'][2])
-            sleep(0.1)
+            sleep(2)
 
         con.execute(cfg['preStm']['cycle']['removeInactive'], (cfg['kickAfter'],))
         con.execute(cfg['preStm']['cycle']['getVotes'])
@@ -785,13 +800,13 @@ def cycle(item, reddit, sub, con, cfg, curCycle):
                 sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['dead'].format(row[1].title(), cfg['deathMsg'][n],day), flair_template_id=cfg['flairID']['dead'])
 
             reddit.redditor(row[0]).message('You have been killed!', cfg['reply']['cycle'][0].format(cfg['deathMsg'][n], day, killedMe, alive, good, bad, killed, alive + killed))
-            sleep(0.1)
+            sleep(2)
 
         con.execute(cfg['preStm']['cycle']['getAlive'])
         result = con.fetchall()
         for row in result:
             sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['alive'].format(day), flair_template_id=cfg['flairID']['alive'])
-            sleep(0.1)
+            sleep(2)
 
         con.execute('TRUNCATE TABLE VoteCall');
         con.execute('COMMIT;')
@@ -825,7 +840,7 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
     for row in result:
         sub.flair.delete(reddit.redditor(row[0]))
         reddit.redditor(row[0]).message('You have been kicked!', cfg['reply']['cycle'][2])
-        sleep(0.1)
+        sleep(2)
 
     con.execute(cfg['preStm']['cycle']['getAliveCnt'])
     result = con.fetchall()
@@ -843,7 +858,7 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
     result = con.fetchall()
     for row in result:
         reddit.redditor(row[0]).message('The game has ended!', cfg['reply']['gameEnd'].format(cfg['sub'], cfg['targetPost']))
-        sleep(0.1)
+        sleep(2)
 
     con.execute(cfg['preStm']['cycle']['getAlive'])
     result = con.fetchall()
@@ -851,7 +866,7 @@ def endGame(item, reddit, sub, con, cfg, curCycle):
     for row in result:
         reddit.redditor(row[0]).message('The game has ended!', cfg['reply']['gameEnd'])
         sub.flair.set(reddit.redditor(row[0]), text=cfg['flairs']['survived'].format(row[1], day), flair_template_id=cfg['flairID']['alive'])
-        sleep(0.1)
+        sleep(2)
 
     con.execute('COMMIT;')
 
@@ -882,7 +897,7 @@ def broadcast(item, reddit, con, cfg):
 
             for row in result:
                 reddit.redditor(row[0]).message('Announcement', msg)
-                sleep(0.1)
+                sleep(2)
 
             con.execute('COMMIT;')
     except mysql.connector.Error as err:
@@ -929,7 +944,7 @@ def restart(item, reddit, sub, db, con, cfg):
                 reddit.redditor(row[0]).message('A new game is starting', cfg['reply']['newGame'].format(row[0], cfg['roles'][0][curPos].title()))
                 curPos += 1
                 sub.flair.set(row[0], text=cfg['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
-                sleep(0.1)
+                sleep(2)
 
             con.execute('TRUNCATE TABLE VoteCall;');
             con.execute('COMMIT;')
