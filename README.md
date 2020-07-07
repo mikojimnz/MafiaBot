@@ -1,4 +1,4 @@
-# Mafia: MI6 VS The Twelve
+# Mafia: MI6 VS The Twelve V1
 
 **Who will survive? MI6 or The Twelve ?!**
 
@@ -45,7 +45,7 @@ All commands must be sent privately to u/DozenIncBOT
 |!revive USERNAME|Brings back a player from the dead. Can only be used once|
 |!vote USERNAME|Vote on who to eliminate. Can be changed until the Cycle ends.|
 |!digup USERNAME|Investigate the roles of other users. Has varying degree of reliability.|
-|!locate USERNAME|Shows the user's location. May give a clue as to what side they are on. Can be used by all.|
+|!locate USERNAME|Shows the user's location. May give a clue as to what side they are on. Can be used by all. Limited number of uses.|
 |!stats|Gets the current stats for the game.|
 |!help|Shows all commands available.|
 |!rules|Shows the rules.|
