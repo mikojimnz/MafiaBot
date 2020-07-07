@@ -88,7 +88,7 @@ def main():
                     removeUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search(r'^!vote', item.body)) and (state == 1)):
                     voteUser(item, reddit, con, cfg, curCycle)
-                elif ((re.search(r'^!burn', item.body)) and (state == 1)):
+                elif ((re.search(r'^!burn$', item.body)) and (state == 1)):
                     burnUser(item, reddit, sub, con, cfg, curCycle)
                 elif ((re.search(r'^!revive', item.body)) and (state == 1)):
                     reviveUser(item, reddit, sub, con, cfg, curCycle)
