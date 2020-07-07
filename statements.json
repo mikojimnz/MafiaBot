@@ -212,19 +212,35 @@
     "showRules": "Rules:\n1. Each user is given a secret role. You cannot see each other’s roles. You may choose to bluff or try to be truthful. Introduce yourself at the beginning of the game to set the scene.\n2. You must investigate each other to determine who is on what side. You may work with each other outside of the game thread.\n3. During the Day, MI6 agents can investigate and kill users who they suspect are in The Twelve. During the Night, The Twelve can investigate and kill users who they suspect are in MI6. Each Cycle lasts 6 hours. 2 Day/Night rounds, 4 cycles per day.\n4. A user must receive at least 2 votes to be executed. Team members are not immune to each other. You may end up killing your own team members out of suspicion. Users who do not actively participate in the game thread may not use game commands.\n5. At the end of each cycle, an announcement will be made about how many people are alive and how many were killed.\n6.You must choose your allies carefully to seek out the enemy.",
     "voteUser": "Your vote has been tallied. You can change your vote until the cycle ends."
   },
-  "roles": [
+  "teams": [
     [
-      "ASSASSIN",
-      "HANDLER",
-      "OPERATIVE",
-      "ANALYST"
+      [
+        "TRAINEE",
+        "ASSASSIN",
+        "HANDLER",
+        "KEEPER"
+      ],
+      [
+        "RECRUIT",
+        "ANALYST",
+        "OPERATIVE",
+        "SUPERVISOR"  
+      ]
     ],
-    {
-      "ASSASSIN": 0,
-      "HANDLER": 1,
-      "OPERATIVE": 2,
-      "ANALYST": 3
-    }
+    [
+      {
+        "TRAINEE": 0,
+        "ASSASSIN": 1,
+        "HANDLER": 2,
+        "KEEPER": 3
+      },
+      {
+        "RECRUIT": 0,
+        "ANALYST": 1,
+        "OPERATIVE": 2,
+        "SUPERVISOR": 3
+      }
+    ]
   ],
   "sticky": {
     "cycle": "It is now **{}** on Round {} (Cycle {}).\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
