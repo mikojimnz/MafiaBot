@@ -4,9 +4,9 @@
   ],
   "allowAllVote": 1,
   "allowBotBroadcast": 1,
-  "allowBurnAfter": 0,
+  "allowBurnAfter": 7,
   "allowJoinUptTo": 1,
-  "allowRevive": 1,
+  "allowRevive": 0,
   "allowVoteAnyTime": 1,
   "clock": {
     "hour1": 3,
