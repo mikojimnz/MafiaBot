@@ -5,6 +5,7 @@
     "goldenninjadragon"
   ],
   "allowAllVote": 1,
+  "allowBotBroadcast": 1,
   "allowBurnOn": 7,
   "allowJoinUptTo": 1,
   "allowRevive": 0,
@@ -93,8 +94,8 @@
   "preStm": {
     "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`role`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 'DUMMY', '0','-999') ON DUPLICATE KEY UPDATE `username`=`username`,`role`='DUMMY', `alive`='0';",
     "burn": [
-      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='ASSASSIN' OR `role`='HANDLER') AND `comment`>0 AND `alive`=1 AND NOT `username`=%s);",
-      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='OPERATIVE' OR `role`='ANALYST') AND `comment`>0 AND `alive`=1 AND NOT `username`=%s);",
+      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='ASSASSIN' OR `role`='HANDLER') AND `alive`=1 AND NOT `username`=%s);",
+      "SELECT `username`,`role` FROM Mafia WHERE ((`role`='OPERATIVE' OR `role`='ANALYST') AND `alive`=1 AND NOT `username`=%s);",
       "SELECT `username`,`role` FROM Mafia WHERE ((`role`='OPERATIVE' OR `role`='ANALYST') AND `alive`=1);",
       "SELECT `username`,`role` FROM Mafia WHERE ((`role`='ASSASSIN' OR `role`='HANDLER') AND `alive`=1);",
       "UPDATE Mafia SET `burn`=0 WHERE `username`=%s",
@@ -251,9 +252,9 @@
   "sql": {
     "database": "Reddit",
     "host": "127.0.0.1",
-    "password": "684239715",
+    "password": "",
     "port": "3306",
-    "user": "DozenIncBOT"
+    "user": ""
   },
   "sticky": {
     "cycle": "It is now **{}** on Round {} (Cycle {}).\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
@@ -271,7 +272,7 @@
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   },
   "sub": "KillingEve",
-  "targetPost": "gycs65",
+  "targetPost": "",
   "voteOneAfter": 11,
   "voteThreshold": 2
 }
