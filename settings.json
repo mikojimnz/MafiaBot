@@ -6,7 +6,7 @@
   ],
   "allowAllVote": 1,
   "allowBotBroadcast": 1,
-  "allowBurnOn": 0,
+  "allowBurnAfter": 0,
   "allowJoinUptTo": 1,
   "allowRevive": 1,
   "allowVoteAnyTime": 1,

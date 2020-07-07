@@ -49,10 +49,19 @@ def main():
     def log_commit(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            username = '*SELF*'
+            command = '!CYCLE'
+            utc = time.time();
+
             try:
+                if (item != None):
+                    username = item.author.name
+                    command = item.body
+                    utc = item.created_utc
+
                 result = func(*args, **kwargs)
-                pattern = re.search(r'^![\w]{1,}\s([\w\d_]{1,20})', item.body)
-                readable = time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(item.created_utc))
+                pattern = re.search(r'^![\w]{1,}\s([\w\d_]{1,20})', command)
+                readable = time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(utc))
                 action = ''
 
                 if (result == -1):
@@ -63,9 +72,9 @@ def main():
                 else:
                     action += f'{func.__name__}'
 
-                con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, action))
+                con.execute(stm['preStm']['log'], (utc, username, action))
                 con.execute('COMMIT;')
-                print(f'[{readable}] {item.author.name}: {action}')
+                print(f'[{readable}] {username}: {action}')
             except mysql.connector.Error as e:
                 print(f'SQL EXCEPTION @ {func.__name__} : {args} - {kwargs}\n{e}')
                 con.close()
@@ -73,40 +82,40 @@ def main():
             return result
         return wrapper
 
-    @log_commit
-    def schdWarn(min):
-        reddit.submission(id=cfg['targetPost']).reply(stm['sticky']['schdWarn'].format(min))
 
-    @log_commit
+    def schdWarn(min=00):
+        reddit.submission(id=cfg['targetPost']).reply(stm['sticky']['schdWarn'].format(min))
+        print(f'Cycle Warning {min}')
+
     def autoCycle():
-        item = type('', (), {})()
-        item.author = type('', (), {})()
-        item.author.name = '*SELF*'
-        item.body = '!CYCLE'
-        item.created_utc = time.time()
-        cycle(item)
-        save(state, curCycle, curPos)
+        with open('save.json') as jsonFile2:
+            sve = json.load(jsonFile2)
+        curCycle = sve['curCycle']
+        cycle(curCycle)
+        print(f'Auto Cycle {curCycle}')
 
     def scheduleJobs():
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:30').do(schdWarn,min=30)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:45').do(schdWarn,min=15)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"]).zfill(2)}:00').do(autoCycle)
-
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:30').do(schdWarn,min=30)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:45').do(schdWarn,min=15)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"]).zfill(2)}:00').do(autoCycle)
-
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:30').do(schdWarn,min=30)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] + 12).zfill(2)}:00').do(autoCycle)
-
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:30').do(schdWarn,min=30)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle)
+        schedule.every().minute.at(':00').do(autoCycle)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:30').do(schdWarn,min=30)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:45').do(schdWarn,min=15)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:55').do(schdWarn,min=5)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"]).zfill(2)}:00').do(autoCycle, curCycle)
+        #
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:30').do(schdWarn,min=30)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:45').do(schdWarn,min=15)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:55').do(schdWarn,min=5)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"]).zfill(2)}:00').do(autoCycle, curCycle)
+        #
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:30').do(schdWarn,min=30)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour1"] + 12).zfill(2)}:00').do(autoCycle, curCycle)
+        #
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:30').do(schdWarn,min=30)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
+        # schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle, curCycle)
+        print("Jobs Scheduled")
 
     @log_commit
     def gameState(state):
@@ -245,7 +254,7 @@ def main():
         burnedRole = ''
         side = 0
 
-        if (curCycle <= cfg['allowBurnOn']):
+        if (curCycle < cfg['allowBurnAfter']):
             item.reply(stm['reply']['err']['noBurnYet'])
             return -1
 
@@ -557,7 +566,7 @@ def main():
             mode[curCycle % 2], day, round, role.title(), stm['reply']['digupUserBody'][1][user], \
             alive, good, bad, killed, alive + killed, stm['reply']['getSts'][2][cfg['allowAllVote']], \
             stm['reply']['getSts'][2][cfg['allowVoteAnyTime']], stm['reply']['getSts'][2][cfg['allowRevive']], \
-            cfg['allowBurnOn'], cfg['voteThreshold'], cfg['voteOneAfter'], \
+            cfg['allowBurnAfter'], cfg['voteThreshold'], cfg['voteOneAfter'], \
             cfg['maxRequests'], cfg['kickAfter']))
 
     @log_commit
@@ -678,8 +687,8 @@ def main():
         con.execute('TRUNCATE TABLE VoteCall');
         comment = reddit.submission(id=cfg['targetPost']).reply(stm['sticky']['cycle'].format(mode[round % 2], day, nextRound, alive, good, bad, killed, alive + killed))
         comment.mod.distinguish(how='yes', sticky=True)
-        
-        if (item.author.name != '*SELF*'): item.reply(f'**Moved to cycle {round} (Round: {nextRound})**')
+
+        if (item != None): item.reply(f'**Moved to cycle {round} (Round: {nextRound})**')
         curCycle = round
         save(state, curCycle, curPos)
         return curCycle
