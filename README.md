@@ -12,8 +12,8 @@ Play against other members to find out who amongst each other you can trust and 
 
 1. Each user is assigned to either MI6 or the Twelve.
 2. You must investigate each other to determine who is on what side and eliminate the opponent.
-3. Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful invesitgation tools.
-4. Vote out players who you suspect are the enemy. A player must recieve a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.
+3. Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful investigation tools.
+4. Vote out players who you suspect are the enemy. A player must receive a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.
 4. At the end of each round, an announcement will be made how many people are alive how many were killed.
 5. You must choose your allies carefully to seek out the enemy.
 
@@ -33,11 +33,11 @@ Play against other members to find out who amongst each other you can trust and 
 |The Twelve|Trainee|1|Access to digup (low accuracy), vote, and max 3 requests.|
 |The Twelve|Assassin|2|Digup accuracy increased.|
 |The Twelve|Handler|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests.|
-|The Twelve|Keeper|4|Revive unloced. Burn does not annoucne who you are.|
-|MI6|Recriuit|1|Access to digup (low accuracy), vote, and max 3 requests.|
+|The Twelve|Keeper|4|Revive unlocked. Burn does not announce who you are.|
+|MI6|Recruit|1|Access to digup (low accuracy), vote, and max 3 requests.|
 |MI6|Analyst|2|Digup accuracy increased.|
 |MI6|Operative|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests.|
-|MI6|Supervisor|4|Revive unloced. Burn does not annoucne who you are.|
+|MI6|Supervisor|4|Revive unlocked. Burn does not announce who you are.|
 
 **Commands**
 
