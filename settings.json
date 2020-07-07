@@ -1,8 +1,6 @@
 {
   "adminUsr": [
-    "*SELF*",
-    "DozenIncBOT",
-    "goldenninjadragon"
+    "*SELF*"
   ],
   "allowAllVote": 1,
   "allowBotBroadcast": 1,
@@ -16,8 +14,8 @@
   },
   "cmtThreshold": 0,
   "flairID": {
-    "alive": "5958a89e-a22d-11ea-b2dd-0e21fdae0ecf",
-    "dead": "6b25177e-a22d-11ea-8cab-0e345a8c674b"
+    "alive": "",
+    "dead": ""
   },
   "kickAfter": 8,
   "maxRequests": 3,
@@ -25,12 +23,12 @@
   "sql": {
     "database": "Reddit",
     "host": "127.0.0.1",
-    "password": "684239715",
+    "password": "",
     "port": "3306",
-    "user": "root"
+    "user": ""
   },
-  "sub": "SomethingsNotRight",
-  "targetPost": "hmwdzb",
+  "sub": "",
+  "targetPost": "",
   "voteOneAfter": 11,
   "voteThreshold": 1
 }
