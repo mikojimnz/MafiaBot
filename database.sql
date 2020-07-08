@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `reddit`.`rolecnt` (`team` INT, `count` INT);
 DROP TABLE IF EXISTS `reddit`.`rolecnt`;
 DROP VIEW IF EXISTS `reddit`.`rolecnt` ;
 USE `reddit`;
-CREATE  OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `reddit`.`rolecnt` AS select `reddit`.`mafia`.`team` AS `team`,count(`reddit`.`mafia`.`team`) AS `count` from `reddit`.`mafia` where (`reddit`.`mafia`.`alive` = '1') group by `reddit`.`mafia`.`team` order by `reddit`.`mafia`.`team` desc;
+CREATE OR REPLACE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `Reddit`.`rolecnt` AS select `Reddit`.`Mafia`.`team` AS `team`,count(`Reddit`.`Mafia`.`team`) AS `count` from `Reddit`.`Mafia` where (`Reddit`.`Mafia`.`alive` = '1') group by `Reddit`.`Mafia`.`team` order by `Reddit`.`Mafia`.`team` desc;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
