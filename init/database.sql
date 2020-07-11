@@ -50,22 +50,22 @@ COLLATE = utf8_bin;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `Reddit`.`Mafia` ;
 
-CREATE TABLE IF NOT EXISTS `Reddit`.`Mafia` (
-  `utc` INT NOT NULL,
-  `username` VARCHAR(20) CHARACTER SET 'utf8' COLLATE 'utf8_bin' NOT NULL,
-  `team` INT NOT NULL,
-  `tier` INT NOT NULL DEFAULT '0',
-  `alive` INT NOT NULL DEFAULT '1',
-  `diedOnCycle` INT NULL DEFAULT NULL,
-  `burn` INT NOT NULL DEFAULT '1',
-  `revive` INT NOT NULL DEFAULT '1',
-  `request` INT NOT NULL DEFAULT '3',
-  `comment` INT NOT NULL DEFAULT '0',
-  `inactive` INT NOT NULL DEFAULT '0',
-  PRIMARY KEY (`utc`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8
-COLLATE = utf8_bin;
+CREATE TABLE `Mafia` (
+  `utc` int NOT NULL,
+  `username` varchar(20) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `team` int NOT NULL DEFAULT '-1',
+  `tier` int NOT NULL DEFAULT '0',
+  `loc` varchar(255) COLLATE utf8_bin DEFAULT NULL,
+  `alive` int NOT NULL DEFAULT '1',
+  `diedOnCycle` int DEFAULT NULL,
+  `burn` int NOT NULL DEFAULT '1',
+  `revive` int NOT NULL DEFAULT '1',
+  `request` int NOT NULL DEFAULT '3',
+  `comment` int NOT NULL DEFAULT '0',
+  `inactive` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`utc`),
+  UNIQUE KEY `Mafiacol_UNIQUE` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin
 
 CREATE UNIQUE INDEX `Mafiacol_UNIQUE` ON `Reddit`.`Mafia` (`username` ASC) VISIBLE;
 
@@ -99,9 +99,9 @@ DELIMITER $$
 USE `Reddit`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `role_cnt`()
 BEGIN
-SELECT team,COUNT(*) as cnt 
-FROM Mafia 
-GROUP BY team 
+SELECT team,COUNT(*) as cnt
+FROM Mafia
+GROUP BY team
 ORDER BY team DESC;
 END$$
 
@@ -118,10 +118,10 @@ DELIMITER $$
 USE `Reddit`$$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `role_cnt_alive`()
 BEGIN
-SELECT team,COUNT(*) as cnt 
+SELECT team,COUNT(*) as cnt
 FROM Mafia
 WHERE alive=1
-GROUP BY team 
+GROUP BY team
 ORDER BY team DESC;
 END$$
 

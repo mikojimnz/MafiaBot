@@ -1,8 +1,9 @@
 {
   "adminUsr": [
-    "*SELF*"
+    "*SELF*",
+    "DozenIncBOT",
+    "goldenninjadragon"
   ],
-  "allowJoinUptTo": 2,
   "clock": {
     "hour1": 3,
     "hour2": 9
@@ -31,15 +32,15 @@
   },
   "kickAfter": 8,
   "reddit": {
-    "praw": "",
-    "sub": "",
-    "targetPost": ""
+    "praw": "DozenIncBOT",
+    "sub": "SomethingsNotRight",
+    "targetPost": "hoohm0"
   },
   "sql": {
     "database": "Reddit",
     "host": "127.0.0.1",
-    "password": "",
+    "password": "684239715",
     "port": "3306",
-    "user": ""
+    "user": "root"
   }
 }

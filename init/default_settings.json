@@ -2,7 +2,6 @@
   "adminUsr": [
     "*SELF*"
   ],
-  "allowJoinUptTo": 2,
   "clock": {
     "hour1": 3,
     "hour2": 9
@@ -17,7 +16,7 @@
     "allowBotBroadcast": 1,
     "burnAfter": 7,
     "maxRequests": 3,
-    "reviveAfter": 1,
+    "reviveAfter": 11,
     "unlockBurn": 2,
     "unlockLocate": 2,
     "unlockRevive": 3,

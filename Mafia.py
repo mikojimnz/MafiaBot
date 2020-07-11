@@ -33,7 +33,6 @@ def main():
     exceptCnt = 0
     state = sve['state']
     curCycle = sve['curCycle']
-    curPos = sve['curPos']
 
     reddit = praw.Reddit(cfg['reddit']['praw'])
     sub = reddit.subreddit(cfg['reddit']['sub'])
@@ -44,7 +43,8 @@ def main():
     pool = db.get_connection()
     con = pool.cursor(prepared=True)
 
-    cache = []
+    idCache = []
+    itemCache = {}
     lastCmd = ''
 
     def log_commit(func):
@@ -121,42 +121,45 @@ def main():
         pattern = re.search(r'^!GAMESTATE\s([0-9]{1,1})(\s-s)?', item.body)
         setState = pattern.group(1)
         silent = pattern.group(2)
-        players = 0
 
         if (item.author.name not in cfg['adminUsr']):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: gameState'))
             return -1
         else:
-            con.execute(stm['preStm']['getAll'])
-            result = con.fetchall()
-            players = len(result)
-
-            for row in result:
-                if ((setState == '0') and (silent == None) and (cfg['allowBotBroadcast'] == 1)):
-                    reddit.redditor(row[0]).message('The game has paused!', stm['reply']['gamePause'])
-                sleep(0.2)
-
             if ((setState == '0') and (silent == None)):
                 comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['pause'])
                 comment.mod.distinguish(how='yes', sticky=True)
             elif ((setState == '1') and (silent == None)):
-                startGame()
+                gameStart()
             elif ((setState == '2') and (silent == None)):
-                endGame()
+                gameEnd()
 
             if (item.author.name != '*SELF*'): item.reply(f'**gamestate changed to {setState}**')
-            save(setState, curCycle, curPos)
+            save(setState, curCycle)
             return setState
 
     @log_commit
-    def addUser(curPos):
-        curPos += 1
-        save(state, curCycle, curPos)
-        return curPos
+    def addUser():
+        con.execute(stm['preStm']['chkUsrState'],(item.author.name,))
+        result = con.fetchall()
+
+        if(len(result) > 0):
+            con.execute(stm['preStm']['addExistingUser'], (cfg['commands']['maxRequests'], item.author.name))
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['addExistingUser'].format(item.author.name))
+        else:
+            con.execute(stm['preStm']['addUser'], (item.created_utc, item.author.name))
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['addUser'].format(item.author.name))
+
+        sub.flair.set(item.author, text=stm['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+        item.reply(stm['reply']['addUser'].format(item.author.name))
+        setItems(item.author.name, item)
 
     @log_commit
     def removeUser():
-        pass
+        con.execute(stm['preStm']['removeUser'], (curCycle, item.author.name))
+        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['removeUser'].format(item.author.name))
+        sub.flair.delete(item.author)
+        setItems(item.author.name, None)
 
     @log_commit
     def voteUser():
@@ -199,12 +202,44 @@ def main():
         item.reply(stm['reply']['showRules'])
 
     @log_commit
-    def startGame():
-        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['start'])
+    def gameStart():
+        con.execute(stm['preStm']['getPlaying'])
+        result = con.fetchall()
+        players = len(result)
+        curPos = 0
+
+        random.seed(time.time())
+        random.shuffle(result)
+
+        for row in result:
+            team = curPos % 2
+
+            random.seed(time.time())
+            if team:
+                loc = stm['location'][0][random.randint(0, len(stm['location'][0]) - 1)]
+            else:
+                loc = stm['location'][1][random.randint(0, len(stm['location'][1]) - 1)]
+
+            con.execute(stm['preStm']['joinTeam'], (team, loc, row[0]))
+            getItems(row[0]).reply(stm['reply']['gameStart'].format(stm['teams'][0][team], loc, players, cfg['reddit']['sub'], cfg['reddit']['targetPost']))
+            limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
+
+            if (limits['remaining'] < 10):
+                reset = (limits["reset_timestamp"] + 10) - time.time()
+                print(f'Sleeping for: {reset} seconds')
+                print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
+                comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
+                comment.mod.distinguish(how='yes', sticky=True)
+                sleep(reset)
+
+            curPos += 1
+            sleep(0.2)
+
+        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['start'].format(players))
         comment.mod.distinguish(how='yes', sticky=True)
 
     @log_commit
-    def endGame():
+    def gameEnd():
         if (good == bad):
             winner = 'NOBODY'
         elif (good > bad):
@@ -218,15 +253,11 @@ def main():
     @log_commit
     def cycle(curCycle):
         curCycle = round
-        save(state, curCycle, curPos)
+        save(state, curCycle)
         return curCycle
 
     @log_commit
     def broadcast():
-        if (cfg['allowBotBroadcast'] == 0):
-            item.reply('Broadcast Disabled')
-            return
-
         pattern = re.search(r'^!BROADCAST\s([\s\w\d!@#$%^&*()_+{}|:\'<>?\-=\[\]\;\',./’]+)', item.body)
         msg = pattern.group(1)
 
@@ -234,11 +265,24 @@ def main():
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: broadcast'))
             return -1
         else:
+            if (cfg['allowBotBroadcast'] == 0):
+                item.reply('Broadcast Disabled')
+                return
+
             con.execute(stm['preStm']['getAll'])
             result = con.fetchall()
-
             for row in result:
-                reddit.redditor(row[0]).message('Announcement', msg)
+                getItems(row[0]).reply(msg)
+                limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
+
+                if (limits['remaining'] < 10):
+                    reset = (limits["reset_timestamp"] + 10) - time.time()
+                    print(f'Sleeping for: {reset} seconds')
+                    print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
+                    comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
+                    comment.mod.distinguish(how='yes', sticky=True)
+                    sleep(reset)
+
                 sleep(0.2)
 
     @log_commit
@@ -313,7 +357,6 @@ def main():
     print(f'Database Connections: {len(conStat)}')
     print(f'state: {state}')
     print(f'curCycle: {curCycle} (Cycle: {curCycle + 1})')
-    print(f'curPos: {curPos}')
     print('______')
 
     while True:
@@ -325,14 +368,14 @@ def main():
                 if comment is None:
                     break
 
-                if ((comment.submission.id == cfg['reddit']['targetPost']) and (comment.id not in cache)):
-                    if (len(cache) > 1000):
-                        cache = []
+                if ((comment.submission.id == cfg['reddit']['targetPost']) and (comment.id not in idCache)):
+                    if (len(idCache) > 1000):
+                        idCache = []
 
                     if(re.search(r'^!(join|leave|vote|digup|rules|help|stats)', comment.body)):
-                        comment.reply(stm['reply']['err']['notPM'])
+                        comment.reply(stm['error']['notPM'])
 
-                    cache.append(comment.id)
+                    idCache.append(comment.id)
                     con.execute(stm['preStm']['comment'], (comment.author.name,))
                     con.execute('COMMIT;')
 
@@ -349,8 +392,8 @@ def main():
                     except:
                         pass
 
-                if ((re.search(r'^!join', item.body)) and (curCycle <= cfg['allowJoinUptTo'])):
-                    curPos = addUser(curPos)
+                if ((re.search(r'^!join', item.body)) and (state == 0)):
+                    addUser()
                 elif (re.search(r'^!leave', item.body)):
                     removeUser()
                 elif ((re.search(r'^!vote', item.body)) and (state == 1)):
@@ -388,7 +431,7 @@ def main():
                 elif (re.search(r'^!HALT', item.body)):
                     halt()
                 else:
-                    item.reply(stm['reply']['err']['unkCmd'][0][0].format(stm['reply']['err']['unkCmd'][1][state]))
+                    item.reply(stm['error']['unkCmd'][0][0].format(stm['error']['unkCmd'][1][state]))
 
                 item.mark_read()
                 lastCmd = item.body.strip()
@@ -401,15 +444,45 @@ def main():
 
     con.close()
 
-def save(state, curCycle, curPos):
+def save(state, curCycle):
     with open('data/save.json', 'r+') as jsonFile2:
         tmp = json.load(jsonFile2)
         tmp['state'] = int(state)
         tmp['curCycle'] = int(curCycle)
-        tmp['curPos'] = int(curPos)
         jsonFile2.seek(0)
         json.dump(tmp, jsonFile2)
         jsonFile2.truncate()
+
+def setItems(k, v):
+    try:
+        with open('data/items.pickle', 'rb') as itemsFile:
+            tmp = pickle.load(itemsFile)
+
+            if v == None:
+                tmp.pop(k, None)
+            else:
+                tmp[k] = v
+
+            pickle.dump(tmp, itemsFile)
+    except Exception as e:
+        tmp = {}
+
+        if v == None:
+            tmp.pop(k, None)
+        else:
+            tmp[k] = v
+
+        pickle.dump(tmp, open('data/items.pickle', 'wb'))
+
+def getItems(k):
+    try:
+        with open('data/items.pickle', 'rb') as itemsFile:
+            tmp = pickle.load(itemsFile)
+            return tmp[k]
+    except Exception as e:
+        tmp = {}
+        pickle.dump(tmp, open('data/items.pickle', 'wb'))
+        return None
 
 def exit_gracefully(signum, frame):
     signal.signal(signal.SIGINT, original_sigint)
