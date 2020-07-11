@@ -118,7 +118,7 @@ def main():
 
     @log_commit
     def gameState(state):
-        pattern = re.search(r'^!GAMESTATE\s([0-9]{1,1})(\s-s)?', item.body)
+        pattern = re.search(r'^!GAMESTATE\s([0-9]{1,1})(\s-[sS])?', item.body)
         setState = pattern.group(1)
         silent = pattern.group(2)
 
@@ -215,23 +215,10 @@ def main():
             team = curPos % 2
 
             random.seed(time.time())
-            if team:
-                loc = stm['location'][0][random.randint(0, len(stm['location'][0]) - 1)]
-            else:
-                loc = stm['location'][1][random.randint(0, len(stm['location'][1]) - 1)]
-
+            loc = stm['location'][team][random.randint(0, len(stm['location'][team]) - 1)]
             con.execute(stm['preStm']['joinTeam'], (team, loc, row[0]))
             getItems(row[0]).reply(stm['reply']['gameStart'].format(stm['teams'][0][team], loc, players, cfg['reddit']['sub'], cfg['reddit']['targetPost']))
-            limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
-
-            if (limits['remaining'] < 10):
-                reset = (limits["reset_timestamp"] + 10) - time.time()
-                print(f'Sleeping for: {reset} seconds')
-                print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
-                comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
-                comment.mod.distinguish(how='yes', sticky=True)
-                sleep(reset)
-
+            rateLimit(reddit)
             curPos += 1
             sleep(0.2)
 
@@ -240,6 +227,50 @@ def main():
 
     @log_commit
     def gameEnd():
+        round = curCycle + 1
+        con.execute(stm['preStm']['cycle']['resetInactive'])
+        con.execute(stm['preStm']['cycle']['incrementInactive'])
+        con.execute(stm['preStm']['cycle']['resetComment'])
+        con.execute(stm['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
+        result = con.fetchall()
+
+        for row in result:
+            sub.flair.delete(reddit.redditor(row[0]))
+            reddit.redditor(row[0]).message('You have been kicked!', stm['reply']['cycle'][2])
+            sleep(0.2)
+
+        con.execute(stm['preStm']['cycle']['getAliveCnt'])
+        result = con.fetchall()
+        alive  = result[0][0]
+        killed = result[0][1]
+
+        print(f'\nAlive: {alive} | Killed {killed}')
+
+        if (cfg['commands']['allowBotBroadcast'] == 1):
+            con.execute(stm['preStm']['getDead'])
+            result = con.fetchall()
+
+            for row in result:
+                getItems(row[0]).reply(stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
+                rateLimit(reddit)
+                sleep(0.2)
+
+        con.execute(stm['preStm']['cycle']['getAlive'])
+        result = con.fetchall()
+
+        for row in result:
+            if (cfg['commands']['allowBotBroadcast'] == 1):
+                getItems(row[0]).reply(stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
+                rateLimit(reddit)
+
+            sub.flair.set(reddit.redditor(row[0]), text=stm['flairs']['survived'].format(stm['teams'][0][row[1]], round), flair_template_id=cfg['flairID']['alive'])
+            sleep(0.2)
+
+        con.execute(stm['preStm']['getWinner'])
+        result = con.fetchall()
+        bad = result[0][0]
+        good = result[0][1]
+
         if (good == bad):
             winner = 'NOBODY'
         elif (good > bad):
@@ -265,7 +296,7 @@ def main():
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: broadcast'))
             return -1
         else:
-            if (cfg['allowBotBroadcast'] == 0):
+            if (cfg['commands']['allowBotBroadcast'] == 0):
                 item.reply('Broadcast Disabled')
                 return
 
@@ -273,16 +304,7 @@ def main():
             result = con.fetchall()
             for row in result:
                 getItems(row[0]).reply(msg)
-                limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
-
-                if (limits['remaining'] < 10):
-                    reset = (limits["reset_timestamp"] + 10) - time.time()
-                    print(f'Sleeping for: {reset} seconds')
-                    print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
-                    comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
-                    comment.mod.distinguish(how='yes', sticky=True)
-                    sleep(reset)
-
+                rateLimit(reddit)
                 sleep(0.2)
 
     @log_commit
@@ -293,9 +315,14 @@ def main():
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: restart'))
             return -1
         else:
-            # Re assign teams
+            con.execute(stm['preStm']['restart'])
+            con.execute('TRUNCATE TABLE VoteCall;');
+            con.execute('COMMIT;')
+            comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['restart'])
+            comment.mod.distinguish(how='yes', sticky=True)
+            save(0, 0)
 
-            if (item.author.name != '*SELF*'): item.reply('**Resetting Game**')
+            if (item.author.name != '*SELF*'): item.reply('**Restarting Game**')
             print('REMOTE RESTART RECEIVED')
             con.close()
             os._exit(1)
@@ -320,7 +347,8 @@ def main():
             con.execute('COMMIT;')
             comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['reset'])
             comment.mod.distinguish(how='yes', sticky=True)
-            save(0, 0, 0)
+            save(0, 0)
+            os.remove('data/items.pickle')
 
             if (item.author.name != '*SELF*'): item.reply('**Resetting Game**')
             print('REMOTE RESET RECEIVED')
@@ -443,6 +471,17 @@ def main():
             sleep(60 * exceptCnt)
 
     con.close()
+
+def rateLimit(reddit):
+    limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
+
+    if (limits['remaining'] < 10):
+        reset = (limits["reset_timestamp"] + 10) - time.time()
+        print(f'Sleeping for: {reset} seconds')
+        print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
+        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
+        comment.mod.distinguish(how='yes', sticky=True)
+        sleep(reset)
 
 def save(state, curCycle):
     with open('data/save.json', 'r+') as jsonFile2:

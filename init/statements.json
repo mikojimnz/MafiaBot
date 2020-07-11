@@ -116,8 +116,27 @@
     "addExistingUser": "UPDATE Mafia SET `alive`=1,`request`=%s WHERE `username`=%s;",
     "chkUsrState": "SELECT `team`,`tier`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
+    "cycle": {
+      "getVotes": "SELECT DISTINCT `vote` From VoteCall",
+      "getVoteTarget": "SELECT `vote` FROM VoteCall WHERE `username`=%s;",
+      "getVoters": "SELECT `username` FROM VoteCall WHERE (NOT `username`=%s AND `vote`=%s);",
+      "voteEscaped": "UPDATE VoteCall SET `vote`='' WHERE `vote`=%s;",
+      "killPlayer": "UPDATE Mafia SET `alive`='0',`diedOnCycle`=%s WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
+      "getAliveCnt":"SELECT (SELECT COUNT(team) FROM Mafia WHERE `alive`='1') AS alive, (SELECT COUNT(team) FROM Mafia WHERE (`alive`='0' AND NOT `username`='DozenIncBOT')) AS dead",
+      "getTeamCnt": "SELECT (SELECT COUNT(team) FROM Mafia WHERE (`alive`= 1 AND `team`=0')) AS TWELVE, (SELECT COUNT(team) FROM Mafia WHERE (`alive`= 1 AND `team`=1)) AS MI6",
+      "getDead": "SELECT v.vote,m.team,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
+      "getKilledMe": "SELECT `username` FROM VoteCall WHERE `vote`=%s",
+      "getAlive": "SELECT `username`,`team` FROM Mafia WHERE `alive`='1';",
+      "resetInactive": "UPDATE Mafia SET `inactive` = 0 WHERE (`comment`>0 AND `alive`=1);",
+      "incrementInactive": "UPDATE Mafia SET `inactive` = `inactive` + 1 WHERE (`comment`=0 AND `alive` = 1);",
+      "resetComment": "UPDATE Mafia SET `comment`=0 WHERE `comment`>0",
+      "getInactive": "SELECT username FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);",
+      "removeInactive": "UPDATE Mafia SET `alive`=3 WHERE (`inactive`>=%s AND `alive`=1);"
+    },
     "getAll": "SELECT `username` FROM Mafia WHERE ((`alive`=0 OR `alive`=1) AND NOT `username`='DozenIncBOT');",
+    "getDead": "SELECT `username`,`team` FROM Mafia WHERE `alive`=0;",
     "getPlaying": "SELECT `username` FROM Mafia WHERE (`alive`=1 AND NOT `username`='DozenIncBOT');",
+    "getWinner": "SELECT (SELECT COUNT(team) FROM Mafia WHERE (`alive`='1' AND `team`=0)) AS TWELVE, (SELECT COUNT(team) FROM Mafia WHERE (`alive`='1' AND `team`=1)) AS MI6",
     "joinTeam": "UPDATE Mafia SET `team`=%s,`loc`=%s WHERE `username`=%s;",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
@@ -125,6 +144,7 @@
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, '*SELF*', 'Game Initalized');"
     ],
     "removeUser": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=%s WHERE `username`=%s;",
+    "restart": "UPDATE Mafia SET `team`=-1,`tier`=0,`loc`=Null,`alive`=1,`burn`=1,`revive`=1,`request`=3,`comment`=0,`inactive`=0 WHERE (`alive`=0 or `alive`=1);",
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
@@ -163,7 +183,7 @@
       ]
     ],
     "gameEnd": "The game has ended. [**Check the game thread to see who won**](https://reddit.com/r/{}/comments/{})\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
-    "gameStart": "The game has started.\n\n**You are with {} and are working in {}!**\nThere are {} players.\n\nInvestigate everyone around you and help your team survive! Don't forget to introduce yourself.\n\nhttps://reddit.com/r/{}/comments/{}\n\nYou do not need to be present at all times to play. However, if you are inactive for more than 48 hours you will be kicked for inactivity.",
+    "gameStart": "The game has started.\n\n**You are with {} and are working in {}!**\nThere are {} players.\n\nInvestigate everyone around you and help your team survive! \n\n[Don't forget to introduce yourself.](https://reddit.com/r/{}/comments/{})\n\n^(You do not need to be present at all times to play. However, if you are inactive for more than 48 hours you will be kicked for inactivity.)",
     "getList": "Total players: {}\n\nDead: {}\n{}\n\nAlive: {}\n{}",
     "getSts": [
       [
@@ -182,7 +202,6 @@
     "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this cycle, cycle {}.",
     "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this round, round {}.",
     "locateUser": "u/{} is located at {}",
-    "newGame": "Hello u/{}, a new game is starting.\n\nYour new role is: *{}*\n\nIf you wish to leave, type !leave. You cannot rejoin once the game has started.",
     "promote": "Code Accepted!\n\nYou have been promoted to {}.",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "requestUser": "Your info request has been posted.",
@@ -218,7 +237,7 @@
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "rateLimit": "Attention the bot has reached its current rate limit.\n\nBot execution will be paused for {} seconds.",
     "reset": "The game has ended and is being reset. Commands are no longer being read.\n\nPlease wait for further information.",
-    "restart": "The game has ended and is being restarted. Teams will be reassigned\n\nPlease wait for further information.",
+    "restart": "The current game has ended and will be restarted. Teams will be reassigned on game start.\n\nPlease wait for further information.",
     "round": "It is now **{}** on Round {}.\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total Players: {}\n\nGood Luck.",
     "start": "The game has started with {} players.\n\nIntroduce yourself to each other and seek out the enemy."
   }
