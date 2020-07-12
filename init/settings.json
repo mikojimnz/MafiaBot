@@ -22,6 +22,7 @@
     "unlockBurn": 2,
     "unlockLocate": 2,
     "unlockRevive": 3,
+    "unlockVote": 1,
     "useThreshold": 1,
     "voteOneAfter": 11,
     "voteThreshold": 2

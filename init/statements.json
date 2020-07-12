@@ -48,28 +48,21 @@
     "Chopped and blended",
     "Run over by train"
   ],
-  "error": {
+  "err": {
+    "alreadyStarted": "The game has already started.",
     "burnUsed": "You have already used your abulity to burn.",
     "noBurnLeft": "There is no one left to burn",
     "noBurnYet": "The burn command is not yet unlocked.",
     "noParticipate": "To use this command, you must comment at least once per round to maintain active status. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
     "noRequestLeft": "You have used your alloted requests",
-    "notFound": "Cannot find that user, the user is not playing in the game, or the user been killed.\n\nNote: Usernames are case-sensitive.",
+    "notFound": "Cannot find that user or the user is not playing in the game.\n\nNote: Usernames are case-sensitive.",
     "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
-    "notUnlocked": "Command not authorized!.\n\nCrack the game codes to unlock this command.",
+    "notStarted": "The game has not started yet.",
+    "notUnlocked": "Command not authorized!.\n\nCrack more game codes to unlock this command.",
     "nmFmt": "Invalid username.",
     "reviveUsed": "You have already used your abulity to revive.",
     "spec": "You are a spectator. You cannot use this command.",
-    "unkCmd": [
-      [
-        "Invalid Command. Type !help for a list of commands.\n\nNote: The game {}"
-      ],
-      [
-        "has not yet started.",
-        "has already started.",
-        "has ended."
-      ]
-    ],
+    "unkCmd": "Invalid Command. Type !help for a list of commands.",
     "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "wrongCode": "Access Denied"
   },
@@ -114,6 +107,7 @@
     "addDummy": "INSERT IGNORE INTO Mafia (`utc`,`username`,`team`,`alive`,`inactive`) VALUES ('0', 'DozenIncBOT', 2, 3,-999) ON DUPLICATE KEY UPDATE `username`=`username`,`team`=2, `alive`=3;",
     "addUser": "INSERT IGNORE INTO Mafia (`utc`, `username`) VALUES (%s, %s) ON DUPLICATE KEY UPDATE `alive`='1';",
     "addExistingUser": "UPDATE Mafia SET `alive`=1,`request`=%s WHERE `username`=%s;",
+    "chkCmt": "SELECT `username` FROM Mafia WHERE (`username`=%s AND `comment`>=%s);",
     "chkUsrState": "SELECT `team`,`tier`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
@@ -133,6 +127,7 @@
       "getInactive": "SELECT username FROM Mafia WHERE (`inactive`>=%s AND `alive`=1);",
       "removeInactive": "UPDATE Mafia SET `alive`=3 WHERE (`inactive`>=%s AND `alive`=1);"
     },
+    "digupUser": "SELECT `team`,`tier`,`alive` FROM Mafia WHERE (`username`=%s AND (`alive`=0 OR `alive`=1));",
     "getAll": "SELECT `username` FROM Mafia WHERE ((`alive`=0 OR `alive`=1) AND NOT `username`='DozenIncBOT');",
     "getDead": "SELECT `username`,`team` FROM Mafia WHERE `alive`=0;",
     "getPlaying": "SELECT `username` FROM Mafia WHERE (`alive`=1 AND NOT `username`='DozenIncBOT');",

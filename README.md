@@ -41,7 +41,7 @@ Play against other members to find out who amongst each other you can trust and 
 
 **Commands**
 
-All commands must be sent privately to u/DozenIncBOT. To use investigative commands, use must comment at least once per round to avoid being kicked for inactivity. 
+All commands must be sent privately to u/DozenIncBOT. To use investigative commands, use must comment at least once per round to avoid being kicked for inactivity.
 
 |Command|Description|Unlock Tier|
 |:-|:-|:-|
@@ -51,7 +51,7 @@ All commands must be sent privately to u/DozenIncBOT. To use investigative comma
 |!request USERNAME|Ask for intel anonymously on a player. Limited number of uses.|1|
 |!burn|Exposes one of your team members for guaranteed intelligence about the other team. Can only be used once.|3|
 |!revive USERNAME|Brings back a player from the dead. Can only be used once|4|
-|!vote USERNAME|Vote on who to eliminate. Can be changed until the Round ends.|1|
+|!vote USERNAME|Vote on who to eliminate. Can be changed until the Round ends.|2|
 |!digup USERNAME|Investigate the roles of other users. Has varying degree of reliability based on your tier|1|
 |!locate USERNAME|Shows the user's location. May give a clue as to what side they are on.|3|
 |!stats|Gets the current stats for the game.|1|

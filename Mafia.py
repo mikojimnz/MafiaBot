@@ -83,6 +83,44 @@ def main():
             return result
         return wrapper
 
+    def game_command(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            pattern = re.search(r'^!([a-z]{4,})\s(u/)?([A-Za-z0-9_]{1,20})', item.body)
+            name = ''
+
+            if (state == 0):
+                item.reply(stm['err']['notStarted'])
+                return -1
+
+            if pattern:
+                name = pattern.group(3)
+            else:
+                item.reply(stm['err']['nmFmt'])
+                return -1
+
+            try:
+                con.execute(stm['preStm']['chkCmt'], (item.author.name, cfg['commands']['useThreshold']))
+                r = con.fetchall()
+
+                if (len(r) <= 0):
+                    item.reply(stm['err']['noParticipate'])
+                    return -1
+
+                con.execute(stm['preStm']['digupUser'], (name,))
+                r = con.fetchall()
+
+                if (len(r) <= 0):
+                    item.reply(stm['err']['notFound'])
+                    return -1
+
+            except mysql.connector.Error as e:
+                print(f'SQL EXCEPTION @ {func.__name__} : {args} - {kwargs}\n{e}')
+                con.close()
+                os._exit(-1)
+            return
+        return wrapper
+
     def schdWarn(min=00):
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['schdWarn'].format(min))
         print(f'Cycle Warning {min}')
@@ -119,19 +157,19 @@ def main():
     @log_commit
     def gameState(state):
         pattern = re.search(r'^!GAMESTATE\s([0-9]{1,1})(\s-[sS])?', item.body)
-        setState = pattern.group(1)
+        setState = int(pattern.group(1))
         silent = pattern.group(2)
 
         if (item.author.name not in cfg['adminUsr']):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: gameState'))
             return -1
         else:
-            if ((setState == '0') and (silent == None)):
+            if ((setState == 0) and (silent == None)):
                 comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['pause'])
                 comment.mod.distinguish(how='yes', sticky=True)
-            elif ((setState == '1') and (silent == None)):
+            elif ((setState == 1) and (silent == None)):
                 gameStart()
-            elif ((setState == '2') and (silent == None)):
+            elif ((setState == 2) and (silent == None)):
                 gameEnd()
 
             if (item.author.name != '*SELF*'): item.reply(f'**gamestate changed to {setState}**')
@@ -140,10 +178,14 @@ def main():
 
     @log_commit
     def addUser():
-        con.execute(stm['preStm']['chkUsrState'],(item.author.name,))
-        result = con.fetchall()
+        if (state == 1):
+            item.reply(stm['err']['alreadyStarted'])
+            return -1
 
-        if(len(result) > 0):
+        con.execute(stm['preStm']['chkUsrState'],(item.author.name,))
+        r = con.fetchall()
+
+        if(len(r) > 0):
             con.execute(stm['preStm']['addExistingUser'], (cfg['commands']['maxRequests'], item.author.name))
             reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['addExistingUser'].format(item.author.name))
         else:
@@ -162,34 +204,42 @@ def main():
         setItems(item.author.name, None)
 
     @log_commit
+    @game_command
     def voteUser():
         pass
 
     @log_commit
+    @game_command
     def burnUser():
         pass
 
     @log_commit
+    @game_command
     def reviveUser():
         pass
 
     @log_commit
+    @game_command
     def digupUser():
         pass
 
     @log_commit
+    @game_command
     def locateUser():
         pass
 
     @log_commit
+    @game_command
     def requestUser():
         pass
 
     @log_commit
+    @game_command
     def unlockTier():
         pass
 
     @log_commit
+    @game_command
     def getStats():
         pass
 
@@ -204,14 +254,14 @@ def main():
     @log_commit
     def gameStart():
         con.execute(stm['preStm']['getPlaying'])
-        result = con.fetchall()
-        players = len(result)
+        r = con.fetchall()
+        players = len(r)
         curPos = 0
 
         random.seed(time.time())
-        random.shuffle(result)
+        random.shuffle(r)
 
-        for row in result:
+        for row in r:
             team = curPos % 2
 
             random.seed(time.time())
@@ -232,33 +282,33 @@ def main():
         con.execute(stm['preStm']['cycle']['incrementInactive'])
         con.execute(stm['preStm']['cycle']['resetComment'])
         con.execute(stm['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
-        result = con.fetchall()
+        r = con.fetchall()
 
-        for row in result:
+        for row in r:
             sub.flair.delete(reddit.redditor(row[0]))
             reddit.redditor(row[0]).message('You have been kicked!', stm['reply']['cycle'][2])
             sleep(0.2)
 
         con.execute(stm['preStm']['cycle']['getAliveCnt'])
-        result = con.fetchall()
-        alive  = result[0][0]
-        killed = result[0][1]
+        r = con.fetchall()
+        alive  = r[0][0]
+        killed = r[0][1]
 
         print(f'\nAlive: {alive} | Killed {killed}')
 
         if (cfg['commands']['allowBotBroadcast'] == 1):
             con.execute(stm['preStm']['getDead'])
-            result = con.fetchall()
+            r = con.fetchall()
 
-            for row in result:
+            for row in r:
                 getItems(row[0]).reply(stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
                 rateLimit(reddit)
                 sleep(0.2)
 
         con.execute(stm['preStm']['cycle']['getAlive'])
-        result = con.fetchall()
+        r = con.fetchall()
 
-        for row in result:
+        for row in r:
             if (cfg['commands']['allowBotBroadcast'] == 1):
                 getItems(row[0]).reply(stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
                 rateLimit(reddit)
@@ -267,9 +317,9 @@ def main():
             sleep(0.2)
 
         con.execute(stm['preStm']['getWinner'])
-        result = con.fetchall()
-        bad = result[0][0]
-        good = result[0][1]
+        r = con.fetchall()
+        bad = r[0][0]
+        good = r[0][1]
 
         if (good == bad):
             winner = 'NOBODY'
@@ -283,6 +333,14 @@ def main():
 
     @log_commit
     def cycle(curCycle):
+        if (state == 0):
+            item.reply(stm['err']['notStarted'])
+            return -1
+
+        if (item.author.name not in cfg['adminUsr']):
+            con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
+            return -1
+
         curCycle = round
         save(state, curCycle)
         return curCycle
@@ -295,17 +353,17 @@ def main():
         if (item.author.name not in cfg['adminUsr']):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: broadcast'))
             return -1
-        else:
-            if (cfg['commands']['allowBotBroadcast'] == 0):
-                item.reply('Broadcast Disabled')
-                return
 
-            con.execute(stm['preStm']['getAll'])
-            result = con.fetchall()
-            for row in result:
-                getItems(row[0]).reply(msg)
-                rateLimit(reddit)
-                sleep(0.2)
+        if (cfg['commands']['allowBotBroadcast'] == 0):
+            item.reply('Broadcast Disabled')
+            return
+
+        con.execute(stm['preStm']['getAll'])
+        r = con.fetchall()
+        for row in r:
+            getItems(row[0]).reply(msg)
+            rateLimit(reddit)
+            sleep(0.2)
 
     @log_commit
     def restart():
@@ -314,18 +372,18 @@ def main():
         if (item.author.name not in cfg['adminUsr']):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: restart'))
             return -1
-        else:
-            con.execute(stm['preStm']['restart'])
-            con.execute('TRUNCATE TABLE VoteCall;');
-            con.execute('COMMIT;')
-            comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['restart'])
-            comment.mod.distinguish(how='yes', sticky=True)
-            save(0, 0)
 
-            if (item.author.name != '*SELF*'): item.reply('**Restarting Game**')
-            print('REMOTE RESTART RECEIVED')
-            con.close()
-            os._exit(1)
+        con.execute(stm['preStm']['restart'])
+        con.execute('TRUNCATE TABLE VoteCall;');
+        con.execute('COMMIT;')
+        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['restart'])
+        comment.mod.distinguish(how='yes', sticky=True)
+        save(0, 0)
+
+        if (item.author.name != '*SELF*'): item.reply('**Restarting Game**')
+        print('REMOTE RESTART RECEIVED')
+        con.close()
+        os._exit(1)
 
     @log_commit
     def reset():
@@ -334,30 +392,30 @@ def main():
         if (item.author.name not in cfg['adminUsr']):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: reset'))
             return -1
-        else:
-            con.execute('SELECT `username` FROM Mafia')
-            result = con.fetchall()
 
-            for row in result:
-                sub.flair.delete(row[0])
+        con.execute('SELECT `username` FROM Mafia')
+        r = con.fetchall()
 
-            con.execute('TRUNCATE TABLE Mafia;');
-            con.execute('TRUNCATE TABLE VoteCall;');
-            con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'reset'))
-            con.execute('COMMIT;')
-            comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['reset'])
-            comment.mod.distinguish(how='yes', sticky=True)
-            save(0, 0)
+        for row in r:
+            sub.flair.delete(row[0])
 
-            try:
-                os.remove('data/items.pickle')
-            except:
-                pass
+        con.execute('TRUNCATE TABLE Mafia;');
+        con.execute('TRUNCATE TABLE VoteCall;');
+        con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'reset'))
+        con.execute('COMMIT;')
+        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['reset'])
+        comment.mod.distinguish(how='yes', sticky=True)
+        save(0, 0)
 
-            if (item.author.name != '*SELF*'): item.reply('**Resetting Game**')
-            print('REMOTE RESET RECEIVED')
-            con.close()
-            os._exit(1)
+        try:
+            os.remove('data/items.pickle')
+        except:
+            pass
+
+        if (item.author.name != '*SELF*'): item.reply('**Resetting Game**')
+        print('REMOTE RESET RECEIVED')
+        con.close()
+        os._exit(1)
 
     @log_commit
     def halt():
@@ -366,15 +424,15 @@ def main():
         if (item.author.name not in cfg['adminUsr']):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: halt'))
             return -1
-        else:
-            comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['halt'])
-            comment.mod.distinguish(how='yes', sticky=True)
-            con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'halt'))
-            con.execute('COMMIT;')
-            if (item.author.name != '*SELF*'): item.reply('**Stopping Game**')
-            print('REMOTE HALT RECEIVED')
-            con.close()
-            os._exit(1)
+
+        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['halt'])
+        comment.mod.distinguish(how='yes', sticky=True)
+        con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'halt'))
+        con.execute('COMMIT;')
+        if (item.author.name != '*SELF*'): item.reply('**Stopping Game**')
+        print('REMOTE HALT RECEIVED')
+        con.close()
+        os._exit(1)
 
     con.execute(stm['preStm']['main'][0])
     con.execute(stm['preStm']['main'][1], (time.time(),))
@@ -405,7 +463,7 @@ def main():
                         idCache = []
 
                     if(re.search(r'^!(join|leave|vote|digup|rules|help|stats)', comment.body)):
-                        comment.reply(stm['error']['notPM'])
+                        comment.reply(stm['err']['notPM'])
 
                     idCache.append(comment.id)
                     con.execute(stm['preStm']['comment'], (comment.author.name,))
@@ -424,23 +482,23 @@ def main():
                     except:
                         pass
 
-                if ((re.search(r'^!join', item.body)) and (state == 0)):
+                if (re.search(r'^!join', item.body)):
                     addUser()
                 elif (re.search(r'^!leave', item.body)):
                     removeUser()
-                elif ((re.search(r'^!vote', item.body)) and (state == 1)):
+                elif (re.search(r'^!vote', item.body)):
                     voteUser()
-                elif ((re.search(r'^!burn$', item.body)) and (state == 1)):
+                elif (re.search(r'^!burn$', item.body)):
                     burnUser()
-                elif ((re.search(r'^!revive', item.body)) and (state == 1)):
+                elif (re.search(r'^!revive', item.body)):
                     reviveUser()
-                elif ((re.search(r'^!digup', item.body)) and (state == 1)):
+                elif (re.search(r'^!digup', item.body)):
                     digupUser()
-                elif ((re.search(r'^!locate', item.body)) and (state == 1)):
+                elif (re.search(r'^!locate', item.body)):
                     locateUser()
-                elif ((re.search(r'^!request', item.body)) and (state == 1)):
+                elif (re.search(r'^!request', item.body)):
                     requestUser()
-                elif ((re.search(r'^!unlock', item.body)) and (state == 1)):
+                elif (re.search(r'^!unlock', item.body)):
                     unlockTier()
                 elif ((re.search(r'^!list', item.body))):
                     getList()
@@ -452,7 +510,7 @@ def main():
                     showRules()
                 elif (re.search(r'^!GAMESTATE', item.body)):
                     state = gameState(state)
-                elif ((re.search(r'^!CYCLE', item.body)) and (state == 1)):
+                elif (re.search(r'^!CYCLE', item.body)):
                     cycle = cycle(curCycle)
                 elif (re.search(r'^!BROADCAST', item.body)):
                     broadcast()
@@ -463,7 +521,7 @@ def main():
                 elif (re.search(r'^!HALT', item.body)):
                     halt()
                 else:
-                    item.reply(stm['error']['unkCmd'][0][0].format(stm['error']['unkCmd'][1][state]))
+                    item.reply(stm['err']['unkCmd'])
 
                 item.mark_read()
                 lastCmd = item.body.strip()
