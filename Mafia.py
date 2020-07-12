@@ -100,6 +100,13 @@ def main():
                 return -1
 
             try:
+                con.execute(stm['preStm']['chkUsr'], (item.author.name,))
+                r = con.fetchall()
+
+                if (len(r) <= 0):
+                    item.reply(stm['err']['spec'])
+                    return -1
+
                 con.execute(stm['preStm']['chkCmt'], (item.author.name, cfg['commands']['useThreshold']))
                 r = con.fetchall()
 
@@ -239,7 +246,6 @@ def main():
         pass
 
     @log_commit
-    @game_command
     def getStats():
         pass
 

@@ -108,6 +108,7 @@
     "addUser": "INSERT IGNORE INTO Mafia (`utc`, `username`) VALUES (%s, %s) ON DUPLICATE KEY UPDATE `alive`='1';",
     "addExistingUser": "UPDATE Mafia SET `alive`=1,`request`=%s WHERE `username`=%s;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE (`username`=%s AND `comment`>=%s);",
+    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND `alive`=1);",
     "chkUsrState": "SELECT `team`,`tier`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
