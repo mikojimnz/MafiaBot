@@ -348,7 +348,11 @@ def main():
             comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['reset'])
             comment.mod.distinguish(how='yes', sticky=True)
             save(0, 0)
-            os.remove('data/items.pickle')
+
+            try:
+                os.remove('data/items.pickle')
+            except:
+                pass
 
             if (item.author.name != '*SELF*'): item.reply('**Resetting Game**')
             print('REMOTE RESET RECEIVED')

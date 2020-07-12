@@ -233,7 +233,7 @@
   ],
   "sticky": {
     "end": "The game has ended! Thanks for playing!\n\n**{} WINS!**\n* Survivors: {}\n* Killed: {}\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
-    "halt": "`The game has been halted! Please wait for further information about this interuption.",
+    "halt": "The game has been halted! Please wait for further information about this interuption.",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",
     "rateLimit": "Attention the bot has reached its current rate limit.\n\nBot execution will be paused for {} seconds.",
     "reset": "The game has ended and is being reset. Commands are no longer being read.\n\nPlease wait for further information.",
