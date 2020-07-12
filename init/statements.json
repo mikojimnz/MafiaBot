@@ -137,6 +137,10 @@
     "digupUser": "SELECT `team`,`tier`,`alive` FROM Mafia WHERE (`username`=%s AND (`alive`=0 OR `alive`=1));",
     "getAll": "SELECT `username` FROM Mafia WHERE ((`alive`=0 OR `alive`=1) AND NOT `username`='DozenIncBOT');",
     "getDead": "SELECT `username`,`team` FROM Mafia WHERE `alive`=0;",
+    "getList": [
+      "SELECT `username` FROM Mafia WHERE (`alive`=0 AND NOT `username`='DozenIncBOT') ORDER BY `username` asc;",
+      "SELECT `username` FROM Mafia WHERE `alive`=1 ORDER BY `username` asc;"
+    ],
     "getPlaying": "SELECT `username` FROM Mafia WHERE (`alive`=1 AND NOT `username`='DozenIncBOT');",
     "getWinner": "SELECT (SELECT COUNT(team) FROM Mafia WHERE (`alive`='1' AND `team`=0)) AS TWELVE, (SELECT COUNT(team) FROM Mafia WHERE (`alive`='1' AND `team`=1)) AS MI6",
     "joinTeam": "UPDATE Mafia SET `team`=%s,`loc`=%s WHERE `username`=%s;",

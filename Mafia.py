@@ -246,6 +246,29 @@ def main():
         pass
 
     @log_commit
+    def getList():
+        dead = ''
+        alive = ''
+        deadNum = 0
+        aliveNum = 0
+
+        con.execute(stm['preStm']['getList'][0])
+        r = con.fetchall()
+
+        for row in r:
+            dead += f'\n* u/{row[0]}'
+            deadNum += 1
+
+        con.execute(stm['preStm']['getList'][1])
+        r = con.fetchall()
+
+        for row in r:
+            alive += f'\n* u/{row[0]}'
+            aliveNum += 1
+
+        item.reply(stm['reply']['getList'].format(deadNum + aliveNum, deadNum, dead, aliveNum, alive))
+
+    @log_commit
     def getStats():
         team = 'The Spectators'
         tier = 'Spectator'
