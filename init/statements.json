@@ -1,4 +1,10 @@
 {
+  "alive": [
+    "Dead",
+    "Alive",
+    "not playing",
+    "kicked for inactivity"
+  ],
   "comment": {
     "actions": {
       "addUser": "u/{} has joined",
@@ -118,7 +124,7 @@
       "voteEscaped": "UPDATE VoteCall SET `vote`='' WHERE `vote`=%s;",
       "killPlayer": "UPDATE Mafia SET `alive`='0',`diedOnCycle`=%s WHERE username IN (SELECT vote FROM VoteCall GROUP BY VOTE HAVING COUNT(*) >= %s)",
       "getAliveCnt":"SELECT (SELECT COUNT(team) FROM Mafia WHERE `alive`='1') AS alive, (SELECT COUNT(team) FROM Mafia WHERE (`alive`='0' AND NOT `username`='DozenIncBOT')) AS dead",
-      "getTeamCnt": "SELECT (SELECT COUNT(team) FROM Mafia WHERE (`alive`= 1 AND `team`=0')) AS TWELVE, (SELECT COUNT(team) FROM Mafia WHERE (`alive`= 1 AND `team`=1)) AS MI6",
+      "getTeamCnt": "SELECT (SELECT COUNT(team) FROM Mafia WHERE (`alive`= 1 AND `team`=0)) AS TWELVE, (SELECT COUNT(team) FROM Mafia WHERE (`alive`= 1 AND `team`=1)) AS MI6",
       "getDead": "SELECT v.vote,m.team,count(*) AS cnt FROM VoteCall v, Mafia m WHERE v.vote = m.username GROUP BY v.vote HAVING cnt >= %s ORDER BY cnt DESC;",
       "getKilledMe": "SELECT `username` FROM VoteCall WHERE `vote`=%s",
       "getAlive": "SELECT `username`,`team` FROM Mafia WHERE `alive`='1';",
@@ -183,7 +189,7 @@
     "getList": "Total players: {}\n\nDead: {}\n{}\n\nAlive: {}\n{}",
     "getSts": [
       [
-        "Current Stats:\n\nGame is {}.\nRound {}.\n\nYou're on {}'s team.'\nYour rank tier is {}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nGame Parameters\n* Burn after cycle {}\n* Vote threshold: {}\n* Single vote after cycle {}\n* Max requests: {}\n* Kick inactive after {} cycles"
+        "**Current Stats**\n\nGame is {} on round {}.\n\nYou're a/an {} with {}.\nYour location is {}.\nYou are {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nGame Parameters\n* Burn after round {}\n* Vote threshold: {}\n* Single vote after round {}\n* Max requests: {}\n* Kick inactive after {} rounds"
       ],
       [
         "not active",
@@ -195,7 +201,7 @@
         "Enabled"
       ]
     ],
-    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this cycle, cycle {}.",
+    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this round, round {}.",
     "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this round, round {}.",
     "locateUser": "u/{} is located at {}",
     "promote": "Code Accepted!\n\nYou have been promoted to {}.",

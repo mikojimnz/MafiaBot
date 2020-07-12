@@ -247,7 +247,38 @@ def main():
 
     @log_commit
     def getStats():
-        pass
+        team = 'The Spectators'
+        tier = 'Spectator'
+        loc = 'Nowhere'
+        status = 'not playing'
+        alive = 0
+        killed = 0
+        good = 0
+        bad = 0
+
+        con.execute(stm['preStm']['chkUsrState'], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) == 1):
+            team = stm['teams'][0][r[0][0]]
+            tier = stm['teams'][1][r[0][0]][r[0][1]]
+            loc = r[0][2]
+            status = stm['alive'][r[0][3]]
+
+        con.execute(stm['preStm']['cycle']['getAliveCnt'])
+        result = con.fetchall()
+        alive = result[0][0]
+        killed = result[0][1]
+
+        con.execute(stm['preStm']['cycle']['getTeamCnt'])
+        result = con.fetchall()
+        bad = result[0][0]
+        good = result[0][1]
+
+        item.reply(stm['reply']['getSts'][0][0].format(stm['reply']['getSts'][1][state], \
+         curCycle + 1, tier, team, loc, status, alive, good, bad, killed, alive + killed, \
+         cfg['commands']['burnAfter'], cfg['commands']['voteThreshold'], \
+         cfg['commands']['voteOneAfter'], cfg['commands']['maxRequests'], cfg['kickAfter']))
 
     @log_commit
     def showHelp():
