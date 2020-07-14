@@ -151,6 +151,9 @@
     ],
     "removeUser": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=%s WHERE `username`=%s;",
     "restart": "UPDATE Mafia SET `team`=-1,`tier`=0,`loc`=Null,`alive`=1,`burn`=1,`revive`=1,`request`=3,`comment`=0,`inactive`=0 WHERE (`alive`=0 or `alive`=1);",
+    "unlock": [
+      "SELECT `tier` FROM Mafia WHERE `username`=%s;"
+    ],
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
