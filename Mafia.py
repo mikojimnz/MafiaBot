@@ -213,37 +213,73 @@ def main():
     @log_commit
     @game_command
     def voteUser():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] <= cfg['commands']['unlockVote']):
+            item.reply(stm['err']['notUnlocked'])
+            return -1
 
     @log_commit
     @game_command
     def burnUser():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] <= cfg['commands']['unlockBurn']):
+            item.reply(stm['err']['notUnlocked'])
+            return -1
 
     @log_commit
     @game_command
     def reviveUser():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] <= cfg['commands']['unlockRevive']):
+            item.reply(stm['err']['notUnlocked'])
+            return -1
 
     @log_commit
     @game_command
     def digupUser():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] == 0):
+            pass
+        elif (r[0][0] == 1):
+            pass
+        elif (r[0][0] == 2):
+            pass
+        elif (r[0][0] == 3):
+            pass
 
     @log_commit
     @game_command
     def locateUser():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] <= cfg['commands']['unlockLocate']):
+            item.reply(stm['err']['notUnlocked'])
+            return -1
 
     @log_commit
     @game_command
     def requestUser():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] <= cfg['commands']['unlockRequest']):
+            item.reply(stm['err']['notUnlocked'])
+            return -1
 
     @log_commit
     @game_command
     def unlockTier():
-        pass
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
 
     @log_commit
     def getList():

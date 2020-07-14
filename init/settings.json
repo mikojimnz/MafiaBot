@@ -8,12 +8,11 @@
     "hour1": 3,
     "hour2": 9
   },
-  "codes":
-  {
-    "tier1": "123",
-    "tier2": "456",
-    "tier3": "789"
-  },
+  "codes": [
+    "SENSATIONAL-CHOCHOLATE-PISTOLS",
+    "A7J-3LX-GZ1",
+    "1836-0322-0935"
+  ],
   "commands": {
     "allowBotBroadcast": 1,
     "burnAfter": 7,
@@ -21,6 +20,7 @@
     "reviveAfter": 1,
     "unlockBurn": 2,
     "unlockLocate": 2,
+    "unlockRequest": 0,
     "unlockRevive": 3,
     "unlockVote": 1,
     "useThreshold": 1,
