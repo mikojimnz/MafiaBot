@@ -10,6 +10,7 @@
       "addUser": "u/{} has joined",
       "addExistingUser": "u/{} has rejoined",
       "burnUser": "u/{} has burned their own member, u/{} for intelligence",
+      "promote": "A player has been promoted to tier {}!",
       "removeUser": "u/{} has left",
       "requestUser": "A request for intel on u/{} has been filed by u/{}.",
       "revive": "A player was revived.",
@@ -57,6 +58,8 @@
   "err": {
     "alreadyStarted": "The game has already started.",
     "burnUsed": "You have already used your abulity to burn.",
+    "impFmt": "Invalid command input.",
+    "maxTier": "You have already reached the max tier available.",
     "noBurnLeft": "There is no one left to burn",
     "noBurnYet": "The burn command is not yet unlocked.",
     "noParticipate": "To use this command, you must comment at least once per round to maintain active status. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
@@ -65,12 +68,11 @@
     "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "notStarted": "The game has not started yet.",
     "notUnlocked": "Command not authorized!.\n\nCrack more game codes to unlock this command.",
-    "nmFmt": "Invalid username.",
     "reviveUsed": "You have already used your abulity to revive.",
     "spec": "You are a spectator. You cannot use this command.",
     "unkCmd": "Invalid Command. Type !help for a list of commands.",
     "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
-    "wrongCode": "Access Denied"
+    "wrongCode": "Access Denied. Try Again."
   },
   "flairs": {
     "alive": "Mafia: Alive - Round {}",
@@ -152,7 +154,8 @@
     "removeUser": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=%s WHERE `username`=%s;",
     "restart": "UPDATE Mafia SET `team`=-1,`tier`=0,`loc`=Null,`alive`=1,`burn`=1,`revive`=1,`request`=3,`comment`=0,`inactive`=0 WHERE (`alive`=0 or `alive`=1);",
     "unlock": [
-      "SELECT `tier` FROM Mafia WHERE `username`=%s;"
+      "SELECT `tier`,`team` FROM Mafia WHERE `username`=%s;",
+      "UPDATE Mafia SET `tier` = `tier` + 1 WHERE `username`=%s;"
     ],
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },

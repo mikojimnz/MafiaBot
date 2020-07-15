@@ -61,7 +61,7 @@ def main():
                     utc = item.created_utc
 
                 result = func(*args, **kwargs)
-                pattern = re.search(r'^![\w]{1,}\s([\w\d_]{1,20})', command)
+                pattern = re.search(r'^![\w]{1,}\s([\w\d_\-\s]+)', command)
                 readable = time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(utc))
                 action = ''
 
@@ -86,18 +86,20 @@ def main():
     def game_command(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            pattern = re.search(r'^!([a-z]{4,})\s(u/)?([A-Za-z0-9_]{1,20})', item.body)
-            name = ''
+            pattern = re.search(r'^!([a-z]{4,})\s(?:u/)?([\w\d_\-]+)\s?$', item.body)
+            search = ''
 
             if (state == 0):
                 item.reply(stm['err']['notStarted'])
                 return -1
 
-            if pattern:
-                name = pattern.group(3)
-            else:
-                item.reply(stm['err']['nmFmt'])
-                return -1
+
+            if (func.__name__ != 'burnUser'):
+                if pattern:
+                    search = pattern.group(2)
+                else:
+                    item.reply(stm['err']['impFmt'])
+                    return -1
 
             try:
                 con.execute(stm['preStm']['chkUsr'], (item.author.name,))
@@ -114,18 +116,21 @@ def main():
                     item.reply(stm['err']['noParticipate'])
                     return -1
 
-                con.execute(stm['preStm']['digupUser'], (name,))
-                r = con.fetchall()
+                if ((func.__name__ != 'unlockTier') and (func.__name__ != 'burnUser')):
+                    con.execute(stm['preStm']['digupUser'], (search,))
+                    r = con.fetchall()
 
-                if (len(r) <= 0):
-                    item.reply(stm['err']['notFound'])
-                    return -1
+                    if (len(r) <= 0):
+                        item.reply(stm['err']['notFound'])
+                        return -1
+
+                result = func(*args, **kwargs)
 
             except mysql.connector.Error as e:
                 print(f'SQL EXCEPTION @ {func.__name__} : {args} - {kwargs}\n{e}')
                 con.close()
                 os._exit(-1)
-            return
+            return result
         return wrapper
 
     def schdWarn(min=00):
@@ -216,7 +221,7 @@ def main():
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
-        if (r[0][0] <= cfg['commands']['unlockVote']):
+        if (r[0][0] < cfg['commands']['unlockVote']):
             item.reply(stm['err']['notUnlocked'])
             return -1
 
@@ -226,7 +231,7 @@ def main():
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
-        if (r[0][0] <= cfg['commands']['unlockBurn']):
+        if (r[0][0] < cfg['commands']['unlockBurn']):
             item.reply(stm['err']['notUnlocked'])
             return -1
 
@@ -236,7 +241,7 @@ def main():
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
-        if (r[0][0] <= cfg['commands']['unlockRevive']):
+        if (r[0][0] < cfg['commands']['unlockRevive']):
             item.reply(stm['err']['notUnlocked'])
             return -1
 
@@ -261,7 +266,7 @@ def main():
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
-        if (r[0][0] <= cfg['commands']['unlockLocate']):
+        if (r[0][0] < cfg['commands']['unlockLocate']):
             item.reply(stm['err']['notUnlocked'])
             return -1
 
@@ -278,8 +283,31 @@ def main():
     @log_commit
     @game_command
     def unlockTier():
+        pattern = re.search(r'^![a-z]{4,}\s(?:u/)?([\w\d\-]+)\s?$', item.body)
+        code = ''
+
+        if pattern:
+            code = pattern.group(1)
+        else:
+            item.reply(stm['err']['impFmt'])
+            return -1
+
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
+        tier = r[0][0]
+        team = r[0][1]
+
+        if (tier > len(cfg['codes']) - 1):
+            item.reply(stm['err']['maxTier'])
+            return -1
+
+        if (cfg['codes'][tier] == code):
+            con.execute(stm['preStm']['unlock'][1], (item.author.name,))
+            item.reply(stm['reply']['promote'].format(stm['teams'][1][team][tier + 1]))
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['promote'].format(tier + 2))
+        else:
+            item.reply(stm['err']['wrongCode'])
+            return -1
 
     @log_commit
     def getList():
