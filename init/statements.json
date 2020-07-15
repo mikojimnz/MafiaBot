@@ -116,7 +116,7 @@
     "addUser": "INSERT IGNORE INTO Mafia (`utc`, `username`) VALUES (%s, %s) ON DUPLICATE KEY UPDATE `alive`='1';",
     "addExistingUser": "UPDATE Mafia SET `alive`=1,`request`=%s WHERE `username`=%s;",
     "chkCmt": "SELECT `username` FROM Mafia WHERE (`username`=%s AND `comment`>=%s);",
-    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND `alive`=1);",
+    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND (`alive`=0 or `alive`=1));",
     "chkUsrState": "SELECT `team`,`tier`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
@@ -178,27 +178,13 @@
     ],
     "digupUser": [
       [
-        "**Intelligence Report**\n\nu/{} is believed to be {} and is currently {}\n\n^(This information is believed to be {}% credible.)"
+        "**Intelligence Report**\n\nu/{} is believed to be {} and is {}.\n\n^(This information is believed to be {}% credible.)"
       ],
       [
-        [
-          "is a Trainee",
-          "is an Assassin",
-          "is a Handler",
-          "is a Keeper"
-        ],
-        [
-          "is a Recruit",
-          "is an Analyst",
-          "is an Operative",
-          "is a Supervisor"
-        ]
-      ],
-      [
-        "deceased.",
-        "alive.",
-        "not in the game.",
-        "not in the game."
+        "deceased",
+        "alive",
+        "not in the game",
+        "not in the game"
       ]
     ],
     "gameEnd": "The game has ended. [**Check the game thread to see who won**](https://reddit.com/r/{}/comments/{})\n\nThank you for playing!\n\nIf you don't want to keep your game flair, you can change it back by clicking on the community options button.",
@@ -247,6 +233,20 @@
         "Analyst",
         "Operative",
         "Supervisor"
+      ]
+    ],
+    [
+      [
+        "a Trainee",
+        "an Assassin",
+        "a Handler",
+        "a Keeper"
+      ],
+      [
+        "a Recruit",
+        "an Analyst",
+        "an Operative",
+        "a Supervisor"
       ]
     ]
   ],

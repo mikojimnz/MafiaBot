@@ -250,15 +250,35 @@ def main():
     def digupUser():
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
+        tier = r[0][0]
 
-        if (r[0][0] == 0):
-            pass
-        elif (r[0][0] == 1):
-            pass
-        elif (r[0][0] == 2):
-            pass
-        elif (r[0][0] == 3):
-            pass
+        pattern = re.search(r'^!digup\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
+        con.execute(stm['preStm']['digupUser'], (pattern.group(1),))
+        r = con.fetchall()
+
+        random.seed(time.time())
+        role = ''
+        maxTeams = len(stm['teams'][0]) - 1
+        maxRoles = len(stm['teams'][1][0]) - 1
+        cred = ((tier + 1) * 25) - random.randint(0,25)
+
+        if (tier == 0):
+            if (random.randint(0,7) == 0):
+                role = stm['teams'][0][r[0][0]]
+            else:
+                role = stm['teams'][0][random.randint(0,maxTeams)]
+        elif (tier == 1):
+            if (random.randint(0,5) == 0):
+                role = stm['teams'][1][r[0][0]][r[0][1]]
+            else:
+                role = stm['teams'][2][random.randint(0,maxTeams)][random.randint(0,maxRoles)]
+        elif (tier >= 2):
+            if (random.randint(0,3) == 0):
+                role = stm['teams'][2][r[0][0]][r[0][1]]
+            else:
+                role = stm['teams'][2][random.randint(0,maxTeams)][random.randint(0,maxRoles)]
+
+        item.reply(stm['reply']['digupUser'][0][0].format(pattern.group(1), role, stm['reply']['digupUser'][1][r[0][2]], cred))
 
     @log_commit
     @game_command
