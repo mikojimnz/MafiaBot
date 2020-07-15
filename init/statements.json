@@ -56,6 +56,7 @@
     "Run over by train"
   ],
   "err": {
+    "alive": "The player is alive.",
     "alreadyStarted": "The game has already started.",
     "burnUsed": "You have already used your abulity to burn.",
     "impFmt": "Invalid command input.",
@@ -64,6 +65,7 @@
     "noBurnYet": "The burn command is not yet unlocked.",
     "noParticipate": "To use this command, you must comment at least once per round to maintain active status. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
     "noRequestLeft": "You have used your alloted requests",
+    "notAlive": "The player is not alive",
     "notFound": "Cannot find that user or the user is not playing in the game.\n\nNote: Usernames are case-sensitive.",
     "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "notStarted": "The game has not started yet.",
@@ -159,6 +161,12 @@
       "UPDATE Mafia SET `request`=`request` - 1 WHERE `username`=%s"
     ],
     "restart": "UPDATE Mafia SET `team`=-1,`tier`=0,`loc`=Null,`alive`=1,`burn`=1,`revive`=1,`request`=3,`comment`=0,`inactive`=0 WHERE (`alive`=0 or `alive`=1);",
+    "revive": [
+      "SELECT `username` FROM Mafia WHERE `username`=%s AND `revive`=1;",
+      "SELECT `username` FROM Mafia WHERE `username`=%s AND `alive`=0;",
+      "UPDATE Mafia SET `revive`=0 WHERE `username`=%s",
+      "UPDATE Mafia SET `alive`=1 WHERE `username`=%s"
+    ],
     "unlock": [
       "SELECT `tier`,`team` FROM Mafia WHERE `username`=%s;",
       "UPDATE Mafia SET `tier` = `tier` + 1 WHERE `username`=%s;",

@@ -231,17 +231,17 @@ def main():
         r = con.fetchall()
 
         if ((len(r) <= 0) or (r[0][2]) != 1):
-            item.reply(stm['err']['notFound'])
+            item.reply(stm['err']['notAlive'])
             return -1
 
         con.execute(stm['preStm']['voteUser'], (item.author.name, target))
         success = con.rowcount
 
         if ((r[0][1] > cfg['commands']['escapeHit']) and (success > 0)):
-            getItems(target).reply(stm['reply']['hitAlertEsc'].format(target, curCycle + 1))
+            sendMessage(target, stm['reply']['hitAlertEsc'].format(target, curCycle + 1))
             item.reply(stm['reply']['voteUser'])
         elif (success > 0):
-            getItems(target).reply(stm['reply']['hitAlert'].format(target, curCycle + 1))
+            sendMessage(target, stm['reply']['hitAlert'].format(target, curCycle + 1))
             item.reply(stm['reply']['voteUser'])
         else:
             item.reply(stm['err']['voteUser'])
@@ -257,6 +257,17 @@ def main():
             item.reply(stm['err']['notUnlocked'])
             return -1
 
+        if (curCycle < cfg['allowBurnAfter']):
+            item.reply(stm['err']['noBurnYet'])
+            return -1
+
+        con.execute(stm['preStm']['chkBurn'], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(stm['err']['burnUsed'])
+            return -1
+
     @log_commit
     @game_command
     def reviveUser():
@@ -266,6 +277,29 @@ def main():
         if (r[0][0] < cfg['commands']['unlockRevive']):
             item.reply(stm['err']['notUnlocked'])
             return -1
+
+        con.execute(stm['preStm']['revive'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(stm['err']['reviveUsed'])
+            return -1
+
+        pattern = re.search(r'^!revive\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
+        target = pattern.group(1)
+        con.execute(stm['preStm']['revive'][1], (target,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(stm['err']['alive'])
+            return -1
+
+        con.execute(stm['preStm']['revive'][2], (item.author.name,))
+        con.execute(stm['preStm']['revive'][3], (target,))
+        sub.flair.set(reddit.redditor(target), text=stm['flairs']['alive'].format(curCycle + 1, flair_template_id=cfg['flairID']['alive']))
+        sendMessage(target, stm['reply']['revivedUser'].format(item.author.name))
+        item.reply(stm['reply']['reviveUser'].format(target))
+        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['revive'])
 
     @log_commit
     @game_command
@@ -457,8 +491,7 @@ def main():
             random.seed(time.time())
             loc = stm['location'][team][random.randint(0, len(stm['location'][team]) - 1)]
             con.execute(stm['preStm']['joinTeam'], (team, loc, row[0]))
-            getItems(row[0]).reply(stm['reply']['gameStart'].format(stm['teams'][0][team], loc, players, cfg['reddit']['sub'], cfg['reddit']['targetPost']))
-            rateLimit(reddit)
+            sendMessage(row[0], stm['reply']['gameStart'].format(stm['teams'][0][team], loc, players, cfg['reddit']['sub'], cfg['reddit']['targetPost']))
             curPos += 1
             sleep(0.2)
 
@@ -491,8 +524,7 @@ def main():
             r = con.fetchall()
 
             for row in r:
-                getItems(row[0]).reply(stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
-                rateLimit(reddit)
+                sendMessage(row[0], stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
                 sleep(0.2)
 
         con.execute(stm['preStm']['cycle']['getAlive'])
@@ -500,8 +532,7 @@ def main():
 
         for row in r:
             if (cfg['commands']['allowBotBroadcast'] == 1):
-                getItems(row[0]).reply(stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
-                rateLimit(reddit)
+                sendMessage(row[0], stm['reply']['gameEnd'].format(cfg['reddit']['sub'], cfg['reddit']['targetPost']))
 
             sub.flair.set(reddit.redditor(row[0]), text=stm['flairs']['survived'].format(stm['teams'][0][row[1]], round), flair_template_id=cfg['flairID']['alive'])
             sleep(0.2)
@@ -551,8 +582,7 @@ def main():
         con.execute(stm['preStm']['getAll'])
         r = con.fetchall()
         for row in r:
-            getItems(row[0]).reply(msg)
-            rateLimit(reddit)
+            sendMessage(row[0], msg)
             sleep(0.2)
 
     @log_commit
@@ -623,6 +653,26 @@ def main():
         print('REMOTE HALT RECEIVED')
         con.close()
         os._exit(1)
+
+    def rateLimit():
+        limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
+
+        if (limits['remaining'] < 10):
+            reset = (limits["reset_timestamp"] + 10) - time.time()
+            print(f'Sleeping for: {reset} seconds')
+            print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
+            comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
+            comment.mod.distinguish(how='yes', sticky=True)
+            sleep(reset)
+
+    def sendMessage(name, message):
+        if(getItems(name) != None):
+            getItems(name).reply(message)
+            rateLimit()
+        else:
+            print(f'WARNING. {name} not found in items.pickle. Falling back on alternate')
+            reddit.redditor(name).message('Mafia', message)
+            rateLimit()
 
     con.execute(stm['preStm']['main'][0])
     con.execute(stm['preStm']['main'][1], (time.time(),))
@@ -724,17 +774,6 @@ def main():
 
     con.close()
 
-def rateLimit(reddit):
-    limits = json.loads(str(reddit.auth.limits).replace("'", "\""))
-
-    if (limits['remaining'] < 10):
-        reset = (limits["reset_timestamp"] + 10) - time.time()
-        print(f'Sleeping for: {reset} seconds')
-        print(time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(limits["reset_timestamp"])))
-        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['rateLimit'].format(reset))
-        comment.mod.distinguish(how='yes', sticky=True)
-        sleep(reset)
-
 def save(state, curCycle):
     with open('data/save.json', 'r+') as jsonFile2:
         tmp = json.load(jsonFile2)
@@ -745,34 +784,24 @@ def save(state, curCycle):
         jsonFile2.truncate()
 
 def setItems(k, v):
-    try:
+    tmp = {}
+
+    if os.path.getsize('data/items.pickle') > 0:
+        print('items.pickle not found. Creating a new one.')
         with open('data/items.pickle', 'rb') as itemsFile:
             tmp = pickle.load(itemsFile)
-
-            if v == None:
-                tmp.pop(k, None)
-            else:
-                tmp[k] = v
-
-            pickle.dump(tmp, itemsFile)
-    except Exception as e:
-        tmp = {}
-
-        if v == None:
-            tmp.pop(k, None)
-        else:
             tmp[k] = v
 
-        pickle.dump(tmp, open('data/items.pickle', 'wb'))
+    with open('data/items.pickle', 'wb') as itemsFile:
+        pickle.dump(tmp, itemsFile)
 
 def getItems(k):
-    try:
+    if os.path.getsize('data/items.pickle') > 0:
         with open('data/items.pickle', 'rb') as itemsFile:
             tmp = pickle.load(itemsFile)
             return tmp[k]
-    except Exception as e:
-        tmp = {}
-        pickle.dump(tmp, open('data/items.pickle', 'wb'))
+    else:
+        print('items.pickle not found. WARNING')
         return None
 
 def exit_gracefully(signum, frame):
