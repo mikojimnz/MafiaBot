@@ -146,12 +146,17 @@
     "getPlaying": "SELECT `username` FROM Mafia WHERE (`alive`=1 AND NOT `username`='DozenIncBOT');",
     "getWinner": "SELECT (SELECT COUNT(team) FROM Mafia WHERE (`alive`='1' AND `team`=0)) AS TWELVE, (SELECT COUNT(team) FROM Mafia WHERE (`alive`='1' AND `team`=1)) AS MI6",
     "joinTeam": "UPDATE Mafia SET `team`=%s,`loc`=%s WHERE `username`=%s;",
+    "locateUser": "SELECT `loc` FROM Mafia WHERE `username`=%s;",
     "log": "INSERT IGNORE INTO Log (`utc`,`username`,`action`) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE `utc`=`utc`;",
     "main": [
       "SET SQL_SAFE_UPDATES = 0;",
       "INSERT INTO Log (`utc`,`username`,`action`) VALUES (%s, '*SELF*', 'Game Initalized');"
     ],
     "removeUser": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=%s WHERE `username`=%s;",
+    "request": [
+      "SELECT `username` FROM Mafia WHERE `username`=%s AND `request`>0;",
+      "UPDATE Mafia SET `request`=`request` - 1 WHERE `username`=%s"
+    ],
     "restart": "UPDATE Mafia SET `team`=-1,`tier`=0,`loc`=Null,`alive`=1,`burn`=1,`revive`=1,`request`=3,`comment`=0,`inactive`=0 WHERE (`alive`=0 or `alive`=1);",
     "unlock": [
       "SELECT `tier`,`team` FROM Mafia WHERE `username`=%s;",

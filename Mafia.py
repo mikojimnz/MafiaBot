@@ -270,15 +270,34 @@ def main():
             item.reply(stm['err']['notUnlocked'])
             return -1
 
+        pattern = re.search(r'^!locate\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
+        name = pattern.group(1)
+        con.execute(stm['preStm']['locateUser'], (name,))
+        r = con.fetchall()
+
+        item.reply(stm['reply']['locateUser'].format(name, r[0][0]))
+
     @log_commit
     @game_command
     def requestUser():
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
-        if (r[0][0] <= cfg['commands']['unlockRequest']):
+        if (r[0][0] < cfg['commands']['unlockRequest']):
             item.reply(stm['err']['notUnlocked'])
             return -1
+
+        con.execute(stm['preStm']['request'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(stm['err']['noRequestLeft'])
+            return -1
+
+        pattern = re.search(r'^!request\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
+        con.execute(stm['preStm']['request'][1], (item.author.name,))
+        item.reply(stm['reply']['requestUser'])
+        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['requestUser'].format(pattern.group(1), item.author.name))
 
     @log_commit
     @game_command
