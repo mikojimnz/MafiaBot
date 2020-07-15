@@ -32,11 +32,11 @@ Play against other members to find out who amongst each other you can trust and 
 |:-|:-|:-|:-|
 |The Twelve|Trainee|1|Access to digup (low accuracy), vote, and max 3 requests.|
 |The Twelve|Assassin|2|Digup accuracy increased.|
-|The Twelve|Handler|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests.|
+|The Twelve|Handler|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests. Can escape hits.|
 |The Twelve|Keeper|4|Revive unlocked. Burn does not announce who you are.|
 |MI6|Recruit|1|Access to digup (low accuracy), vote, and max 3 requests.|
 |MI6|Analyst|2|Digup accuracy increased.|
-|MI6|Operative|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests.|
+|MI6|Operative|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests. Can escape hits.|
 |MI6|Supervisor|4|Revive unlocked. Burn does not announce who you are.|
 
 **Commands**
@@ -51,7 +51,7 @@ All commands must be sent privately to u/DozenIncBOT. To use investigative comma
 |!request USERNAME|Ask for intel anonymously on a player. Limited number of uses.|1|
 |!burn|Exposes one of your team members for guaranteed intelligence about the other team. Can only be used once.|3|
 |!revive USERNAME|Brings back a player from the dead. Can only be used once|4|
-|!vote USERNAME|Vote on who to eliminate. Can be changed until the Round ends.|2|
+|!vote USERNAME|Vote on who to eliminate. Can not be changed once voted per round.|2|
 |!digup USERNAME|Investigate the roles of other users. Has varying degree of reliability based on your tier|1|
 |!locate USERNAME|Shows the user's location. May give a clue as to what side they are on.|3|
 |!stats|Gets the current stats for the game.|1|

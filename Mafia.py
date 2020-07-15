@@ -225,6 +225,28 @@ def main():
             item.reply(stm['err']['notUnlocked'])
             return -1
 
+        pattern = re.search(r'^!vote\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
+        target = pattern.group(1)
+        con.execute(stm['preStm']['digupUser'], (target,))
+        r = con.fetchall()
+
+        if ((len(r) <= 0) or (r[0][2]) != 1):
+            item.reply(stm['err']['notFound'])
+            return -1
+
+        con.execute(stm['preStm']['voteUser'], (item.author.name, target))
+        success = con.rowcount
+
+        if ((r[0][1] > cfg['commands']['escapeHit']) and (success > 0)):
+            getItems(target).reply(stm['reply']['hitAlertEsc'].format(target, curCycle + 1))
+            item.reply(stm['reply']['voteUser'])
+        elif (success > 0):
+            getItems(target).reply(stm['reply']['hitAlert'].format(target, curCycle + 1))
+            item.reply(stm['reply']['voteUser'])
+        else:
+            item.reply(stm['err']['voteUser'])
+            return -1
+
     @log_commit
     @game_command
     def burnUser():

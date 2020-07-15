@@ -72,6 +72,7 @@
     "spec": "You are a spectator. You cannot use this command.",
     "unkCmd": "Invalid Command. Type !help for a list of commands.",
     "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
+    "voteUser": "You already casted your vote for this round.",
     "wrongCode": "Access Denied. Try Again."
   },
   "flairs": {
@@ -163,7 +164,7 @@
       "UPDATE Mafia SET `tier` = `tier` + 1 WHERE `username`=%s;",
       "UPDATE Mafia SET `request` = `request` + %s WHERE `username`=%s;"
     ],
-    "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
+    "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `username`=`username`;"
   },
   "reply": {
     "addRequests": "+{} Requests Added.",
@@ -204,8 +205,8 @@
         "Enabled"
       ]
     ],
-    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit, no matter how much is on your head, by correctly voting the person who put a hit on you.\n\nThis hit will expire after this round, round {}.",
-    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed!\n\nThis hit will expire after this round, round {}.",
+    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit by correctly voting any of the people who put a hit on you.\n\nThis hit will expire after this round, round {}.",
+    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed! Higher ranking members have the ability to escape.\n\nThis hit will expire after this round, round {}.",
     "locateUser": "u/{} is located at {}",
     "promote": "Code Accepted!\n\nYou have been promoted to {}.",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
@@ -214,7 +215,7 @@
     "revivedUser": "You have been revived by u/{}!\n\nGet back into the game and win!",
     "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel on a player. Limited number of uses.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !unlock CODE: Enter a code to level up your rank and gain new investigative powers.\n* !vote USERNAME: Vote on which user to be eliminated.",
     "showRules": "Rules:\n1. Each user is assigned to either MI6 or the Twelve.\n2. You must investigate each other to determine who is on what side and eliminate the opponent.\n3. Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful investigation tools.\n4. Vote out players who you suspect are the enemy. A player must receive a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.\n4. At the end of each round, an announcement will be made how many people are alive how many were killed.\n5. You must choose your allies carefully to seek out the enemy.",
-    "voteUser": "Your vote has been tallied. You can change your vote until the round ends."
+    "voteUser": "Your vote has been locked in for this round."
   },
   "teams": [
     [

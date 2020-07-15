@@ -13,7 +13,10 @@
   ],
   "commands": {
     "allowBotBroadcast": 1,
+    "addRequests": 3,
+    "addRequestsOn": 1,
     "burnAfter": 7,
+    "escapeHit": 1,
     "maxRequests": 3,
     "reviveAfter": 1,
     "unlockBurn": 2,
