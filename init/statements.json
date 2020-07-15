@@ -12,7 +12,7 @@
       "burnUser": "u/{} has burned their own member, u/{} for intelligence",
       "promote": "A player has been promoted to tier {}!",
       "removeUser": "u/{} has left",
-      "requestUser": "A request for intel on u/{} has been filed by u/{}.",
+      "requestUser": "A request for intel on u/{} has been filed by {}.",
       "revive": "A player was revived.",
       "schdWarn": "Round ending in {} minutes!"
     },
@@ -154,17 +154,19 @@
     ],
     "removeUser": "UPDATE Mafia SET `alive`=2,`diedOnCycle`=%s WHERE `username`=%s;",
     "request": [
-      "SELECT `username` FROM Mafia WHERE `username`=%s AND `request`>0;",
+      "SELECT `username`,`team` FROM Mafia WHERE `username`=%s AND `request`>0;",
       "UPDATE Mafia SET `request`=`request` - 1 WHERE `username`=%s"
     ],
     "restart": "UPDATE Mafia SET `team`=-1,`tier`=0,`loc`=Null,`alive`=1,`burn`=1,`revive`=1,`request`=3,`comment`=0,`inactive`=0 WHERE (`alive`=0 or `alive`=1);",
     "unlock": [
       "SELECT `tier`,`team` FROM Mafia WHERE `username`=%s;",
-      "UPDATE Mafia SET `tier` = `tier` + 1 WHERE `username`=%s;"
+      "UPDATE Mafia SET `tier` = `tier` + 1 WHERE `username`=%s;",
+      "UPDATE Mafia SET `request` = `request` + %s WHERE `username`=%s;"
     ],
     "voteUser": "INSERT INTO VoteCall (`username`, `vote`) VALUES(%s, %s) ON DUPLICATE KEY UPDATE `vote`=%s;"
   },
   "reply": {
+    "addRequests": "+{} Requests Added.",
     "addUser": "Hello u/{}, you have joined the game!\n\nYour team will be assigned at the start of the game.\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
     "burnUser": "You have burned a teammate!\n\nIntelligence Report:\n\nu/{} is a {}",
     "burnedUser": "You have been exposed by u/{} on round {}!\n\nThank you for playing. You are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",

@@ -295,9 +295,9 @@ def main():
             return -1
 
         pattern = re.search(r'^!request\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
-        con.execute(stm['preStm']['request'][1], (item.author.name,))
         item.reply(stm['reply']['requestUser'])
-        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['requestUser'].format(pattern.group(1), item.author.name))
+        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['requestUser'].format(pattern.group(1), stm['teams'][0][r[0][1]]))
+        con.execute(stm['preStm']['request'][1], (item.author.name,))
 
     @log_commit
     @game_command
@@ -322,6 +322,11 @@ def main():
 
         if (cfg['codes'][tier] == code):
             con.execute(stm['preStm']['unlock'][1], (item.author.name,))
+
+            if (tier == cfg['commands']['addRequestsOn']):
+                con.execute(stm['preStm']['unlock'][2], (cfg['commands']['addRequests'], item.author.name))
+                item.reply(stm['reply']['addRequests'].format(cfg['commands']['addRequests']))
+
             item.reply(stm['reply']['promote'].format(stm['teams'][1][team][tier + 1]))
             reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['promote'].format(tier + 2))
         else:
