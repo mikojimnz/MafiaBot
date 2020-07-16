@@ -257,7 +257,7 @@ def main():
             item.reply(stm['err']['notUnlocked'])
             return -1
 
-        if (curCycle < cfg['allowBurnAfter']):
+        if (curCycle < cfg['commands']['burnAfter']):
             item.reply(stm['err']['noBurnYet'])
             return -1
 
@@ -267,6 +267,33 @@ def main():
         if (len(r) <= 0):
             item.reply(stm['err']['burnUsed'])
             return -1
+
+        tier = r[0][2]
+        selfTeam = r[0][1]
+        oppTeam = selfTeam + 2
+        con.execute(stm['preStm']['burn'][selfTeam], (item.author.name,))
+        toBurn = con.fetchall()
+        con.execute(stm['preStm']['burn'][oppTeam])
+        toReport = con.fetchall()
+
+        if ((len(toBurn) <= 0) or (len(toReport) <= 0)):
+            item.reply(stm['err']['noBurnLeft'])
+            return -1
+
+        burned = toBurn[0][random.randint(0, len(toBurn) - 1)]
+        exposed = toReport[0][random.randint(0, len(toReport) - 1)]
+        deathMsg = random.randint(0,len(stm['deathMsg']) - 1)
+        con.execute(stm['preStm']['burn'][4], (item.author.name,))
+        con.execute(stm['preStm']['burn'][5], (burned,))
+        sub.flair.set(reddit.redditor(burned), text=stm['flairs']['dead'].format(stm['deathMsg'][deathMsg], curCycle + 1), flair_template_id=cfg['flairID']['dead'])
+        item.reply(stm['reply']['burnUser'].format(burned, exposed, stm['teams'][0][(selfTeam + 1) % 2]))
+
+        if (tier >= cfg['commands']['burnQuietly']):
+            sendMessage(burned, stm['reply']['burnedUserQuietly'].format(stm['deathMsg'][deathMsg], curCycle + 1))
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['burnUserQuietly'].format(burned, stm['deathMsg'][deathMsg]))
+        else:
+            sendMessage(burned, stm['reply']['burnedUser'].format(stm['deathMsg'][deathMsg], item.author.name, curCycle + 1))
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['burnUser'].format(burned, stm['deathMsg'][deathMsg], item.author.name,))
 
     @log_commit
     @game_command
@@ -786,11 +813,13 @@ def save(state, curCycle):
 def setItems(k, v):
     tmp = {}
 
-    if os.path.getsize('data/items.pickle') > 0:
-        print('items.pickle not found. Creating a new one.')
+    if (os.path.getsize('data/items.pickle') > 0):
         with open('data/items.pickle', 'rb') as itemsFile:
             tmp = pickle.load(itemsFile)
             tmp[k] = v
+    else:
+        print('WARNING items.pickle not found. Creating new one.')
+        tmp[k] = v
 
     with open('data/items.pickle', 'wb') as itemsFile:
         pickle.dump(tmp, itemsFile)
