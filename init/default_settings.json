@@ -1,0 +1,49 @@
+{
+  "adminUsr": [
+    "*SELF*"
+  ],
+  "clock": {
+    "hour1": 3,
+    "hour2": 9
+  },
+  "codes": [
+    "123",
+    "456",
+    "789"
+  ],
+  "commands": {
+    "allowBotBroadcast": 1,
+    "addRequests": 3,
+    "addRequestsOn": 1,
+    "burnAfter": 7,
+    "burnQuietly": 3,
+    "escapeHit": 1,
+    "maxRequests": 3,
+    "reviveAfter": 1,
+    "unlockBurn": 2,
+    "unlockLocate": 2,
+    "unlockRequest": 0,
+    "unlockRevive": 3,
+    "unlockVote": 1,
+    "useThreshold": 1,
+    "voteOneAfter": 11,
+    "voteThreshold": 2
+  },
+  "flairID": {
+    "alive": "",
+    "dead": ""
+  },
+  "kickAfter": 8,
+  "reddit": {
+    "praw": "",
+    "sub": "",
+    "targetPost": ""
+  },
+  "sql": {
+    "database": "Reddit",
+    "host": "127.0.0.1",
+    "password": "",
+    "port": "3306",
+    "user": ""
+  }
+}
