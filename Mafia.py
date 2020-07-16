@@ -164,6 +164,8 @@ def main():
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle)
+
+        schedule.every(1).to(3).hours.do(makeComment)
         print("Jobs Scheduled")
 
     @log_commit
@@ -501,6 +503,23 @@ def main():
         item.reply(stm['reply']['showRules'])
 
     @log_commit
+    def makeComment():
+        random.seed(time.time())
+
+        if (random.randint(0, 2) == 0):
+            con.execute(stm['preStm']['cycle']['getVotes'])
+            r = con.fetchall()
+
+            if (len(r) <= 0):
+                reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['warn']['noVotes'][random.randint(0, len(stm['comment']['warn']['noVotes']) - 1)])
+                return
+            else:
+                reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['warn']['votes'][random.randint(0, len(stm['comment']['warn']['votes']) - 1)])
+                return
+
+        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['spook'][random.randint(0, len(stm['comment']['spook']) - 1)])
+
+    @log_commit
     def gameStart():
         con.execute(stm['preStm']['getPlaying'])
         r = con.fetchall()
@@ -626,7 +645,7 @@ def main():
 
                 for user in list:
                     if (target[0][0] == user[0]):
-                        con.execute(stm['preStm']['log'], (time.time(), row[0], f'{row[0]} Escaped'))
+                        con.execute(stm['preStm']['log'], (time.time(), row[0], 'Escaped'))
                         con.execute(stm['preStm']['cycle']['voteEscaped'], (row[0],))
                         sendMessage(row[0], stm['reply']['cycle'][3])
                         print(f'  > {row[0]} escaped')

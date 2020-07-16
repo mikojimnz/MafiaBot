@@ -18,10 +18,60 @@
       "schdWarn": "Round ending in {} minutes!"
     },
     "spook": [
-
+      "Trust no one.",
+      "There is darnkness in here.",
+      "If I killed everybody who betrayed me, there'd be no one left.",
+      "You Should Never Tell A Psychopath They Are A Psychopath. It Upsets Them.",
+      "You Should Really Ask Before You Touch A Person.",
+      "Traitors everywhere.",
+      "Betryal is inevitable.",
+      "Crack those codes!",
+      "Who's working for who?",
+      "Sometimes when you love someone you do crazy things.",
+      "Lies, Decaption, Deceit on every turn.",
+      "Back-stabbers, double-crossers, trouble-makers.",
+      "Spot the liars!",
+      "Tread carefully.",
+      "Actions have consequences.",
+      "It's a trap!",
+      "The rondevu point has moved.",
+      "Hmmm.",
+      "Are you sure about that?"
     ],
     "warn": {
-
+      "noVotes": [
+        "Lazy, Lazy, Lazy",
+        "Shame",
+        "I should fire some of you",
+        "I think its time some of you left",
+        "Management Sucks",
+        "This is so borrriinnnngggg",
+        "It's quiet... A little *too* quiet",
+        "Hello?",
+        "I haven't heard anything in a while from our informant. This is worrying.",
+        "Comms have gone silent",
+        "Waiting for our informants to make contact",
+        "Awaiting orders",
+        "No new intelligence to report."
+      ],
+      "votes": [
+        "This should be interesting",
+        "O_O",
+        "Who will betray who?",
+        "Watch out!",
+        "I Have To Kill You Now",
+        "Uh oh",
+        "Things are about to heat up",
+        "People are on the move",
+        "Things are happening in the shadows",
+        "The shadows are moving",
+        "An encrypted message was intercepted!",
+        "An annonomys tip was dropped",
+        "We have recieved the package",
+        "Our contact has made the signal. The exchange is happening.",
+        "Orders Recieved",
+        "Its getting spicy now!"
+      ]
     }
   },
   "deathMsg": [
