@@ -192,7 +192,7 @@
     "burnedUserQuietly": "You have been {} by on round {}!\n\nSomeone higher up has decided to betray their own. You are now a spectator. Others can view how you died on your user flair.",
     "cycle": [
       "**You Were Killed!**\n\nYou were \"{}\" on round {}.\nBy:\n{}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
-      "**You survived another day!**\n\nNow round {}.\n\nPlayers alive: {}\nPlayes killed:{}\nMI6 Agents Remaining: {}\nThe Twelve Remaining: {}\n\nHappy Hunting!",
+      "**You survived another day!**\n\nNow round {}.\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nHappy Hunting!",
       "You were inactive for 48 hours and were automatically kicked from the game. Please wait until after the current game ends to rejoin.",
       "You have escaped your hit! Take back revenge now!"
     ],
@@ -271,6 +271,7 @@
     ]
   ],
   "sticky": {
+    "cycle": "It is now Round {}.\n\n* Alive: {}\n* MI6: {}\n* The Twelve: {}\n* Killed: {}\n* Total: {}",
     "end": "The game has ended! Thanks for playing!\n\n**{} WINS!**\n* Survivors: {}\n* Killed: {}\n\nYou can choose to keep your flairs or remove them by clicking the Edit flair button in the community info tab.",
     "halt": "The game has been halted! Please wait for further information about this interuption.",
     "pause": "The game is not active.\n\nUsers can join or leave by [private messaging](https://www.reddit.com/message/compose/?to=DozenIncBOT) me with !join or !leave.\n\n[**Send Command Here**](https://www.reddit.com/message/compose/?to=DozenIncBOT)",

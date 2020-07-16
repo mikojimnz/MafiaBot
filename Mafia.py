@@ -148,22 +148,22 @@ def main():
         schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:30').do(schdWarn,min=30)
         schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:45').do(schdWarn,min=15)
         schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"]).zfill(2)}:00').do(autoCycle, curCycle)
+        schedule.every().day.at(f'{str(cfg["clock"]["hour1"]).zfill(2)}:00').do(autoCycle)
 
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:30').do(schdWarn,min=30)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:45').do(schdWarn,min=15)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"]).zfill(2)}:00').do(autoCycle, curCycle)
+        schedule.every().day.at(f'{str(cfg["clock"]["hour2"]).zfill(2)}:00').do(autoCycle)
 
         schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:30').do(schdWarn,min=30)
         schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
         schedule.every().day.at(f'{str(cfg["clock"]["hour1"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] + 12).zfill(2)}:00').do(autoCycle, curCycle)
+        schedule.every().day.at(f'{str(cfg["clock"]["hour1"] + 12).zfill(2)}:00').do(autoCycle)
 
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:30').do(schdWarn,min=30)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:45').do(schdWarn,min=15)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
-        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle, curCycle)
+        schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle)
         print("Jobs Scheduled")
 
     @log_commit
@@ -285,6 +285,8 @@ def main():
         deathMsg = random.randint(0,len(stm['deathMsg']) - 1)
         con.execute(stm['preStm']['burn'][4], (item.author.name,))
         con.execute(stm['preStm']['burn'][5], (burned,))
+        con.execute(stm['preStm']['log'], (time.time(), burned, 'Betrayed'))
+        con.execute(stm['preStm']['log'], (time.time(), exposed, 'Exposed'))
         sub.flair.set(reddit.redditor(burned), text=stm['flairs']['dead'].format(stm['deathMsg'][deathMsg], curCycle + 1), flair_template_id=cfg['flairID']['dead'])
         item.reply(stm['reply']['burnUser'].format(burned, exposed, stm['teams'][0][(selfTeam + 1) % 2]))
 
@@ -465,10 +467,6 @@ def main():
         tier = 'Spectator'
         loc = 'Nowhere'
         status = 'not playing'
-        alive = 0
-        killed = 0
-        good = 0
-        bad = 0
 
         con.execute(stm['preStm']['chkUsrState'], (item.author.name,))
         r = con.fetchall()
@@ -589,7 +587,98 @@ def main():
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
             return -1
 
-        curCycle = round
+        threshold = 1
+
+        if (curCycle > cfg['commands']['voteOneAfter']):
+            threshold = 1
+        else:
+            threshold = cfg['commands']['voteThreshold']
+
+        con.execute(stm['preStm']['cycle']['resetInactive'])
+        con.execute(stm['preStm']['cycle']['incrementInactive'])
+        con.execute(stm['preStm']['cycle']['resetComment'])
+        con.execute(stm['preStm']['cycle']['getInactive'], (cfg['kickAfter'],))
+        result = con.fetchall()
+        for row in result:
+            con.execute(stm['preStm']['log'], (time.time(), row[0], 'Inactive Kick'))
+            sub.flair.delete(reddit.redditor(row[0]))
+            sendMessage(row[0], stm['reply']['cycle'][2])
+            sleep(0.2)
+
+        con.execute(stm['preStm']['cycle']['removeInactive'], (cfg['kickAfter'],))
+        con.execute(stm['preStm']['cycle']['getVotes'])
+        result = con.fetchall()
+
+        for row in result:
+            con.execute(stm['preStm']['chkUsr'], (row[0],))
+            r = con.fetchall()
+            tier = r[0][2]
+
+            if (tier <= cfg['commands']['escapeHit']):
+                continue
+
+            con.execute(stm['preStm']['cycle']['getVoteTarget'], (row[0],))
+            target = con.fetchall()
+
+            if (len(target) >= 1):
+                con.execute(stm['preStm']['cycle']['getVoters'], (row[0], row[0]))
+                list = con.fetchall()
+
+                for user in list:
+                    if (target[0][0] == user[0]):
+                        con.execute(stm['preStm']['log'], (time.time(), row[0], f'{row[0]} Escaped'))
+                        con.execute(stm['preStm']['cycle']['voteEscaped'], (row[0],))
+                        sendMessage(row[0], stm['reply']['cycle'][3])
+                        print(f'  > {row[0]} escaped')
+
+        con.execute(stm['preStm']['cycle']['killPlayer'], (curCycle, threshold))
+        con.execute(stm['preStm']['cycle']['getAliveCnt'])
+        result = con.fetchall()
+        alive  = result[0][0]
+        killed = result[0][1]
+
+        print(f'\nAlive: {alive} | Killed {killed}')
+
+        con.execute(stm['preStm']['cycle']['getTeamCnt'])
+        result = con.fetchall()
+        bad = result[0][0]
+        good = result[0][1]
+
+        print(f'MI6: {good} | The Twelve: {bad}')
+
+        con.execute(stm['preStm']['cycle']['getDead'], (threshold,))
+        result = con.fetchall()
+
+        for row in result:
+            con.execute(stm['preStm']['cycle']['getKilledMe'], (row[0],))
+            r = con.fetchall()
+            killedMe = ''
+
+            for v in r:
+                killedMe += f'* u/{v[0]}\n'
+
+            random.seed(time.time())
+            n = random.randint(0,len(stm['deathMsg']) - 1)
+            sub.flair.set(reddit.redditor(row[0]), text=stm['flairs']['dead'].format(stm['deathMsg'][n], curCycle + 1), flair_template_id=cfg['flairID']['dead'])
+            sendMessage(row[0], stm['reply']['cycle'][0].format(stm['deathMsg'][n], curCycle + 1, killedMe, alive, good, bad, killed, alive + killed))
+            con.execute(stm['preStm']['log'], (time.time(), row[0], 'Killed'))
+            print(f'  > {row[0]} killed')
+            sleep(0.2)
+
+        con.execute(stm['preStm']['cycle']['getAlive'])
+        result = con.fetchall()
+
+        for row in result:
+            sub.flair.set(reddit.redditor(row[0]), text=stm['flairs']['alive'].format(curCycle + 2), flair_template_id=cfg['flairID']['alive'])
+            # sendMessage(row[0], stm['reply']['cycle'][1].format(curCycle + 2, alive, good, bad, killed, alive + killed))
+            sleep(0.2)
+
+        con.execute('TRUNCATE TABLE VoteCall');
+        comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['cycle'].format(curCycle + 2, alive, good, bad, killed, alive + killed))
+        comment.mod.distinguish(how='yes', sticky=True)
+        if (item != None): item.reply(f'**Moved to Round {curCycle + 2}**')
+        print(f'Moved to Round {curCycle + 1}')
+        curCycle += 1
         save(state, curCycle)
         return curCycle
 
@@ -778,7 +867,7 @@ def main():
                 elif (re.search(r'^!GAMESTATE', item.body)):
                     state = gameState(state)
                 elif (re.search(r'^!CYCLE', item.body)):
-                    cycle = cycle(curCycle)
+                    curCycle = cycle(curCycle)
                 elif (re.search(r'^!BROADCAST', item.body)):
                     broadcast()
                 elif (re.search(r'^!RESTART', item.body)):
