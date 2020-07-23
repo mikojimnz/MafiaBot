@@ -33,11 +33,11 @@ Play against other members to find out who amongst each other you can trust and 
 |The Twelve|Trainee|1|Access to digup (low accuracy), vote, and max 3 requests.|
 |The Twelve|Assassin|2|Digup accuracy increased.|
 |The Twelve|Handler|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests. Can escape hits.|
-|The Twelve|Keeper|4|Revive unlocked. Burn does not announce who you are.|
+|The Twelve|Keeper|4|Revive and convert unlocked. Burn does not announce who you are.|
 |MI6|Recruit|1|Access to digup (low accuracy), vote, and max 3 requests.|
 |MI6|Analyst|2|Digup accuracy increased.|
 |MI6|Operative|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests. Can escape hits.|
-|MI6|Supervisor|4|Revive unlocked. Burn does not announce who you are.|
+|MI6|Supervisor|4|Revive and convert unlocked. Burn does not announce who you are.|
 
 **Commands**
 
@@ -54,10 +54,12 @@ All commands must be sent privately to u/DozenIncBOT. To use investigative comma
 |!vote USERNAME|Vote on who to eliminate. Can not be changed once voted per round.|2|
 |!digup USERNAME|Investigate the roles of other users. Has varying degree of reliability based on your tier|1|
 |!locate USERNAME|Shows the user's location. May give a clue as to what side they are on.|3|
+|!convert USERNAME|Invite a user to switch to your team.|3|
+|!accept|Accept an invitation to switch teams.|1|
+|!unlock CODE|Enter a secret code in order to level up to the next tier.|1|
 |!stats|Gets the current stats for the game.|1|
 |!help|Shows all commands available.|1|
 |!rules|Shows the rules.|1|
-|!unlock CODE|Enter a secret code in order to level up to the next tier.|1|
 
 **Flairs**
 

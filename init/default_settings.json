@@ -13,6 +13,7 @@
   ],
   "commands": {
     "allowBotBroadcast": 1,
+    "allowSwitchTeam": 1,
     "addRequests": 3,
     "addRequestsOn": 1,
     "burnAfter": 7,
@@ -21,6 +22,7 @@
     "maxRequests": 3,
     "reviveAfter": 1,
     "unlockBurn": 2,
+    "unlockInviteSwitch": 3,
     "unlockLocate": 2,
     "unlockRequest": 0,
     "unlockRevive": 3,

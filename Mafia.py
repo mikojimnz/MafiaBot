@@ -93,7 +93,6 @@ def main():
                 item.reply(stm['err']['notStarted'])
                 return -1
 
-
             if (func.__name__ != 'burnUser'):
                 if pattern:
                     search = pattern.group(2)
@@ -441,6 +440,66 @@ def main():
             return -1
 
     @log_commit
+    @game_command
+    def switchTeam():
+        if (cfg['commands']['allowSwitchTeam'] == 0):
+            item.reply(stm['err']['switchTeamDisabled'])
+            return -1
+
+        con.execute(stm['preStm']['unlock'][0], (item.author.name,))
+        r = con.fetchall()
+
+        if (r[0][0] < cfg['commands']['unlockInviteSwitch']):
+            item.reply(stm['err']['notUnlocked'])
+            return -1
+
+        pattern = re.search(r'^!convert\s(?:u/)?([A-Za-z0-9_]{1,20})', item.body)
+        target = pattern.group(1)
+        con.execute(stm['preStm']['digupUser'], (target,))
+        r = con.fetchall()
+
+        if ((len(r) <= 0) or (r[0][2]) != 1):
+            item.reply(stm['err']['notAlive'])
+            return -1
+
+        con.execute(stm['preStm']['switchTeam'][0], (target,))
+        r = con.fetchall()
+
+        if (len(r) > 1):
+            item.reply(stm['err']['switchTeamBlocked'])
+            return -1
+
+        con.execute(stm['preStm']['switchTeam'][1], (item.author.name, target))
+        success = con.rowcount
+
+        if (success > 0):
+            sendMessage(target, stm['reply']['switchTeamMsg'].format(item.author.name, curCycle + 1))
+            item.reply(stm['reply']['switchTeam'])
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['switchTeamInvite'])
+        else:
+            item.reply(stm['err']['switchTeam'])
+            return -1
+
+    @log_commit
+    def acceptInvite():
+        if (cfg['commands']['allowSwitchTeam'] == 0):
+            item.reply(stm['err']['switchTeamDisabled'])
+            return -1
+
+        con.execute(stm['preStm']['switchTeam'][2], (item.author.name,))
+        r = con.fetchall()
+
+        if (len(r) <= 0):
+            item.reply(stm['err']['switchTeamNone'])
+            return -1
+
+        con.execute(stm['preStm']['switchTeam'][3], (r[0][0], r[0][1]))
+        con.execute(stm['preStm']['switchTeam'][4], (r[0][1],))
+        item.reply(stm['reply']['switchTeamAccept'])
+        sendMessage(r[0][0], stm['reply']['switchTeamAccepted'].format(r[0][1]))
+        reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['switchTeam'])
+
+    @log_commit
     def getList():
         dead = ''
         alive = ''
@@ -475,7 +534,7 @@ def main():
 
         if (len(r) == 1):
             team = stm['teams'][0][r[0][0]]
-            tier = stm['teams'][1][r[0][0]][r[0][1]]
+            tier = stm['teams'][2][r[0][0]][r[0][1]]
             loc = r[0][2]
             status = stm['alive'][r[0][3]]
 
@@ -693,6 +752,7 @@ def main():
             sleep(0.2)
 
         con.execute('TRUNCATE TABLE VoteCall');
+        con.execute('TRUNCATE TABLE TeamInvite;');
         comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['cycle'].format(curCycle + 2, alive, good, bad, killed, alive + killed))
         comment.mod.distinguish(how='yes', sticky=True)
         if (item != None): item.reply(f'**Moved to Round {curCycle + 2}**')
@@ -712,7 +772,7 @@ def main():
 
         if (cfg['commands']['allowBotBroadcast'] == 0):
             item.reply('Broadcast Disabled')
-            return
+            return -1
 
         con.execute(stm['preStm']['getAll'])
         r = con.fetchall()
@@ -730,6 +790,7 @@ def main():
 
         con.execute(stm['preStm']['restart'])
         con.execute('TRUNCATE TABLE VoteCall;');
+        con.execute('TRUNCATE TABLE TeamInvite;');
         con.execute('COMMIT;')
         comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['restart'])
         comment.mod.distinguish(how='yes', sticky=True)
@@ -756,6 +817,7 @@ def main():
 
         con.execute('TRUNCATE TABLE Mafia;');
         con.execute('TRUNCATE TABLE VoteCall;');
+        con.execute('TRUNCATE TABLE TeamInvite;');
         con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'reset'))
         con.execute('COMMIT;')
         comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['reset'])
@@ -875,6 +937,10 @@ def main():
                     requestUser()
                 elif (re.search(r'^!unlock', item.body)):
                     unlockTier()
+                elif (re.search(r'^!convert', item.body)):
+                    switchTeam()
+                elif (re.search(r'^!accept', item.body)):
+                    acceptInvite()
                 elif ((re.search(r'^!list', item.body))):
                     getList()
                 elif (re.search(r'^!stats', item.body)):
@@ -921,16 +987,20 @@ def save(state, curCycle):
 def setItems(k, v):
     tmp = {}
 
-    if (os.path.getsize('data/items.pickle') > 0):
-        with open('data/items.pickle', 'rb') as itemsFile:
-            tmp = pickle.load(itemsFile)
+    try:
+        if (os.path.getsize('data/items.pickle') > 0):
+            with open('data/items.pickle', 'rb') as itemsFile:
+                tmp = pickle.load(itemsFile)
+                tmp[k] = v
+        else:
+            print('WARNING items.pickle not found. Creating new one.')
             tmp[k] = v
-    else:
+    except:
         print('WARNING items.pickle not found. Creating new one.')
         tmp[k] = v
-
-    with open('data/items.pickle', 'wb') as itemsFile:
-        pickle.dump(tmp, itemsFile)
+    finally:
+        with open('data/items.pickle', 'wb') as itemsFile:
+            pickle.dump(tmp, itemsFile)
 
 def getItems(k):
     if os.path.getsize('data/items.pickle') > 0:
