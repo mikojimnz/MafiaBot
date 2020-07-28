@@ -54,7 +54,7 @@ All commands must be sent privately to u/DozenIncBOT. To use investigative comma
 |!vote USERNAME|Vote on who to eliminate. Can not be changed once voted per round.|2|
 |!digup USERNAME|Investigate the roles of other users. Has varying degree of reliability based on your tier|1|
 |!locate USERNAME|Shows the user's location. May give a clue as to what side they are on.|3|
-|!convert USERNAME|Invite a user to switch to your team.|3|
+|!convert USERNAME|Invite a user to switch to your team.|4|
 |!accept|Accept an invitation to switch teams.|1|
 |!unlock CODE|Enter a secret code in order to level up to the next tier.|1|
 |!stats|Gets the current stats for the game.|1|
