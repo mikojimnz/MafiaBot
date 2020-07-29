@@ -133,10 +133,16 @@ def main():
         return wrapper
 
     def schdWarn(min=00):
+        if (state != 1):
+            return -1
+
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['schdWarn'].format(min))
         print(f'Cycle Warning {min}')
 
     def autoCycle():
+        if (state != 1):
+            return -1
+
         with open('data/save.json') as jsonFile2:
             sve = json.load(jsonFile2)
         curCycle = sve['curCycle']
@@ -165,6 +171,7 @@ def main():
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle)
 
         schedule.every(1).to(3).hours.do(makeComment)
+        schedule.every(4).hours.do(refreshConnection)
         print("Jobs Scheduled")
 
     @log_commit
@@ -563,6 +570,9 @@ def main():
 
     @log_commit
     def makeComment():
+        if (state != 1):
+            return -1
+
         random.seed(time.time())
 
         if (random.randint(0, 2) == 0):
@@ -871,11 +881,16 @@ def main():
             reddit.redditor(name).message('Mafia', message)
             rateLimit()
 
+    def refreshConnection():
+        con.execute('SHOW PROCESSLIST;')
+        conStat = con.fetchall()
+        print(f'Refreshed SQL Connection. {len(conStat)}')
+
     con.execute(stm['preStm']['main'][0])
     con.execute(stm['preStm']['main'][1], (time.time(),))
     con.execute(stm['preStm']['addDummy'])
     con.execute('COMMIT;')
-    con.execute('SHOW PROCESSLIST')
+    con.execute('SHOW PROCESSLIST;')
     conStat = con.fetchall()
 
     scheduleJobs()
@@ -887,8 +902,7 @@ def main():
     print('______')
 
     while True:
-        if (state == 1):
-            schedule.run_pending()
+        schedule.run_pending()
 
         try:
             for comment in commentStream:
