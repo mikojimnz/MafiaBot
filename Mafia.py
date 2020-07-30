@@ -170,7 +170,7 @@ def main():
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle)
 
-        schedule.every(1).to(3).hours.do(makeComment)
+        schedule.every(2).to(5).hours.do(makeComment)
         schedule.every(4).hours.do(refreshConnection)
         print("Jobs Scheduled")
 
