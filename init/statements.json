@@ -19,6 +19,28 @@
       "switchTeam": "A player has changed their allegiance!",
       "switchTeamInvite": "An offer was made to switch allegiances."
     },
+    "idle": [
+      "Join by PMing me !join.",
+      "Invite your friends!",
+      "Trust no one!",
+      "Read the tips and strategy guide!",
+      "Not too long now!",
+      "This is exciting!",
+      "Who will win this game?",
+      "Remeber to read the strategy guide!",
+      "Say hello!",
+      "Don't forget to introduce yourself!",
+      "Will it be MI6 or The Twelve?",
+      "Pro Tip: Use the !digup command multiple times.",
+      "Nothing is at it seems.",
+      "Teams will be assigned on game start!",
+      "Who will betray their own?",
+      "I have to kill some of you later.",
+      "You all look like bacon.",
+      "Players cannot join once the game starts! Join Now!",
+      "Remeber to use Private Messaging to send me commands.",
+      "You can team up with other players, but can you trust them?"
+    ],
     "spook": [
       "Trust no one.",
       "There is darnkness in here.",

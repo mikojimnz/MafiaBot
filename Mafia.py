@@ -570,10 +570,12 @@ def main():
 
     @log_commit
     def makeComment():
-        if (state != 1):
-            return -1
 
         random.seed(time.time())
+
+        if (state == 0):
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['idle'][random.randint(0, len(stm['comment']['idle']) - 1)])
+            return
 
         if (random.randint(0, 2) == 0):
             con.execute(stm['preStm']['cycle']['getVotes'])
