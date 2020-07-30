@@ -212,7 +212,7 @@ def main():
             con.execute(stm['preStm']['addUser'], (item.created_utc, item.author.name))
             reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['addUser'].format(item.author.name))
 
-        sub.flair.set(item.author, text=stm['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+        sub.flair.set(item.author, text=stm['flairs']['alive'], flair_template_id=cfg['flairID']['alive'])
         item.reply(stm['reply']['addUser'].format(item.author.name))
         setItems(item.author.name, item)
 
@@ -333,7 +333,7 @@ def main():
 
         con.execute(stm['preStm']['revive'][2], (item.author.name,))
         con.execute(stm['preStm']['revive'][3], (target,))
-        sub.flair.set(reddit.redditor(target), text=stm['flairs']['alive'].format(curCycle + 1, flair_template_id=cfg['flairID']['alive']))
+        sub.flair.set(reddit.redditor(target), text=stm['flairs']['alive'], flair_template_id=cfg['flairID']['alive'])
         sendMessage(target, stm['reply']['revivedUser'].format(item.author.name))
         item.reply(stm['reply']['reviveUser'].format(target))
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['revive'])
@@ -759,7 +759,6 @@ def main():
         result = con.fetchall()
 
         for row in result:
-            sub.flair.set(reddit.redditor(row[0]), text=stm['flairs']['alive'].format(curCycle + 2), flair_template_id=cfg['flairID']['alive'])
             # sendMessage(row[0], stm['reply']['cycle'][1].format(curCycle + 2, alive, good, bad, killed, alive + killed))
             sleep(0.2)
 

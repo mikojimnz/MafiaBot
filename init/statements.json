@@ -157,7 +157,7 @@
     "wrongCode": "Access Denied. Try Again."
   },
   "flairs": {
-    "alive": "Mafia: Alive - Round {}",
+    "alive": "Mafia: Alive",
     "dead": "Mafia: {} on Round {}",
     "survived": "{}: Survived to Round {}"
   },
