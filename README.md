@@ -30,12 +30,12 @@ Play against other members to find out who amongst each other you can trust and 
 
 |Team|Role|Tier|Description|
 |:-|:-|:-|:-|
-|The Twelve|Trainee|1|Access to digup (low accuracy), vote, and max 3 requests.|
-|The Twelve|Assassin|2|Digup accuracy increased.|
+|The Twelve|Trainee|1|Access to digup (low accuracy) and max 3 requests.|
+|The Twelve|Assassin|2|Vote unlocked, Digup accuracy increased.|
 |The Twelve|Handler|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests. Can escape hits.|
 |The Twelve|Keeper|4|Revive and convert unlocked. Burn does not announce who you are.|
-|MI6|Recruit|1|Access to digup (low accuracy), vote, and max 3 requests.|
-|MI6|Analyst|2|Digup accuracy increased.|
+|MI6|Recruit|1|Access to digup (low accuracy) and max 3 requests.|
+|MI6|Analyst|2|Vote unlocked, Digup accuracy increased.|
 |MI6|Operative|3|Digup accuracy increased. Unlocked locate and burn command (Tier 3 or lower). 3 Additional requests. Can escape hits.|
 |MI6|Supervisor|4|Revive and convert unlocked. Burn does not announce who you are.|
 
