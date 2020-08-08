@@ -61,7 +61,7 @@ def main():
                     utc = item.created_utc
 
                 result = func(*args, **kwargs)
-                pattern = re.search(r'^![\w]{1,}\s([\w\d_\-\s]+)', command)
+                pattern = re.search(r'^![\w]{1,}\s([\w\d_\-\s/]+)', command)
                 readable = time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(utc))
                 action = ''
 
@@ -673,7 +673,7 @@ def main():
             item.reply(stm['err']['notStarted'])
             return -1
 
-        if (item.author.name not in cfg['adminUsr']):
+        if ((item.author.name != None) and (item.author.name not in cfg['adminUsr'])):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
             return -1
 
