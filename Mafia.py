@@ -362,7 +362,7 @@ def main():
                 role = stm['teams'][0][random.randint(0,maxTeams)]
         elif (tier == 1):
             if (random.randint(0,5) == 0):
-                role = stm['teams'][1][r[0][0]][r[0][1]]
+                role = stm['teams'][2][r[0][0]][r[0][1]]
             else:
                 role = stm['teams'][2][random.randint(0,maxTeams)][random.randint(0,maxRoles)]
         elif (tier >= 2):
@@ -774,7 +774,7 @@ def main():
             pass
         else:
             item.reply(f'**Moved to Round {curCycle + 2}**')
-            
+
         print(f'Moved to Round {curCycle + 1}')
         curCycle += 1
         save(state, curCycle)
