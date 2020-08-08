@@ -673,9 +673,12 @@ def main():
             item.reply(stm['err']['notStarted'])
             return -1
 
-        if ((item.author.name is not None) and (item.author.name not in cfg['adminUsr'])):
-            con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
-            return -1
+        if (item is None):
+            pass
+        else:
+            if (item.author.name not in cfg['adminUsr']):
+                con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
+                return -1
 
         threshold = 1
 
@@ -766,7 +769,12 @@ def main():
         con.execute('TRUNCATE TABLE TeamInvite;');
         comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['cycle'].format(curCycle + 2, alive, good, bad, killed, alive + killed))
         comment.mod.distinguish(how='yes', sticky=True)
-        if (item != None): item.reply(f'**Moved to Round {curCycle + 2}**')
+
+        if (item is None):
+            pass
+        else:
+            item.reply(f'**Moved to Round {curCycle + 2}**')
+            
         print(f'Moved to Round {curCycle + 1}')
         curCycle += 1
         save(state, curCycle)
