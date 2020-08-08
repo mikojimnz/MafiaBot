@@ -673,7 +673,7 @@ def main():
             item.reply(stm['err']['notStarted'])
             return -1
 
-        if ((item.author.name != None) and (item.author.name not in cfg['adminUsr'])):
+        if ((item.author.name is not None) and (item.author.name not in cfg['adminUsr'])):
             con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
             return -1
 
