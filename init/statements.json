@@ -207,7 +207,7 @@
     ],
     "chkBurn": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND `burn`=1);",
     "chkCmt": "SELECT `username` FROM Mafia WHERE (`username`=%s AND `comment`>=%s);",
-    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND (`alive`=0 or `alive`=1));",
+    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND `alive`=1);",
     "chkUsrState": "SELECT `team`,`tier`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
