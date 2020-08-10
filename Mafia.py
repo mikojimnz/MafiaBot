@@ -145,8 +145,8 @@ def main():
 
         with open('data/save.json') as jsonFile2:
             sve = json.load(jsonFile2)
-        curCycle = sve['curCycle']
-        cycle(curCycle)
+
+        curCycle = cycle(sve['curCycle'])
         print(f'Auto Cycle {curCycle}')
 
     def scheduleJobs():
@@ -288,8 +288,12 @@ def main():
             item.reply(stm['err']['noBurnLeft'])
             return -1
 
-        burned = toBurn[0][random.randint(0, len(toBurn) - 1)]
-        exposed = toReport[0][random.randint(0, len(toReport) - 1)]
+        print(toBurn)
+        print(toReport)
+        burned = toBurn[random.randint(0, len(toBurn) - 1)][0]
+        exposed = toReport[random.randint(0, len(toReport) - 1)][0]
+        print(burned)
+        print(exposed)
         deathMsg = random.randint(0,len(stm['deathMsg']) - 1)
         con.execute(stm['preStm']['burn'][4], (item.author.name,))
         con.execute(stm['preStm']['burn'][5], (burned,))
