@@ -133,7 +133,7 @@
   "err": {
     "alive": "The player is alive.",
     "alreadyStarted": "The game has already started.",
-    "burnUsed": "You have already used your abulity to burn.",
+    "burnUsed": "You have already used your ability to burn.",
     "impFmt": "Invalid command input.",
     "maxTier": "You have already reached the max tier available.",
     "noBurnLeft": "There is no one left to burn on your or the other's team.",
@@ -145,7 +145,7 @@
     "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "notStarted": "The game has not started yet.",
     "notUnlocked": "Command not authorized!.\n\nCrack more game codes to unlock this command.",
-    "reviveUsed": "You have already used your abulity to revive.",
+    "reviveUsed": "You have already used your ability to revive.",
     "spec": "You are a spectator. You cannot use this command.",
     "switchTeam": "You already sent an invitation this round",
     "switchTeamBlocked": "Someone has already made an offer to that player this round.\n\nYou may try to convince them to reject their existing offer.",
