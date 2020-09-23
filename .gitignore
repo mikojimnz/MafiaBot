@@ -133,3 +133,4 @@ dmypy.json
 test.py
 *.pickle
 settings.json
+discord_settings.json
