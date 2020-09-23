@@ -22,7 +22,15 @@ from mysql.connector.cursor import MySQLCursorPrepared
 from random import randrange
 from time import sleep
 
+exceptCnt = 0
+state = None
+curCycle = None
+
 def main():
+    global exceptCnt
+    global state
+    global curCycle
+
     with open('init/statements.json') as jsonFile1:
         stm = json.load(jsonFile1)
     with open('data/save.json') as jsonFile2:
@@ -61,7 +69,7 @@ def main():
                     utc = item.created_utc
 
                 result = func(*args, **kwargs)
-                pattern = re.search(r'^![\w]{1,}\s([\w\d_\-\s]+)', command)
+                pattern = re.search(r'^![\w]{1,}\s([\w\d_\-\s/]+)', command)
                 readable = time.strftime('%m/%d/%Y %H:%M:%S',  time.gmtime(utc))
                 action = ''
 
@@ -133,14 +141,22 @@ def main():
         return wrapper
 
     def schdWarn(min=00):
+        if (state != 1):
+            return -1
+
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['schdWarn'].format(min))
         print(f'Cycle Warning {min}')
 
     def autoCycle():
+        global curCycle
+
+        if (state != 1):
+            return -1
+
         with open('data/save.json') as jsonFile2:
             sve = json.load(jsonFile2)
-        curCycle = sve['curCycle']
-        cycle(curCycle)
+
+        cycle()
         print(f'Auto Cycle {curCycle}')
 
     def scheduleJobs():
@@ -164,11 +180,14 @@ def main():
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] - 1 + 12).zfill(2)}:55').do(schdWarn,min=5)
         schedule.every().day.at(f'{str(cfg["clock"]["hour2"] + 12).zfill(2)}:00').do(autoCycle)
 
-        schedule.every(1).to(3).hours.do(makeComment)
+        schedule.every(2).to(5).hours.do(makeComment)
+        schedule.every(4).hours.do(refreshConnection)
         print("Jobs Scheduled")
 
     @log_commit
     def gameState(state):
+        global curCycle
+
         pattern = re.search(r'^!GAMESTATE\s([0-9]{1,1})(\s-[sS])?', item.body)
         setState = int(pattern.group(1))
         silent = pattern.group(2)
@@ -205,12 +224,14 @@ def main():
             con.execute(stm['preStm']['addUser'], (item.created_utc, item.author.name))
             reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['addUser'].format(item.author.name))
 
-        sub.flair.set(item.author, text=stm['flairs']['alive'].format(1), flair_template_id=cfg['flairID']['alive'])
+        sub.flair.set(item.author, text=stm['flairs']['alive'], flair_template_id=cfg['flairID']['alive'])
         item.reply(stm['reply']['addUser'].format(item.author.name))
         setItems(item.author.name, item)
 
     @log_commit
     def removeUser():
+        global curCycle
+
         con.execute(stm['preStm']['removeUser'], (curCycle, item.author.name))
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['removeUser'].format(item.author.name))
         sub.flair.delete(item.author)
@@ -219,6 +240,8 @@ def main():
     @log_commit
     @game_command
     def voteUser():
+        global curCycle
+
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
@@ -251,6 +274,8 @@ def main():
     @log_commit
     @game_command
     def burnUser():
+        global curCycle
+
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
@@ -281,8 +306,8 @@ def main():
             item.reply(stm['err']['noBurnLeft'])
             return -1
 
-        burned = toBurn[0][random.randint(0, len(toBurn) - 1)]
-        exposed = toReport[0][random.randint(0, len(toReport) - 1)]
+        burned = toBurn[random.randint(0, len(toBurn) - 1)][0]
+        exposed = toReport[random.randint(0, len(toReport) - 1)][0]
         deathMsg = random.randint(0,len(stm['deathMsg']) - 1)
         con.execute(stm['preStm']['burn'][4], (item.author.name,))
         con.execute(stm['preStm']['burn'][5], (burned,))
@@ -326,7 +351,7 @@ def main():
 
         con.execute(stm['preStm']['revive'][2], (item.author.name,))
         con.execute(stm['preStm']['revive'][3], (target,))
-        sub.flair.set(reddit.redditor(target), text=stm['flairs']['alive'].format(curCycle + 1, flair_template_id=cfg['flairID']['alive']))
+        sub.flair.set(reddit.redditor(target), text=stm['flairs']['alive'], flair_template_id=cfg['flairID']['alive'])
         sendMessage(target, stm['reply']['revivedUser'].format(item.author.name))
         item.reply(stm['reply']['reviveUser'].format(target))
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['revive'])
@@ -355,7 +380,7 @@ def main():
                 role = stm['teams'][0][random.randint(0,maxTeams)]
         elif (tier == 1):
             if (random.randint(0,5) == 0):
-                role = stm['teams'][1][r[0][0]][r[0][1]]
+                role = stm['teams'][2][r[0][0]][r[0][1]]
             else:
                 role = stm['teams'][2][random.randint(0,maxTeams)][random.randint(0,maxRoles)]
         elif (tier >= 2):
@@ -524,6 +549,8 @@ def main():
 
     @log_commit
     def getStats():
+        global curCycle
+
         team = 'The Spectators'
         tier = 'Spectator'
         loc = 'Nowhere'
@@ -563,7 +590,12 @@ def main():
 
     @log_commit
     def makeComment():
+
         random.seed(time.time())
+
+        if (state == 0):
+            reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['idle'][random.randint(0, len(stm['comment']['idle']) - 1)])
+            return
 
         if (random.randint(0, 2) == 0):
             con.execute(stm['preStm']['cycle']['getVotes'])
@@ -603,6 +635,8 @@ def main():
 
     @log_commit
     def gameEnd():
+        global curCycle
+
         round = curCycle + 1
         con.execute(stm['preStm']['cycle']['resetInactive'])
         con.execute(stm['preStm']['cycle']['incrementInactive'])
@@ -656,14 +690,19 @@ def main():
         comment.mod.distinguish(how='yes', sticky=True)
 
     @log_commit
-    def cycle(curCycle):
+    def cycle():
+        global curCycle
+
         if (state == 0):
             item.reply(stm['err']['notStarted'])
             return -1
 
-        if (item.author.name not in cfg['adminUsr']):
-            con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
-            return -1
+        if (item is None):
+            pass
+        else:
+            if (item.author.name not in cfg['adminUsr']):
+                con.execute(stm['preStm']['log'], (item.created_utc, item.author.name, 'ATTEMPTED ADMIN COMMAND: cycle'))
+                return -1
 
         threshold = 1
 
@@ -747,7 +786,6 @@ def main():
         result = con.fetchall()
 
         for row in result:
-            sub.flair.set(reddit.redditor(row[0]), text=stm['flairs']['alive'].format(curCycle + 2), flair_template_id=cfg['flairID']['alive'])
             # sendMessage(row[0], stm['reply']['cycle'][1].format(curCycle + 2, alive, good, bad, killed, alive + killed))
             sleep(0.2)
 
@@ -755,7 +793,12 @@ def main():
         con.execute('TRUNCATE TABLE TeamInvite;');
         comment = reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['sticky']['cycle'].format(curCycle + 2, alive, good, bad, killed, alive + killed))
         comment.mod.distinguish(how='yes', sticky=True)
-        if (item != None): item.reply(f'**Moved to Round {curCycle + 2}**')
+
+        if (item is None):
+            pass
+        else:
+            item.reply(f'**Moved to Round {curCycle + 2}**')
+
         print(f'Moved to Round {curCycle + 1}')
         curCycle += 1
         save(state, curCycle)
@@ -871,11 +914,16 @@ def main():
             reddit.redditor(name).message('Mafia', message)
             rateLimit()
 
+    def refreshConnection():
+        con.execute('SHOW PROCESSLIST;')
+        conStat = con.fetchall()
+        print(f'Refreshed SQL Connection. {len(conStat)}')
+
     con.execute(stm['preStm']['main'][0])
     con.execute(stm['preStm']['main'][1], (time.time(),))
     con.execute(stm['preStm']['addDummy'])
     con.execute('COMMIT;')
-    con.execute('SHOW PROCESSLIST')
+    con.execute('SHOW PROCESSLIST;')
     conStat = con.fetchall()
 
     scheduleJobs()
@@ -887,8 +935,7 @@ def main():
     print('______')
 
     while True:
-        if (state == 1):
-            schedule.run_pending()
+        schedule.run_pending()
 
         try:
             for comment in commentStream:
@@ -918,6 +965,12 @@ def main():
                         con.execute('RESET QUERY CACHE;')
                     except:
                         pass
+
+                with open('data/save.json') as jsonFile2:
+                    sve = json.load(jsonFile2)
+
+                state = sve['state']
+                curCycle = sve['curCycle']
 
                 if (re.search(r'^!join', item.body)):
                     addUser()
@@ -952,7 +1005,7 @@ def main():
                 elif (re.search(r'^!GAMESTATE', item.body)):
                     state = gameState(state)
                 elif (re.search(r'^!CYCLE', item.body)):
-                    curCycle = cycle(curCycle)
+                    curCycle = cycle()
                 elif (re.search(r'^!BROADCAST', item.body)):
                     broadcast()
                 elif (re.search(r'^!RESTART', item.body)):

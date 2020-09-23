@@ -19,6 +19,28 @@
       "switchTeam": "A player has changed their allegiance!",
       "switchTeamInvite": "An offer was made to switch allegiances."
     },
+    "idle": [
+      "Join by PMing me !join.",
+      "Invite your friends!",
+      "Trust no one!",
+      "Read the tips and strategy guide!",
+      "Not too long now!",
+      "This is exciting!",
+      "Who will win this game?",
+      "Remeber to read the strategy guide!",
+      "Say hello!",
+      "Don't forget to introduce yourself!",
+      "Will it be MI6 or The Twelve?",
+      "Pro Tip: Use the !digup command multiple times.",
+      "Nothing is as it seems.",
+      "Teams will be assigned on game start!",
+      "Who will betray their own?",
+      "I have to kill some of you later.",
+      "You all look like bacon.",
+      "Players cannot join once the game starts! Join Now!",
+      "Remeber to use Private Messaging to send me commands.",
+      "You can team up with other players, but can you trust them?"
+    ],
     "spook": [
       "Trust no one.",
       "There is darnkness in here.",
@@ -111,7 +133,7 @@
   "err": {
     "alive": "The player is alive.",
     "alreadyStarted": "The game has already started.",
-    "burnUsed": "You have already used your abulity to burn.",
+    "burnUsed": "You have already used your ability to burn.",
     "impFmt": "Invalid command input.",
     "maxTier": "You have already reached the max tier available.",
     "noBurnLeft": "There is no one left to burn on your or the other's team.",
@@ -123,7 +145,7 @@
     "notPM": "Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "notStarted": "The game has not started yet.",
     "notUnlocked": "Command not authorized!.\n\nCrack more game codes to unlock this command.",
-    "reviveUsed": "You have already used your abulity to revive.",
+    "reviveUsed": "You have already used your ability to revive.",
     "spec": "You are a spectator. You cannot use this command.",
     "switchTeam": "You already sent an invitation this round",
     "switchTeamBlocked": "Someone has already made an offer to that player this round.\n\nYou may try to convince them to reject their existing offer.",
@@ -135,7 +157,7 @@
     "wrongCode": "Access Denied. Try Again."
   },
   "flairs": {
-    "alive": "Mafia: Alive - Round {}",
+    "alive": "Mafia: Alive",
     "dead": "Mafia: {} on Round {}",
     "survived": "{}: Survived to Round {}"
   },
@@ -185,7 +207,7 @@
     ],
     "chkBurn": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND `burn`=1);",
     "chkCmt": "SELECT `username` FROM Mafia WHERE (`username`=%s AND `comment`>=%s);",
-    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND (`alive`=0 or `alive`=1));",
+    "chkUsr": "SELECT `username`,`team`,`tier` FROM Mafia WHERE (`username`=%s AND `alive`=1);",
     "chkUsrState": "SELECT `team`,`tier`,`loc`,`alive`,`burn`,`revive`,`request` From Mafia WHERE `username`=%s",
     "comment": "UPDATE Mafia SET `comment` = `comment` + 1 WHERE `username`=%s;",
     "cycle": {
@@ -295,7 +317,7 @@
     "requestUser": "Your info request has been posted.",
     "reviveUser": "You have revived {}!",
     "revivedUser": "You have been revived by u/{}!\n\nGet back into the game and win!",
-    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel on a player. Limited number of uses.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !unlock CODE: Enter a code to level up your rank and gain new investigative powers.\n* !vote USERNAME: Vote on which user to be eliminated.",
+    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel on a player. Limited number of uses.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !unlock CODE: Enter a code to level up your rank and gain new investigative powers.\n* !vote USERNAME: Vote on which user to be eliminated.\n* !convert USERNAME: Invite a user to switch to your team.\n* !accept: Accept an invitation to switch teams.",
     "showRules": "Rules:\n1. Each user is assigned to either MI6 or the Twelve.\n2. You must investigate each other to determine who is on what side and eliminate the opponent.\n3. Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful investigation tools.\n4. Vote out players who you suspect are the enemy. A player must receive a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.\n4. At the end of each round, an announcement will be made how many people are alive how many were killed.\n5. You must choose your allies carefully to seek out the enemy.",
     "switchTeam": "Invitation Sent.\n\nYou may send another invitation next round.",
     "switchTeamAccept": "You have switched teams.",
