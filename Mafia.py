@@ -22,7 +22,15 @@ from mysql.connector.cursor import MySQLCursorPrepared
 from random import randrange
 from time import sleep
 
+exceptCnt = 0
+state = None
+curCycle = None
+
 def main():
+    global exceptCnt
+    global state
+    global curCycle
+
     with open('init/statements.json') as jsonFile1:
         stm = json.load(jsonFile1)
     with open('data/save.json') as jsonFile2:
@@ -140,13 +148,15 @@ def main():
         print(f'Cycle Warning {min}')
 
     def autoCycle():
+        global curCycle
+
         if (state != 1):
             return -1
 
         with open('data/save.json') as jsonFile2:
             sve = json.load(jsonFile2)
 
-        curCycle = cycle(sve['curCycle'])
+        cycle()
         print(f'Auto Cycle {curCycle}')
 
     def scheduleJobs():
@@ -176,6 +186,8 @@ def main():
 
     @log_commit
     def gameState(state):
+        global curCycle
+
         pattern = re.search(r'^!GAMESTATE\s([0-9]{1,1})(\s-[sS])?', item.body)
         setState = int(pattern.group(1))
         silent = pattern.group(2)
@@ -218,6 +230,8 @@ def main():
 
     @log_commit
     def removeUser():
+        global curCycle
+
         con.execute(stm['preStm']['removeUser'], (curCycle, item.author.name))
         reddit.submission(id=cfg['reddit']['targetPost']).reply(stm['comment']['actions']['removeUser'].format(item.author.name))
         sub.flair.delete(item.author)
@@ -226,6 +240,8 @@ def main():
     @log_commit
     @game_command
     def voteUser():
+        global curCycle
+
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
@@ -258,6 +274,8 @@ def main():
     @log_commit
     @game_command
     def burnUser():
+        global curCycle
+
         con.execute(stm['preStm']['unlock'][0], (item.author.name,))
         r = con.fetchall()
 
@@ -531,6 +549,8 @@ def main():
 
     @log_commit
     def getStats():
+        global curCycle
+
         team = 'The Spectators'
         tier = 'Spectator'
         loc = 'Nowhere'
@@ -615,6 +635,8 @@ def main():
 
     @log_commit
     def gameEnd():
+        global curCycle
+
         round = curCycle + 1
         con.execute(stm['preStm']['cycle']['resetInactive'])
         con.execute(stm['preStm']['cycle']['incrementInactive'])
@@ -668,7 +690,9 @@ def main():
         comment.mod.distinguish(how='yes', sticky=True)
 
     @log_commit
-    def cycle(curCycle):
+    def cycle():
+        global curCycle
+
         if (state == 0):
             item.reply(stm['err']['notStarted'])
             return -1
@@ -942,6 +966,12 @@ def main():
                     except:
                         pass
 
+                with open('data/save.json') as jsonFile2:
+                    sve = json.load(jsonFile2)
+
+                state = sve['state']
+                curCycle = sve['curCycle']
+
                 if (re.search(r'^!join', item.body)):
                     addUser()
                 elif (re.search(r'^!leave', item.body)):
@@ -975,7 +1005,7 @@ def main():
                 elif (re.search(r'^!GAMESTATE', item.body)):
                     state = gameState(state)
                 elif (re.search(r'^!CYCLE', item.body)):
-                    curCycle = cycle(curCycle)
+                    curCycle = cycle()
                 elif (re.search(r'^!BROADCAST', item.body)):
                     broadcast()
                 elif (re.search(r'^!RESTART', item.body)):
