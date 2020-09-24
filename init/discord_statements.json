@@ -140,7 +140,7 @@
     "maxTier": "You have already reached the max tier available.",
     "noBurnLeft": "There is no one left to burn on your or the other's team.",
     "noBurnYet": "The burn command is not yet unlocked.",
-    "noParticipate": "To use this command, you must check in at least once per round to maintain active status. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
+    "noParticipate": "To use this command, you must check in at least once per round to maintain active status using `m!checkin`. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
     "noRequestLeft": "You have used your alloted requests",
     "notAlive": "The player is not alive",
     "notFound": "Cannot find that user or the user is not playing in the game.\n\nNote: Usernames are case-sensitive.",

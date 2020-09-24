@@ -71,6 +71,16 @@ def checkUser(ctx):
 async def on_ready():
     print("Bot Started")
 
+@bot.event
+async def on_command(ctx):
+    try:
+        con.execute(stm['preStm']['log'], (time.time(), ctx.message.author.id, ctx.message.content[2:27]))
+        con.execute('COMMIT;')
+    except mysql.connector.Error as e:
+        print(f'SQL EXCEPTION {e}')
+        con.close()
+        await client.change_presence(status=discord.Status.dnd, activity=discord.Game(name=' has stopped. Check DB.'))
+
 @bot.command(name='ping',pass_context=True)
 async def ping(ctx):
     await ctx.message.channel.send("Pong!")
@@ -83,6 +93,12 @@ async def join(ctx):
 @bot.command(pass_context=True)
 @commands.has_any_role(cfg['discord']['roles'])
 async def leave(ctx):
+    pass
+
+@bot.command(pass_context=True, aliases=['ci', 'check'])
+@commands.dm_only()
+@commands.check(checkUser)
+async def checkin(ctx, target):
     pass
 
 @bot.command(pass_context=True, aliases=['v', 'kill'])
@@ -113,7 +129,7 @@ async def digup(ctx, target):
 @commands.dm_only()
 @commands.check(checkUser)
 async def locate(ctx, target):
-    print('locate')
+    pass
 
 @bot.command(pass_context=True)
 @commands.dm_only()
@@ -153,7 +169,7 @@ async def rules(ctx):
 
 @bot.command(pass_context=True)
 @commands.has_role('narrator')
-async def gamestate(ctx):
+async def gamestate(ctx, state: int):
     pass
 
 @bot.command(pass_context=True)
@@ -173,6 +189,17 @@ async def halt(ctx):
 
 @bot.event
 async def on_command_error(ctx, error):
+
+    err = str(error)
+
+    try:
+        con.execute(stm['preStm']['log'], (time.time(), ctx.message.author.id, f'{err} - {ctx.message.content[2:27]}'))
+        con.execute('COMMIT;')
+    except mysql.connector.Error as e:
+        print(f'SQL EXCEPTION {e}')
+        con.close()
+        await client.change_presence(status=discord.Status.dnd, activity=discord.Game(name=' has stopped. Check DB.'))
+
     if isinstance(error, commands.CommandNotFound):
         await ctx.message.channel.send("Unknown Command")
         return
@@ -184,13 +211,13 @@ async def on_command_error(ctx, error):
         await ctx.message.channel.send(stm['err']['spec'])
         await ctx.message.delete()
         return
-    elif str(error) == 'Inactive':
+    elif err == 'Inactive':
         await ctx.message.channel.send(stm['err']['noParticipate'])
         return
-    elif str(error) == 'Dead':
+    elif err == 'Dead':
         await ctx.message.channel.send(stm['err']['spec'])
         return
-    elif str(error) == 'ConLos':
+    elif err == 'ConLos':
         await ctx.message.channel.send(stm['err']['conLos'])
         return
     elif isinstance(error, commands.CheckFailure):
