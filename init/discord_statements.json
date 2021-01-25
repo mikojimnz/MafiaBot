@@ -268,9 +268,9 @@
   },
   "reply": {
     "addRequests": "+{} Requests Added.",
-    "addUser": "Hello u/{}, you have joined the game!\n\nYour team will be assigned at the start of the game.\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
-    "burnUser": "You have burned u/{}!\n\nIntelligence Report:\n\nu/{} is {}",
-    "burnedUser": "You have been {} by u/{} on round {}!\n\nYou are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",
+    "addUser": "Hello <@{}, you have joined the game!\n\nYour team will be assigned at the start of the game.\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
+    "burnUser": "You have burned <@{}!\n\nIntelligence Report:\n\n<@{}>is {}",
+    "burnedUser": "You have been {} by <@{}>on round {}!\n\nYou are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",
     "burnedUserQuietly": "You have been {} by on round {}!\n\nSomeone higher up has decided to betray their own. You are now a spectator. Others can view how you died on your user flair.",
     "cycle": [
       "**You Were Killed!**\n\nYou were \"{}\" on round {}.\nBy:\n{}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
@@ -280,7 +280,7 @@
     ],
     "digupUser": [
       [
-        "**Intelligence Report**\n\nu/{} is believed to be {} and is {}.\n\n^(This information is believed to be {}% credible.)"
+        "**Intelligence Report**\n\n<@{}>is believed to be {} and is {}.\n\n^(This information is believed to be {}% credible.)"
       ],
       [
         "deceased",
@@ -306,20 +306,20 @@
         "Enabled"
       ]
     ],
-    "hitAlertEsc": " Watch out u/{}! A hit has been put on you!. \n\nYou can escape this hit by correctly voting any of the people who put a hit on you.\n\nThis hit will expire after this round, round {}.",
-    "hitAlert": "Watch out u/{}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed! Higher ranking members have the ability to escape.\n\nThis hit will expire after this round, round {}.",
-    "locateUser": "u/{} is located at {}",
+    "hitAlertEsc": " Watch out <@{}>! A hit has been put on you!. \n\nYou can escape this hit by correctly voting any of the people who put a hit on you.\n\nThis hit will expire after this round, round {}.",
+    "hitAlert": "Watch out <@{}>! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed! Higher ranking members have the ability to escape.\n\nThis hit will expire after this round, round {}.",
+    "locateUser": "<@{}>is located at {}",
     "promote": "Code Accepted!\n\nYou have been promoted to {}.",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
     "requestUser": "Your info request has been posted.",
     "reviveUser": "You have revived {}!",
-    "revivedUser": "You have been revived by u/{}!\n\nGet back into the game and win!",
+    "revivedUser": "You have been revived by <@{}>!\n\nGet back into the game and win!",
     "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel on a player. Limited number of uses.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !unlock CODE: Enter a code to level up your rank and gain new investigative powers.\n* !vote USERNAME: Vote on which user to be eliminated.\n* !convert USERNAME: Invite a user to switch to your team.\n* !accept: Accept an invitation to switch teams.",
     "showRules": "Rules:\n1. Each user is assigned to either MI6 or the Twelve.\n2. You must investigate each other to determine who is on what side and eliminate the opponent.\n3. Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful investigation tools.\n4. Vote out players who you suspect are the enemy. A player must receive a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.\n4. At the end of each round, an announcement will be made how many people are alive how many were killed.\n5. You must choose your allies carefully to seek out the enemy.",
     "switchTeam": "Invitation Sent.\n\nYou may send another invitation next round.",
     "switchTeamAccept": "You have switched teams.",
-    "switchTeamAccepted": "u/{} has accepted your invitation to switch to your team.",
-    "switchTeamMsg": "u/{} has invited you to switch to their team. To accep this invitation, use !accept.\n\nThis invitation will expire at the end of this round, round {}.",
+    "switchTeamAccepted": "<@{}>has accepted your invitation to switch to your team.",
+    "switchTeamMsg": "<@{}>has invited you to switch to their team. To accep this invitation, use !accept.\n\nThis invitation will expire at the end of this round, round {}.",
     "voteUser": "Your vote has been locked in for this round."
   },
   "teams": [

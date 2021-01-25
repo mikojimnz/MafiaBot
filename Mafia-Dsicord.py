@@ -92,8 +92,7 @@ async def join(ctx):
     author = ctx.message.author
 
     if state == 1:
-        await ctx.message.channel.send(['err']['alreadyStarted'])
-        return false
+        raise commands.CommandError(message='Started')
 
     con.execute(stm['preStm']['chkUsrState'],(author.id,))
     r = con.fetchall()
@@ -111,9 +110,19 @@ async def join(ctx):
         await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
 
 @bot.command(pass_context=True)
-@commands.has_any_role(cfg['discord']['roles'])
+@commands.has_any_role(cfg['discord']['roles']['alive'], cfg['discord']['roles']['dead'])
 async def leave(ctx):
-    pass
+    gameCh = bot.get_channel(cfg['discord']['channels']['game'])
+    author = ctx.message.author
+
+    con.execute(stm['preStm']['removeUser'], (curCycle, author.id))
+    await gameCh.send(stm['comment']['actions']['removeUser'].format(author.id))
+
+    if get(ctx.guild.roles, id=cfg['discord']['roles']['alive']) in author.roles:
+        await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['alive']))
+
+    if get(ctx.guild.roles, id=cfg['discord']['roles']['dead']) in author.roles:
+        await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
 
 @bot.command(pass_context=True, aliases=['ci', 'check'])
 @commands.dm_only()
@@ -230,6 +239,9 @@ async def on_command_error(ctx, error):
     elif isinstance(error, (commands.MissingRole, commands.MissingAnyRole)):
         await ctx.message.channel.send(stm['err']['spec'])
         await ctx.message.delete()
+        return
+    elif err == 'Started':
+        await ctx.message.channel.send(stm['err']['alreadyStarted'])
         return
     elif err == 'Inactive':
         await ctx.message.channel.send(stm['err']['noParticipate'])
