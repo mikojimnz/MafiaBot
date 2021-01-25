@@ -144,6 +144,7 @@
     "noRequestLeft": "You have used your alloted requests",
     "notAlive": "The player is not alive",
     "notFound": "Cannot find that user or the user is not playing in the game.\n\nNote: Usernames are case-sensitive.",
+    "notInGuild": "You are not a member of this server",
     "notPM": "{}, This command must be sent by DM only.",
     "notStarted": "The game has not started yet.",
     "notUnlocked": "Command not authorized!.\n\nCrack more game codes to unlock this command.",
@@ -153,10 +154,38 @@
     "switchTeamBlocked": "Someone has already made an offer to that player this round.\n\nYou may try to convince them to reject their existing offer.",
     "switchTeamDisabled": "Team switching is disabled.",
     "switchTeamNone": "You have no pending invitations.",
-    "unkCmd": "Invalid Command. Type !help for a list of commands.",
+    "unkCmd": "Invalid Command. Type m!help for a list of commands.",
     "unkPM": "Unknown Command. Please enter commands through [private message](https://www.reddit.com/message/compose/?to=DozenIncBOT).",
     "voteUser": "You already casted your vote for this round.",
     "wrongCode": "Access Denied. Try Again."
+  },
+  "help": {
+    "url": "https://www.reddit.com/r/KillingEve/wiki/mafia",
+    "strat": "https://www.reddit.com/r/KillingEve/wiki/mafia/strategy",
+    "commands": [
+      "Join game.",
+      "Leave game.",
+      "Vote on a player to elminate.\n`vote ID`",
+      "Burn a random eamate for information.\n`burn ID`",
+      "Bring a player back from the dead.\n`revive ID`",
+      "Get info on player.\n`digup ID`",
+      "Find a player's location.\n`locate ID`",
+      "Request infromation on a player.\n`request ID`",
+      "Request infromation on a player.\n`request ID`",
+      "Enter a game code to advance to the next rank.\n`unlock CODE`",
+      "Invite a player to switch to your team.\n`convert ID`",
+      "Accept invite to switch teams.",
+      "Show game stats.",
+      "Show rules."
+    ],
+    "rules": [
+      "Each user is assigned to either MI6 or the Twelve.",
+      "You must investigate each other to determine who is on what side and eliminate the opponent.",
+      "Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful investigation tools.",
+      "Vote out players who you suspect are the enemy. A player must receive a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.",
+      "At the end of each round, an announcement will be made how many people are alive how many were killed.",
+      "You must choose your allies carefully to seek out the enemy."
+    ]
   },
   "location": [
     [
@@ -314,8 +343,6 @@
     "requestUser": "Your info request has been posted.",
     "reviveUser": "You have revived {}!",
     "revivedUser": "You have been revived by <@{}>!\n\nGet back into the game and win!",
-    "showHelp": "List of available commands:\n* !burn: Exposes one of your teammates randomly for a 100% credible Intelligence Report. Can only be used once\n* !digup USERNAME: Gather intelligence on a user.\n* !help: Shows help.\n* !join: Join the game.\n* !leave: Leave the game. You cannot rejoin once the game has started.\n* !list: Show all players.\n* !locate USERNAME: Shows the location of the user.\n* !request USERNAME: Ask for intel on a player. Limited number of uses.\n* !rules: Shows the rules.\n* !revive USERNAME: Bring back one user back from the dead. Can only be used once.\n* !stats: Shows current number of players.\n* !unlock CODE: Enter a code to level up your rank and gain new investigative powers.\n* !vote USERNAME: Vote on which user to be eliminated.\n* !convert USERNAME: Invite a user to switch to your team.\n* !accept: Accept an invitation to switch teams.",
-    "showRules": "Rules:\n1. Each user is assigned to either MI6 or the Twelve.\n2. You must investigate each other to determine who is on what side and eliminate the opponent.\n3. Decipher and decrypt the clues provided in order to advance your rank and unlock more powerful investigation tools.\n4. Vote out players who you suspect are the enemy. A player must receive a certain number of hits in order to be killed. After a certain amount of time, the number of votes required will be lowered to 1. Votes, aka hits, only last per round.\n4. At the end of each round, an announcement will be made how many people are alive how many were killed.\n5. You must choose your allies carefully to seek out the enemy.",
     "switchTeam": "Invitation Sent.\n\nYou may send another invitation next round.",
     "switchTeamAccept": "You have switched teams.",
     "switchTeamAccepted": "<@{}>has accepted your invitation to switch to your team.",

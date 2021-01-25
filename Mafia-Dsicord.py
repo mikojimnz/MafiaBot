@@ -45,11 +45,14 @@ bot.remove_command('help')
 
 def checkUser(ctx):
     guild = bot.get_guild(cfg['discord']['guild'])
-    dead = str(get(guild.roles, id=cfg['discord']['roles']['dead']));
+    dead = get(guild.roles, id=cfg['discord']['roles']['dead']);
     userID = ctx.message.author.id
 
-    if guild.get_member(userID) is None:
-        return False
+    if guild.get_member(userID) is not None:
+        raise commands.CommandError(message='NotInGuild')
+
+    if state != 1:
+        raise commands.CommandError(message='NotStarted')
 
     for role in guild.get_member(userID).roles:
         if (role.name == dead):
@@ -65,7 +68,6 @@ def checkUser(ctx):
         raise commands.CommandError(message='ConLos')
 
     return true
-
 
 @bot.event
 async def on_ready():
@@ -123,12 +125,6 @@ async def leave(ctx):
 
     if get(ctx.guild.roles, id=cfg['discord']['roles']['dead']) in author.roles:
         await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
-
-# @bot.command(pass_context=True, aliases=['ci', 'check'])
-# @commands.dm_only()
-# @commands.check(checkUser)
-# async def checkin(ctx, target):
-#     pass
 
 @bot.command(pass_context=True, aliases=['v', 'kill'])
 @commands.dm_only()
@@ -190,11 +186,41 @@ async def stats(ctx):
 
 @bot.command(pass_context=True)
 async def help(ctx):
-    pass
+    pre = cfg['discord']['cmdPrefix']
+    embed = discord.Embed(
+        title = 'Help',
+        description = f'Command prefix: `{pre}`\n Full information: {stm["help"]["url"]}',
+        color = discord.Colour.blue()
+    )
+    embed.insert_field_at(index=0, name='join', value=stm['help']['commands'][0])
+    embed.insert_field_at(index=1, name='leave', value=stm['help']['commands'][1])
+    embed.insert_field_at(index=2, name='vote', value=stm['help']['commands'][2])
+    embed.insert_field_at(index=3, name='burn', value=stm['help']['commands'][3])
+    embed.insert_field_at(index=4, name='revive', value=stm['help']['commands'][4])
+    embed.insert_field_at(index=5, name='digup', value=stm['help']['commands'][5])
+    embed.insert_field_at(index=6, name='locate', value=stm['help']['commands'][6])
+    embed.insert_field_at(index=7, name='request', value=stm['help']['commands'][7])
+    embed.insert_field_at(index=8, name='unlock', value=stm['help']['commands'][8])
+    embed.insert_field_at(index=9, name='convert', value=stm['help']['commands'][9])
+    embed.insert_field_at(index=10, name='accept', value=stm['help']['commands'][10])
+    embed.insert_field_at(index=11, name='stats', value=stm['help']['commands'][11])
+    embed.insert_field_at(index=12, name='rules', value=stm['help']['commands'][12])
+    await ctx.message.channel.send(embed=embed)
 
 @bot.command(pass_context=True)
 async def rules(ctx):
-    pass
+    embed = discord.Embed(
+        title = 'Rules',
+        description = f'Full information: {stm["help"]["url"]}\nStrategy: {stm["help"]["strat"]}',
+        color = discord.Colour.blue()
+    )
+    embed.insert_field_at(index=0, name='#1', value=stm['help']['rules'][0], inline=False)
+    embed.insert_field_at(index=1, name='#2', value=stm['help']['rules'][1], inline=False)
+    embed.insert_field_at(index=2, name='#3', value=stm['help']['rules'][2], inline=False)
+    embed.insert_field_at(index=3, name='#4', value=stm['help']['rules'][3], inline=False)
+    embed.insert_field_at(index=4, name='#5', value=stm['help']['rules'][4], inline=False)
+    embed.insert_field_at(index=5, name='#6', value=stm['help']['rules'][5], inline=False)
+    await ctx.message.channel.send(embed=embed)
 
 @bot.command(pass_context=True)
 @commands.has_role('narrator')
@@ -236,19 +262,18 @@ async def on_raw_reaction_add(payload):
     if payload.emoji.name == 'vote':
         #TODO: vote
         await reaction.remove(payload.member)
-        pass
     elif payload.emoji.name == 'burn':
         #TODO: burn
         await reaction.remove(payload.member)
-        pass
+    elif payload.emoji.name == 'revive':
+        #TODO: revive
+        await reaction.remove(payload.member)
     elif payload.emoji.name == 'digup':
         #TODO: Lookup
         await reaction.remove(payload.member)
-        pass
     elif payload.emoji.name == 'locate':
         #TODO: Locate
         await reaction.remove(payload.member)
-        pass
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -274,8 +299,14 @@ async def on_command_error(ctx, error):
         await ctx.message.channel.send(stm['err']['spec'])
         await ctx.message.delete()
         return
+    elif err == 'NotInGuild':
+        await ctx.message.channel.send(stm['err']['notInGuild'])
+        return
     elif err == 'Started':
         await ctx.message.channel.send(stm['err']['alreadyStarted'])
+        return
+    elif err == 'NotStarted':
+        await ctx.message.channel.send(stm['err']['notStarted'])
         return
     elif err == 'Inactive':
         await ctx.message.channel.send(stm['err']['noParticipate'])
