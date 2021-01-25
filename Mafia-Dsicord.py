@@ -124,11 +124,11 @@ async def leave(ctx):
     if get(ctx.guild.roles, id=cfg['discord']['roles']['dead']) in author.roles:
         await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
 
-@bot.command(pass_context=True, aliases=['ci', 'check'])
-@commands.dm_only()
-@commands.check(checkUser)
-async def checkin(ctx, target):
-    pass
+# @bot.command(pass_context=True, aliases=['ci', 'check'])
+# @commands.dm_only()
+# @commands.check(checkUser)
+# async def checkin(ctx, target):
+#     pass
 
 @bot.command(pass_context=True, aliases=['v', 'kill'])
 @commands.dm_only()
@@ -215,6 +215,40 @@ async def reset(ctx):
 @commands.has_role('narrator')
 async def halt(ctx):
     pass
+
+@bot.event
+async def on_message(message):
+    await bot.process_commands(message)
+
+    if message.channel.id == cfg['discord']['channels']['game']:
+        con.execute(stm['preStm']['comment'], (message.author.id,))
+        con.execute('COMMIT;')
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    channel = bot.get_channel(payload.channel_id)
+    msg = await channel.fetch_message(payload.message_id)
+    reaction = discord.utils.get(msg.reactions, emoji=payload.emoji)
+
+    if channel.id != cfg['discord']['channels']['game']:
+        return
+
+    if payload.emoji.name == 'vote':
+        #TODO: vote
+        await reaction.remove(payload.member)
+        pass
+    elif payload.emoji.name == 'burn':
+        #TODO: burn
+        await reaction.remove(payload.member)
+        pass
+    elif payload.emoji.name == 'digup':
+        #TODO: Lookup
+        await reaction.remove(payload.member)
+        pass
+    elif payload.emoji.name == 'locate':
+        #TODO: Locate
+        await reaction.remove(payload.member)
+        pass
 
 @bot.event
 async def on_command_error(ctx, error):
