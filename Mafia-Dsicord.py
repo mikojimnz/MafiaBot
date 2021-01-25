@@ -29,7 +29,7 @@ with open('init/discord_statements.json') as jsonFile1:
     stm = json.load(jsonFile1)
 with open('data/save.json') as jsonFile2:
     sve = json.load(jsonFile2)
-with open('discord_settings.json') as jsonFile3:
+with open('init/discord_settings.json') as jsonFile3:
     cfg = json.load(jsonFile3)
 
 exceptCnt = 0
@@ -88,7 +88,27 @@ async def ping(ctx):
 @bot.command(pass_context=True)
 @commands.guild_only()
 async def join(ctx):
-    pass
+    gameCh = bot.get_channel(cfg['discord']['channels']['game'])
+    author = ctx.message.author
+
+    if state == 1:
+        await ctx.message.channel.send(['err']['alreadyStarted'])
+        return false
+
+    con.execute(stm['preStm']['chkUsrState'],(author.id,))
+    r = con.fetchall()
+
+    if(len(r) > 0):
+        con.execute(stm['preStm']['addExistingUser'], (cfg['commands']['maxRequests'], author.id))
+        await author.add_roles( get(ctx.guild.roles, id=cfg['discord']['roles']['alive']))
+        await gameCh.send(stm['comment']['actions']['addExistingUser'].format(author.id))
+    else:
+        con.execute(stm['preStm']['addUser'], (time.time(), author.id))
+        await author.add_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['alive']))
+        await gameCh.send(stm['comment']['actions']['addUser'].format(author.id))
+
+    if get(ctx.guild.roles, id=cfg['discord']['roles']['dead']) in author.roles:
+        await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
 
 @bot.command(pass_context=True)
 @commands.has_any_role(cfg['discord']['roles'])
