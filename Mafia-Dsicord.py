@@ -45,18 +45,21 @@ bot.remove_command('help')
 
 def checkUser(ctx):
     guild = bot.get_guild(cfg['discord']['guild'])
+    alive = get(guild.roles, id=cfg['discord']['roles']['alive']);
     dead = get(guild.roles, id=cfg['discord']['roles']['dead']);
     userID = ctx.message.author.id
 
-    if guild.get_member(userID) is not None:
+    if guild.get_member(userID) is not None or hasattr(ctx.message.author, 'roles') is False:
         raise commands.CommandError(message='NotInGuild')
 
     if state != 1:
         raise commands.CommandError(message='NotStarted')
 
-    for role in guild.get_member(userID).roles:
-        if (role.name == dead):
-            raise commands.CommandError(message='Dead')
+    if dead in ctx.message.author.roles:
+        raise commands.CommandError(message='Dead')
+
+    if alive not in ctx.message.author.roles:
+        raise commands.CommandError(message='Dead')
 
     try:
         con.execute(stm['preStm']['chkCmt'], (userID, cfg['commands']['useThreshold']))
@@ -67,7 +70,7 @@ def checkUser(ctx):
     except mysql.connector.Error:
         raise commands.CommandError(message='ConLos')
 
-    return true
+    return True
 
 @bot.event
 async def on_ready():
@@ -127,55 +130,69 @@ async def leave(ctx):
         await author.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
 
 @bot.command(pass_context=True, aliases=['v', 'kill'])
-@commands.dm_only()
 @commands.check(checkUser)
-async def vote(ctx, target):
-    pass
+async def vote(ctx, target: discord.User = None):
+    if target is None:
+        await ctx.message.channel.send(stm['err']['notFound'])
+        return False
+
+    await ctx.message.delete()
+
+    con.execute(stm['preStm']['unlock'][0], (ctx.message.author.id,))
+    r = con.fetchall()
+
+    if (r[0][0] < cfg['commands']['unlockVote']):
+        await ctx.message.channel.send(stm['err']['notUnlocked'])
+        return False
+
+    con.execute(stm['preStm']['voteUser'], (ctx.message.author.id, target.id))
+    success = con.rowcount
+
+    if ((r[0][1] > cfg['commands']['escapeHit']) and (success > 0)):
+        await target.send(stm['reply']['hitAlertEsc'].format(target.name, curCycle + 1))
+        await ctx.message.author.send(stm['reply']['voteUser'])
+    elif (success > 0):
+        await target.send(stm['reply']['hitAlert'].format(target.name, curCycle + 1))
+        await ctx.message.author.send(stm['reply']['voteUser'])
+    else:
+        await ctx.message.author.send(stm['reply']['voteUser'])
 
 @bot.command(pass_context=True, aliases=['expose'])
-@commands.dm_only()
 @commands.check(checkUser)
 async def burn(ctx, target):
     pass
 
 @bot.command(pass_context=True, aliases=['heal'])
-@commands.dm_only()
 @commands.check(checkUser)
 async def revive(ctx, target):
     pass
 
 @bot.command(pass_context=True, aliases=['dp', 'info'])
-@commands.dm_only()
 @commands.check(checkUser)
 async def digup(ctx, target):
     pass
 
 @bot.command(pass_context=True, aliases=['loc', 'find', 'where'])
-@commands.dm_only()
 @commands.check(checkUser)
 async def locate(ctx, target):
     pass
 
 @bot.command(pass_context=True)
-@commands.dm_only()
 @commands.check(checkUser)
 async def request(ctx, target):
     pass
 
 @bot.command(pass_context=True)
-@commands.dm_only()
 @commands.check(checkUser)
 async def unlock(ctx, code):
     pass
 
 @bot.command(pass_context=True)
-@commands.dm_only()
 @commands.check(checkUser)
 async def convert(ctx, target):
     pass
 
 @bot.command(pass_context=True)
-@commands.dm_only()
 @commands.check(checkUser)
 async def accept(ctx):
     pass
@@ -291,13 +308,12 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.message.channel.send("Unknown Command")
         return
-    elif isinstance(error, commands.PrivateMessageOnly):
-        await ctx.message.channel.send(stm['err']['notPM'].format(ctx.message.author.mention))
-        await ctx.message.delete()
-        return
     elif isinstance(error, (commands.MissingRole, commands.MissingAnyRole)):
         await ctx.message.channel.send(stm['err']['spec'])
         await ctx.message.delete()
+        return
+    elif isinstance(error, commands.errors.BadArgument):
+        await ctx.message.channel.send(stm['err']['badArgument'])
         return
     elif err == 'NotInGuild':
         await ctx.message.channel.send(stm['err']['notInGuild'])

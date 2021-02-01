@@ -133,6 +133,7 @@
   "err": {
     "alive": "The player is alive.",
     "alreadyStarted": "The game has already started.",
+    "badArgument": "Invalid command argument. If you are entering a player ID use their ID number of tag.",
     "burnUsed": "You have already used your ability to burn.",
     "conLos": "Connectio to the database could not be completed. Plese try again later.\nContact the admins if this problem continues.",
     "generic": "This command cannot be run here.",
@@ -143,7 +144,7 @@
     "noParticipate": "To use this command, you must check in at least once per round to maintain active status using `m!checkin`. Users who become inactive for more than 2 days (4 rounds) will be kicked.",
     "noRequestLeft": "You have used your alloted requests",
     "notAlive": "The player is not alive",
-    "notFound": "Cannot find that user or the user is not playing in the game.\n\nNote: Usernames are case-sensitive.",
+    "notFound": "Cannot find that user or the user is not playing in the game.",
     "notInGuild": "You are not a member of this server",
     "notPM": "{}, This command must be sent by DM only.",
     "notStarted": "The game has not started yet.",
@@ -335,8 +336,8 @@
         "Enabled"
       ]
     ],
-    "hitAlertEsc": " Watch out <@{}>! A hit has been put on you!. \n\nYou can escape this hit by correctly voting any of the people who put a hit on you.\n\nThis hit will expire after this round, round {}.",
-    "hitAlert": "Watch out <@{}>! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed! Higher ranking members have the ability to escape.\n\nThis hit will expire after this round, round {}.",
+    "hitAlertEsc": " Watch out {}! A hit has been put on you!. \n\nYou can escape this hit by correctly voting any of the people who put a hit on you.\n\nThis hit will expire after this round, round {}.",
+    "hitAlert": "Watch out {}! A hit has been put on you!. \n\nYou may try to convice others to change their vote or be killed! Higher ranking members have the ability to escape.\n\nThis hit will expire after this round, round {}.",
     "locateUser": "<@{}>is located at {}",
     "promote": "Code Accepted!\n\nYou have been promoted to {}.",
     "removeUser": "You have left the game. You can rejoin before the game starts.",
