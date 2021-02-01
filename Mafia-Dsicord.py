@@ -209,19 +209,10 @@ async def help(ctx):
         description = f'Command prefix: `{pre}`\n Full information: {stm["help"]["url"]}',
         color = discord.Colour.blue()
     )
-    embed.insert_field_at(index=0, name='join', value=stm['help']['commands'][0])
-    embed.insert_field_at(index=1, name='leave', value=stm['help']['commands'][1])
-    embed.insert_field_at(index=2, name='vote', value=stm['help']['commands'][2])
-    embed.insert_field_at(index=3, name='burn', value=stm['help']['commands'][3])
-    embed.insert_field_at(index=4, name='revive', value=stm['help']['commands'][4])
-    embed.insert_field_at(index=5, name='digup', value=stm['help']['commands'][5])
-    embed.insert_field_at(index=6, name='locate', value=stm['help']['commands'][6])
-    embed.insert_field_at(index=7, name='request', value=stm['help']['commands'][7])
-    embed.insert_field_at(index=8, name='unlock', value=stm['help']['commands'][8])
-    embed.insert_field_at(index=9, name='convert', value=stm['help']['commands'][9])
-    embed.insert_field_at(index=10, name='accept', value=stm['help']['commands'][10])
-    embed.insert_field_at(index=11, name='stats', value=stm['help']['commands'][11])
-    embed.insert_field_at(index=12, name='rules', value=stm['help']['commands'][12])
+
+    cmds = list(stm['help']['commands'])
+    for i, cmd in enumerate(cmds):
+        embed.insert_field_at(index=i, name=cmd, value=stm['help']['commands'][cmd], inline=True)
     await ctx.message.channel.send(embed=embed)
 
 @bot.command(pass_context=True)
@@ -231,12 +222,9 @@ async def rules(ctx):
         description = f'Full information: {stm["help"]["url"]}\nStrategy: {stm["help"]["strat"]}',
         color = discord.Colour.blue()
     )
-    embed.insert_field_at(index=0, name='#1', value=stm['help']['rules'][0], inline=False)
-    embed.insert_field_at(index=1, name='#2', value=stm['help']['rules'][1], inline=False)
-    embed.insert_field_at(index=2, name='#3', value=stm['help']['rules'][2], inline=False)
-    embed.insert_field_at(index=3, name='#4', value=stm['help']['rules'][3], inline=False)
-    embed.insert_field_at(index=4, name='#5', value=stm['help']['rules'][4], inline=False)
-    embed.insert_field_at(index=5, name='#6', value=stm['help']['rules'][5], inline=False)
+
+    for i, rule in enumerate(stm['help']['rules']):
+        embed.insert_field_at(index=i, name=f'#{i+1}', value=stm['help']['rules'][i], inline=False)
     await ctx.message.channel.send(embed=embed)
 
 @bot.command(pass_context=True)

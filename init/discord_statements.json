@@ -163,22 +163,21 @@
   "help": {
     "url": "https://www.reddit.com/r/KillingEve/wiki/mafia",
     "strat": "https://www.reddit.com/r/KillingEve/wiki/mafia/strategy",
-    "commands": [
-      "Join game.",
-      "Leave game.",
-      "Vote on a player to elminate.\n`vote ID`",
-      "Burn a random eamate for information.\n`burn ID`",
-      "Bring a player back from the dead.\n`revive ID`",
-      "Get info on player.\n`digup ID`",
-      "Find a player's location.\n`locate ID`",
-      "Request infromation on a player.\n`request ID`",
-      "Request infromation on a player.\n`request ID`",
-      "Enter a game code to advance to the next rank.\n`unlock CODE`",
-      "Invite a player to switch to your team.\n`convert ID`",
-      "Accept invite to switch teams.",
-      "Show game stats.",
-      "Show rules."
-    ],
+    "commands": {
+      "Join": "Join game.",
+      "Leave": "Leave game.",
+      "Vote": "Vote on a player to elminate.\n`vote ID`",
+      "Burn": "Burn a random eamate for information.\n`burn ID`",
+      "Revive": "Bring a player back from the dead.\n`revive ID`",
+      "Digup": "Get info on player.\n`digup ID`",
+      "Locate": "Find a player's location.\n`locate ID`",
+      "Request": "Request infromation on a player.\n`request ID`",
+      "Unlock": "Enter a game code to advance to the next rank.\n`unlock CODE`",
+      "Invite": "Invite a player to switch to your team.\n`convert ID`",
+      "Accept": "Accept invite to switch teams.",
+      "Stats": "Show game stats.",
+      "Rules": "Show rules."
+    },
     "rules": [
       "Each user is assigned to either MI6 or the Twelve.",
       "You must investigate each other to determine who is on what side and eliminate the opponent.",
