@@ -104,7 +104,7 @@ async def join(ctx):
 
     if(len(r) > 0):
         con.execute(stm['preStm']['addExistingUser'], (cfg['commands']['maxRequests'], author.id))
-        await author.add_roles( get(ctx.guild.roles, id=cfg['discord']['roles']['alive']))
+        await author.add_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['alive']))
         await gameCh.send(stm['comment']['actions']['addExistingUser'].format(author.id))
     else:
         con.execute(stm['preStm']['addUser'], (time.time(), author.id))
@@ -132,35 +132,94 @@ async def leave(ctx):
 @bot.command(pass_context=True, aliases=['v', 'kill'])
 @commands.check(checkUser)
 async def vote(ctx, target: discord.User = None):
-    if target is None:
-        await ctx.message.channel.send(stm['err']['notFound'])
-        return False
+    author = ctx.message.author
 
     await ctx.message.delete()
 
-    con.execute(stm['preStm']['unlock'][0], (ctx.message.author.id,))
+    if target is None:
+        await author.send(stm['err']['notFound'])
+        return False
+
+    con.execute(stm['preStm']['unlock'][0], (author.id,))
     r = con.fetchall()
 
     if (r[0][0] < cfg['commands']['unlockVote']):
-        await ctx.message.channel.send(stm['err']['notUnlocked'])
+        await author.send(stm['err']['notUnlocked'])
         return False
 
-    con.execute(stm['preStm']['voteUser'], (ctx.message.author.id, target.id))
+    con.execute(stm['preStm']['voteUser'], (author.id, target.id))
     success = con.rowcount
 
     if ((r[0][1] > cfg['commands']['escapeHit']) and (success > 0)):
         await target.send(stm['reply']['hitAlertEsc'].format(target.name, curCycle + 1))
-        await ctx.message.author.send(stm['reply']['voteUser'])
+        await author.send(stm['reply']['voteUser'])
     elif (success > 0):
         await target.send(stm['reply']['hitAlert'].format(target.name, curCycle + 1))
-        await ctx.message.author.send(stm['reply']['voteUser'])
+        await author.send(stm['reply']['voteUser'])
     else:
-        await ctx.message.author.send(stm['reply']['voteUser'])
+        await author.send(stm['reply']['voteUser'])
 
 @bot.command(pass_context=True, aliases=['expose'])
 @commands.check(checkUser)
-async def burn(ctx, target):
-    pass
+async def burn(ctx):
+    guild = bot.get_guild(cfg['discord']['guild'])
+    gameCh = bot.get_channel(cfg['discord']['channels']['game'])
+    author = ctx.message.author
+
+    await ctx.message.delete()
+
+    con.execute(stm['preStm']['unlock'][0], (author.id,))
+    r = con.fetchall()
+
+    if (r[0][0] < cfg['commands']['unlockBurn']):
+        await author.send(stm['err']['notUnlocked'])
+        return False
+
+    if (curCycle < cfg['commands']['burnAfter']):
+        await author.send(stm['err']['noBurnYet'])
+        return False
+
+    con.execute(stm['preStm']['chkBurn'], (author.id,))
+    r = con.fetchall()
+
+    if (len(r) <= 0):
+        await author.send(stm['err']['burnUsed'])
+        return False
+
+    tier = r[0][2]
+    selfTeam = r[0][1]
+    oppTeam = selfTeam + 2
+    con.execute(stm['preStm']['burn'][selfTeam], (author.id,))
+    toBurn = con.fetchall()
+    con.execute(stm['preStm']['burn'][oppTeam])
+    toReport = con.fetchall()
+
+    if ((len(toBurn) <= 0) or (len(toReport) <= 0)):
+        await author.send(stm['err']['noBurnLeft'])
+        return False
+
+    burned = await guild.fetch_member(int(toBurn[random.randint(0, len(toBurn) - 1)][0]))
+    exposed = await guild.fetch_member(int(toReport[random.randint(0, len(toReport) - 1)][0]))
+    deathMsg = random.randint(0,len(stm['deathMsg']) - 1)
+    con.execute(stm['preStm']['burn'][4], (author.id,))
+    con.execute(stm['preStm']['burn'][5], (burned.id,))
+    con.execute(stm['preStm']['log'], (time.time(), burned.id, 'Betrayed'))
+    con.execute(stm['preStm']['log'], (time.time(), exposed.id, 'Exposed'))
+
+    if get(ctx.guild.roles, id=cfg['discord']['roles']['alive']) in burned.roles:
+        await burned.remove_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['alive']))
+
+    if get(ctx.guild.roles, id=cfg['discord']['roles']['alive']) in burned.roles:
+        await burned.add_roles(get(ctx.guild.roles, id=cfg['discord']['roles']['dead']))
+
+    await author.send(stm['reply']['burnUser'].format(burned.name, exposed.name, stm['teams'][0][(selfTeam + 1) % 2]))
+
+    if (tier >= cfg['commands']['burnQuietly']):
+        await burned.send(stm['reply']['burnedUserQuietly'].format(stm['deathMsg'][deathMsg], curCycle + 1))
+        await gameCh.send(stm['comment']['actions']['burnUserQuietly'].format(burned.id, stm['deathMsg'][deathMsg]))
+    else:
+        await burned.send(stm['reply']['burnedUser'].format(stm['deathMsg'][deathMsg], author.name, curCycle + 1))
+        await gameCh.send(stm['comment']['actions']['burnUser'].format(burned.id, stm['deathMsg'][deathMsg], author.id,))
 
 @bot.command(pass_context=True, aliases=['heal'])
 @commands.check(checkUser)
@@ -302,6 +361,7 @@ async def on_command_error(ctx, error):
         return
     elif isinstance(error, commands.errors.BadArgument):
         await ctx.message.channel.send(stm['err']['badArgument'])
+        await ctx.message.delete()
         return
     elif err == 'NotInGuild':
         await ctx.message.channel.send(stm['err']['notInGuild'])

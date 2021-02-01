@@ -298,8 +298,8 @@
   "reply": {
     "addRequests": "+{} Requests Added.",
     "addUser": "Hello <@{}, you have joined the game!\n\nYour team will be assigned at the start of the game.\n\nType all commands here.\n\nYou can leave the game by replying !leave to this message. **You cannot rejoin once the game has started!**\n\nFor help type !help.\nType !rules for the rules.",
-    "burnUser": "You have burned <@{}!\n\nIntelligence Report:\n\n<@{}>is {}",
-    "burnedUser": "You have been {} by <@{}>on round {}!\n\nYou are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",
+    "burnUser": "You have burned {}!\n\nIntelligence Report:\n\n{} is {}",
+    "burnedUser": "You have been {} by {} on round {}!\n\nYou are now a spectator, but can haunt your killer from beyond the grave. Others can view how you died on your user flair.",
     "burnedUserQuietly": "You have been {} by on round {}!\n\nSomeone higher up has decided to betray their own. You are now a spectator. Others can view how you died on your user flair.",
     "cycle": [
       "**You Were Killed!**\n\nYou were \"{}\" on round {}.\nBy:\n{}\n\nAlive: {}\n* MI6: {}\n* The Twelve: {}\nKilled: {}\nTotal Players: {}\n\nThank you for playing. You are now a spectator. Others can view how you died on your user flair.",
